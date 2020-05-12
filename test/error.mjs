@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
-import oada from '@oada/oada-cache'
+import oada from '@oada/client'
 import Promise from 'bluebird'
 import moment from 'moment'
 
@@ -10,10 +10,10 @@ import config from '../config.js'
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-const jobkey = 'TEST-TARGETHELPER-MAINJOB2';
-const jobpath = `/bookmarks/services/target/jobs/${jobkey}`;
-const pdfkey = 'TEST-PDF2';
-const auditkey = 'TEST-FSQAAUDIT2-DUMMY';
+let jobkey = false;
+const jobpath = `/bookmarks/services/target/jobs`;
+const pdfkey = 'TEST-PDF3';
+const coikey = 'TEST-COI3-DUMMY';
 
 const tree = {
   bookmarks: {
@@ -34,7 +34,7 @@ const tree = {
             _type: 'application/vnd.oada.job.1+json',
           },
         },
-        'jobs-error': {
+        'jobs-failure': {
           _type: 'application/vnd.oada.jobs.1+json',
           '*': {
             _type: 'application/vnd.oada.job.1+json',
@@ -46,102 +46,103 @@ const tree = {
 };
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-describe('error job', () => {
+describe('success job', () => {
   let con = false;
 
-  before(async () => {
-    con = await oada.connect({ domain: config.get('domain'), token: config.get('token') });
-    await con.get({ path: `/resources/${pdfkey}` })
-    .catch(async e => {
-      if (e && e.response && e.response.status === 404) {
-        console.log('resources/TEST-PDF1 does not exist, creating a dummy one');
-        await con.put({ path: `/resources/${pdfkey}`, data: {}, headers: { 'content-type': 'application/pdf' } });
-      }
-    });
+  before(async function() {
+    this.timeout(10000);
+    console.log('Before 1: started');
+    const domain = config.get('domain').replace(/^https:\/\//,'');
+    console.log('Before 2: connecting to oada');
+    con = await oada.connect({ domain, token: config.get('token') });
+    console.log('Before 3: connected.  Getting pdf');
 
+    //------------------------------------------
+    // Do some cleanup: get rid of coi and pdf and /bookmarks/trellisfw/cois/${coikey}
+    await Promise.each([ 
+      `/resources/${pdfkey}`, `/resources/${coikey}`, `/bookmarks/trellisfw/cois/${coikey}` 
+    ], path => con.get({path}).then(() => con.delete({path})).catch(e=>{}));
+
+
+    //------------------------------------------
+    // Create the initial PDF 
+    console.log('Before 5: resources/TEST-PDF1 does not exist, creating a dummy one');
+    await con.put({ path: `/resources/${pdfkey}`, data: {}, headers: { 'content-type': 'application/pdf' } });
+
+    console.log('Before 7: posting job to get job key');
     //--------------------------------------------------------
-    // Example of an error job: go ahead and put that up, tests will check results later
-    await con.put({ path: `/resources/${jobkey}`, headers: { 'content-type': 'application/vnd.oada.job.1+json'}, data: {
+    // Example of a successful normal job: go ahead and put that up, tests will check results later
+    jobkey = await con.post({ path: `/resources`, headers: { 'content-type': 'application/vnd.oada.job.1+json' }, data: {
+      service: 'target',
       type: 'pdf',
-      service: "target",
-      config: {
-        pdf: { _id: `resources/${pdfkey}` }
-      },
-      result: false,
-      status: "start",
-      updates: { }
-    }});
+      config: { pdf: { _id: `resources/${pdfkey}` } },
+    }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''));
+    console.log('Before: job posted, key = ', jobkey);
+
     // Link job under queue to start things off:
-    await con.put({ path: jobpath, headers: { 'content-type': 'application/vnd.oada.jobs.1+json' }, tree, data: {
-      _id: `resources/${jobkey}`
-    }});
+    console.log(`Before: linking job at ${jobpath}/${jobkey}`);
+    await con.put({ path: `${jobpath}/${jobkey}`, data: { _id: `resources/${jobkey}` } });
+    console.log(`Before: job linked, waiting to simulate target processing`);
     await Promise.delay(200); // wait a little bit after posting job
     // Now pretend to be target
-    await con.post({ path: `${jobpath}/updates`, headers: { 'content-type': 'application/vnd.oada.job.1+json' }, data: {
+    console.log('Before: posting first target update');
+    await con.post({ path: `${jobpath}/${jobkey}/updates`, data: {
       status: "identifying",
-      time: moment().unix(),
+      time: moment().format(),
     }});
     await Promise.delay(50);
-    await con.post({ path: `${jobpath}/updates`, headers: { 'content-type': 'application/vnd.oada.job.1+json' }, data: {
-      status: "identified",
-      information: 'Identified as FSQA audit',
-      time: moment().unix(),
-    }});
-    await Promise.delay(50);
-    // Post transcriptionerror
-    await con.post({ path: `${jobpath}/updates`, headers: { 'content-type': 'application/vnd.oada.job.1+json' }, data: {
+    console.log('Before: posting second target update');
+    await con.post({ path: `${jobpath}/${jobkey}/updates`, data: {
       status: "error",
-      information: 'Failed to parse Audit PDF document',
-      time: moment().unix(),
+      information: 'Could not identify document',
+      time: moment().format(),
     }});
     // Wait a bit for processing
-    await Promise.delay(200);
+    await Promise.delay(2000);
+    console.log('Before: finished, running tests');
   })
 
   // Now the real checks begin.  Did target helper:
-  // 1: _ref pdf from _meta/vdoc/pdf in fsqa-audit resource
-  // 2: _ref fsqa-audit from _meta/vdoc/fsqa-audits/<id> for PDF resource
-  // 3: Put the FSQA audit up at /bookmarks/trellisfw/fsqa-audits/<key>
-  // 4: Post update of "signing" once all is good w/target
-  // 5: POST a job to trellis-signer's job queue to sign this audit (or sign it ourselves to eliminate need for trellis-signer?)
-  // 6: Monitor the audit looking for signature to show up, when it appears then put "status: success" to the job (and post update)
+  // 1: _ref pdf from _meta/vdoc/pdf in coi resource
+  // 2: _ref coi from _meta/vdoc/cois/<id> for PDF resource
+  // 3: Put the COI up at /bookmarks/trellisfw/cois/<key>
+  // 5: Sign the thing
+  // 6: Monitor the coi looking for signature to show up, when it appears then put "status: success" to the job (and post update)
   // 7: oada-jobs should move the job to jobs-success under today's index
 
-  it('should NOT _ref the PDF at _meta/vdoc/pdf in the fsqa-audit resource', async () => {
-    const result = await con.get({ path: `/resources/${auditkey}/_meta/vdoc/pdf` }).catch( e => e.response.status );
+  it('should NOT _ref the PDF at _meta/vdoc/pdf in the coi resource', async () => {
+    const result = await con.get({ path: `/resources/${coikey}/_meta/vdoc/pdf` }).catch(e=>e.status);
+    expect(result).to.equal(403); // unauthorized on /resources that don't exist
+  });
+
+  it('should NOT _ref the coi from _meta/vdoc/cois/<id> in PDF resource', async () => {
+    const result = await con.get({ path: `/resources/${pdfkey}/_meta/vdoc/cois/${coikey}`}).catch(e=>e.status);
     expect(result).to.equal(404);
   });
 
-  it('should NOT _ref the fsqa-audit from _meta/vdoc/fsqa-audits/<id> in PDF resource', async () => {
-    const result = await con.get({ path: `/resources/${pdfkey}/_meta/vdoc/fsqa-audits/${auditkey}`}).catch(e => e.response.status);
+  it('should NOT put coi up at /bookmarks/trellisfw/cois/<coikey>', async () => {
+    const result = await con.get({ path: `/bookmarks/trellisfw/cois/${coikey}` }).catch(e=>e.status);
     expect(result).to.equal(404);
   });
 
-  it('should NOT put audit up at /bookmarks/trellisfw/fsqa-audits/<auditkey>', async () => {
-    const result = await con.get({ path: `/bookmarks/trellisfw/fsqa-audits/${auditkey}` }).catch(e => e.response.status);
-    expect(result).to.equal(404);
+  it('should NOT have a signature on the coi', async () => {
+    const result = await con.get({ path: `/resources/${coikey}/signatures` }).catch(e=>e.status);
+    expect(result).to.equal(403); // unauthorized on /resources that don't exist
   });
 
-  it('should NOT have a signature on the audit', async () => {
-    const result = await con.get({ path: `/resources/${auditkey}/signatures` }).catch(e => e.response.status);
-    expect(result).to.equal(404);
-  });
-
-  it('should have status of error on the job when completed', async () => {
+  it('should have status of failure on the job when completed', async () => {
     const result = await con.get({ path: `resources/${jobkey}/status` }).then(r=>r.data);
-    expect(result).to.equal('error');
+    expect(result).to.equal('failure');
   });
 
   it('should delete the job from jobs', async () => {
-    const result = await con.get({ path: `${jobpath}` }).catch(e => e.response.status);
-    expect(result).to.equal(404);
+    const result = await con.get({ path: `${jobpath}/${jobkey}` }).catch(e => e); // returns the error
+    expect(result.status).to.equal(404);
   });
 
-  it('should put the job under today\'s day-index within jobs-error', async() => {
+  it('should put the job under today\'s day-index within jobs-failure', async() => {
     const day = moment().format('YYYY-MM-DD');
-    const result = await con.get({ path: `/bookmarks/services/target/jobs-error/day-index/${day}/${jobkey}` }).then(r=>r.data);
+    const result = await con.get({ path: `/bookmarks/services/target/jobs-failure/day-index/${day}/${jobkey}` }).then(r=>r.data);
     expect(result._id).to.equal(`resources/${jobkey}`);
   });
-
 });
-
