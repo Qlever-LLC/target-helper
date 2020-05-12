@@ -36,7 +36,7 @@ if (DOMAIN === 'localhost') {
 const service = new Service('target', DOMAIN, TOKEN, 1); // 1 concurrent job
 
 // 5 min timeout
-service.on('pdf', 5*60*1000, newJob);
+service.on('pdf', config.get('timeout'), newJob);
 
 // `target-helper` will fill in around this
 // - receive the job from oada-jobs

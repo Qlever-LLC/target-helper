@@ -19,5 +19,5 @@ export default {
   privateJWK: './keys/private_key.jwk',
   signer: { name: 'Test signer', url: 'https://oatscenter.org' },
   signatureType: 'transcription',
-  timeout: 30000, // 30 seconds
+  timeout: 5 * 60 * 1000, // 5 minutes
 }

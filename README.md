@@ -8,7 +8,7 @@ A microservice to simplify Target interaction with Trellis.  Target will:
 
 `target-helper` will fill in around this
 - receive the job from oada-jobs
-- once it sees "success" in the updates, it will post a job to trellis-signer and notify oada-jobs of success
+- once it sees "success" in the updates, it will post a job to target-helper and notify oada-jobs of success
 - if it sees "error" in the updates, it will notify oada-jobs of error
 - In the caes of PDF, it will cross-link from the PDF in meta to the resulting fsqa-certificates (etc.): i.e. the
   "result" object should just go in meta/vdoc, except all id's should be ref's
@@ -19,17 +19,17 @@ A microservice to simplify Target interaction with Trellis.  Target will:
 ```docker-compose
 cd path/to/your/oada-srvc-docker
 cd services-available
-git clone git@github.com:trellisfw/trellis-signer.git
+git clone git@github.com:trellisfw/target-helper.git
 cd ../services-enabled
-ln -s ../services-available/trellis-signer .
-oada up -d trellis-signer
+ln -s ../services-available/target-helper .
+oada up -d target-helper
 ```
 
 ## Overriding defaults for Production
 Using the common `z_tokens` method outlined for `oada-srvc-docker`, the following entries
 for the `z_tokens` docker-compose file will work:
 ```docker-compose
-  trellis-signer:
+  target-helper:
     volumes:
       - ./services-available/z_tokens/private_key.jwk:/private_key.jwk
     environment:
