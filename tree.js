@@ -3,6 +3,9 @@ export default {
     _type: 'application/vnd.oada.bookmarks.1+json',
     trellisfw: {
       _type: 'application/vnd.trellisfw.1+json',
+      documents: {
+        _type: 'application/vnd.trellisfw.documents.1+json',
+      }
     },
     services: {
       _type: 'application/vnd.oada.services.1+json',

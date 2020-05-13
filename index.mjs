@@ -3,6 +3,7 @@ import Promise from 'bluebird';
 import _ from 'lodash';
 import debug from 'debug';
 import Jobs from '@oada/jobs';
+import oadaclient from '@oada/client';
 import tsig from '@trellisfw/signatures';
 import tree from './tree.js';
 
@@ -159,19 +160,24 @@ async function newJob(job, { jobId, log, oada }) {
           await Promise.each(shares, async s => {
             const {dockey, doc, tp} = s;
             const tpkey = tp._id.replace(/^resources\//,'');
+            const user = await oada.get({ path: `/${tp._id}/user` }).then(r=>r.data);
             const resid = await oada.post({ path: `/resources`, headers: { 'content-type': tree.bookmarks.services['*'].jobs['*']._type }, data: {
-              type: 'share-user',
+              type: 'share-user-link',
+              service: 'trellis-shares',
               config: {
-                service: 'shares',
-                src: { _id: doc._id },
+                src: `/${doc._id}`,
                 doctype, // fsqa-audits, cois, fsqa-certificates, trading-partners
-                userdest: `/bookmarks/trellisfw/${doctype}/${dockey}`,
-                userbookmarks: `/bookmarks/trellisfw/trading-partners/${tpkey}/user/bookmarks`,
+                dest: `/bookmarks/trellisfw/${doctype}/${dockey}`, // this doubles-up bookmarks, but I think it's the most understandable to look at
+                user, // { id, bookmarks }
+                chroot: `/bookmarks/trellisfw/trading-partners/${tpkey}/user/bookmarks`,
+                tree: treeForDocType(doctype),
               },
             }}).then(r=>r.headers['content-location'].replace(/^\//,''));
-            const jobpath = await oada.post( { path: `/bookmarks/services/shares/jobs`, data: { _id: resid, _rev: 0 }, tree }).then(r=>r.headers['content-location']);
-            const jobid = jobpath.replace(/^\/resources\/[^\/]+\//,'');
-            trace('Posted jobid ',jobid, ' for shares');
+            const reskey = resid.replace(/^resources\//,'');
+            trace('Shares job posted as resid = ', resid);
+            const jobpath = await oada.put( { path: `/bookmarks/services/trellis-shares/jobs`, data: { [reskey]: { _id: resid, _rev: 0 } }, tree }).then(r=>r.headers['content-location']);
+            const jobkey = jobpath.replace(/^\/resources\/[^\/]+\//,'');
+            trace('Posted jobkey ',jobkey, ' for shares');
           });
         });
   
@@ -257,7 +263,77 @@ async function signResourceForTarget({ _id, oada, log }) {
   return true; // success!
 }
 
+function treeForDocType(doctype) {
+  let singularType = doctype;
+  if (singularType.match(/s$/)) singularType.replace(/s$/,''); // if it ends in 's', easy fix
+  else if (singularType.match(/-/)) { // if it has a dash, maybe it is like letters-of-guarantee (first thing plural)
+    const parts = _.split(singularType, '-');
+    if (parts[0] && parts[0].match(/s$/)) {
+      parts[0] = parts[0].replace(/s$/,'');
+    } else {
+      throw new Error(`ERROR: doctype ${doctype} has dashes, but is not easily convertible to singular word for _type`);
+    }
+    singularType = _.join(parts, '-');
+  } else {
+    throw new Error(`ERROR: doctype ${doctype} is not easily convertible to singular word for _type`);
+  }
+  return {
+    bookmarks: {
+      _type: 'application/vnd.oada.bookmarks.1+json',
+      trellisfw: {
+        _type: 'application/vnd.trellisfw.1+json',
+        [doctype]: { // cois, fsqa-audits, etc.
+          _type: `application/vnd.trellisfw.${doctype}.1+json`, // plural word: cois, letters-of-guarantee
+          '*': {
+            _type: `application/vnd.trellisfw/${singularType}.1+json`, // coi, letter-of-guarantee
+          }
+        }
+      }
+    }
+  };
+}
 
 service.start().catch(e => 
   console.error('Service threw uncaught error: ',e)
 );
+
+
+// also start watching /bookmarks/trellisfw/documents and create target jobs for each new one
+// until ainz can do that for us
+oadaclient.connect({domain: DOMAIN,token: TOKEN})
+.then(async con => {
+  // ensure the thing exists
+  const exists = await con.get({ path: `/bookmarks/trellisfw/documents`}).then(r=>r.status).catch(e => e.status);
+  if (exists !== 200) {
+    info(`/bookmarks/trellisfw/documents does not exist, creating....`);
+    await con.put({path: '/bookmarks/trellisfw/documents', data: {}, tree });
+  }
+
+  await con.get({ path: `/bookmarks/trellisfw/documents`, watchCallback: async function handleDocChange(c) {
+    if (c.path !== '') return; // not a change to root resource
+    if (c.type !== 'merge') return;
+    // Is there a link in here?
+    const keys = _.filter(_.keys(c.body), k => !k.match(/^\//));
+    if (keys.length < 1) return;
+    // Have a real key that could be a new doc link, check if _id is in the link (that means it's a new link)
+    await Promise.each(keys, async k => {
+      const v = c.body[k];
+      if (!v || !v._id) return; // not a link
+      // Otherwise, it is a new link, post a job to ourselves
+      info('RECEIVED NEW PDF DOCUMENT: ', v._id);
+      const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
+        type: 'pdf',
+        service: 'target',
+        config: {
+          pdf: { _id: v._id },
+        },
+      }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
+      .catch(e => error('ERROR: failed to get jobkey when posting job resource, e = ', e));
+      console.log('Posted job resource, jobkey = ', jobkey);
+      await con.put({path: `/bookmarks/services/target/jobs`, tree, data: {
+        [jobkey]: { _id: `resources/${jobkey}` },
+      }});
+      trace('Posted new PDF document to target task queue');
+    });
+  }});
+}).catch(e => error('ERROR: unchaught exception in watching /bookmarks/trellisfw/documents.  Error was: ', e));
