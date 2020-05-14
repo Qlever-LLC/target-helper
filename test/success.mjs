@@ -104,7 +104,7 @@ describe('success job', () => {
     .then(async () => {
       await con.delete({ path: `/resources/${coikey}` }); // clean copy each time
     }).catch(e => {}) // doesn't exist, go ahead and create
-    await con.put({ path: `/resources/${coikey}`, headers: { 'content-type': 'application/vnd.trellisfw.coi.1+json' }, data: {
+    await con.put({ path: `/resources/${coikey}`, headers: { 'content-type': 'application/vnd.trellis.coi.1+json' }, data: {
       holder: {
         name: 'test holder',
       },

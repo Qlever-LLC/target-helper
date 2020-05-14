@@ -52,14 +52,8 @@ service.on('transcription', config.get('timeout'), newJob);
 async function newJob(job, { jobId, log, oada }) {
   // until oada-jobs adds cross-linking, make sure we are linked under pdf's jobs
   trace('Linking job under pdf/_meta until oada-jobs can do that natively');
-  await oada.put({ path: `/bookmarks/services/target/jobs/${jobId}/config/pdf/_meta`, data: {
-    services: {
-      target: {
-        jobs: {
-          [jobId]: { _ref: `resources/${jobId}` }
-        }
-      }
-    }
+  await oada.put({ path: `/bookmarks/services/target/jobs/${jobId}/config/pdf/_meta/services/target/jobs`, data: {
+    [jobId]: { _ref: `resources/${jobId}` }
   }});
 
   return new Promise(async (resolve, reject) => {
@@ -94,7 +88,7 @@ async function newJob(job, { jobId, log, oada }) {
           if (!obj || typeof obj !== 'object') return;
           if (obj._id) {
             return await oada.put({ path: `/${obj._id}/_meta`, data: {
-              vdoc: { pdf: { _ref: `${pdfid}` } }
+              vdoc: { pdf: { _id: `${pdfid}` } }
             }});
           }
           return Promise.each(_.keys(obj), k => recursivePutVdocAtLinks(obj[k]));
@@ -124,7 +118,7 @@ async function newJob(job, { jobId, log, oada }) {
         await Promise.each(_.keys(versionedResult), async doctype => { // top-level keys are doc types
           log.info('linking', `Linking doctype ${doctype} from result`);
           // Automatically augment the base tree with the right content-type
-          tree.bookmarks.trellisfw[doctype] = { _type: `application/vnd.trellisfw.${doctype}.1+json` };
+          tree.bookmarks.trellisfw[doctype] = { _type: `application/vnd.trellis.${doctype}.1+json` };
           await oada.put({ path: `/bookmarks/trellisfw/${doctype}`, data: versionedResult[doctype], tree });
         });
   
@@ -289,11 +283,11 @@ function treeForDocType(doctype) {
     bookmarks: {
       _type: 'application/vnd.oada.bookmarks.1+json',
       trellisfw: {
-        _type: 'application/vnd.trellisfw.1+json',
+        _type: 'application/vnd.trellis.1+json',
         [doctype]: { // cois, fsqa-audits, etc.
-          _type: `application/vnd.trellisfw.${doctype}.1+json`, // plural word: cois, letters-of-guarantee
+          _type: `application/vnd.trellis.${doctype}.1+json`, // plural word: cois, letters-of-guarantee
           '*': {
-            _type: `application/vnd.trellisfw/${singularType}.1+json`, // coi, letter-of-guarantee
+            _type: `application/vnd.trellis.${singularType}.1+json`, // coi, letter-of-guarantee
           }
         }
       }
