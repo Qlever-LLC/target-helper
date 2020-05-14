@@ -1,6 +1,6 @@
 {
   "name": "target-helper",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A Trellis microservice to fill in around Target integration",
   "main": "index.mjs",
   "type": "module",
@@ -13,7 +13,7 @@
   "license": "None",
   "private": true,
   "dependencies": {
-    "@oada/jobs": "github:oada/jobs",
+    "@oada/jobs": "^0.1.8",
     "@oada/oada-cache": "git://github.com/OADA/oada-cache.git#dev",
     "@trellisfw/signatures": "^2.1.3",
     "bluebird": "^3.7.2",

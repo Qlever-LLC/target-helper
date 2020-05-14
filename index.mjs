@@ -34,7 +34,15 @@ if (DOMAIN === 'localhost') {
 }
 
 
-const service = new Service('target', DOMAIN, TOKEN, 1); // 1 concurrent job
+const service = new Service('target', DOMAIN, TOKEN, 1, { 
+  finishReporters: [ 
+    { 
+      type: 'slack', 
+      status: 'failure', 
+      posturl: config.get('slackposturl'),
+    } 
+  ]
+}); // 1 concurrent job
 
 // 5 min timeout
 service.on('pdf', config.get('timeout'), newJob);
@@ -189,7 +197,7 @@ async function newJob(job, { jobId, log, oada }) {
         // notify oada-jobs of error    
         // post to slack if oada-jobs doesn't do that yet
         log.info('helper-error', 'Target returned error, target-helper throwing to oada/jobs');
-        return reject("Target returned error: "+JSON.stringify(update,false,'  '));
+        return reject({ message: "Target returned error: "+JSON.stringify(update,false,'  ') });
       }
       const jobChange = async c => {
         try { 

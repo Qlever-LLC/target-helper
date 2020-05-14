@@ -20,4 +20,5 @@ export default {
   signer: { name: 'Test signer', url: 'https://oatscenter.org' },
   signatureType: 'transcription',
   timeout: 5 * 60 * 1000, // 5 minutes
+  slackposturl: 'https://example.com', // use a real slack webhook URL
 }
