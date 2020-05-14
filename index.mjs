@@ -45,7 +45,7 @@ const service = new Service('target', DOMAIN, TOKEN, 1, {
 }); // 1 concurrent job
 
 // 5 min timeout
-service.on('pdf', config.get('timeout'), newJob);
+service.on('transcription', config.get('timeout'), newJob);
 
 // `target-helper` will fill in around this
 // - receive the job from oada-jobs
@@ -330,9 +330,10 @@ oadaclient.connect({domain: DOMAIN,token: TOKEN})
       // Otherwise, it is a new link, post a job to ourselves
       info('RECEIVED NEW PDF DOCUMENT: ', v._id);
       const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
-        type: 'pdf',
+        type: 'transcription',
         service: 'target',
         config: {
+          type: 'pdf',
           pdf: { _id: v._id },
         },
       }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
