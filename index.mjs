@@ -290,7 +290,7 @@ async function signResourceForTarget({ _id, oada, log }) {
 
 function treeForDocType(doctype) {
   let singularType = doctype;
-  if (singularType.match(/s$/)) singularType.replace(/s$/,''); // if it ends in 's', easy fix
+  if (singularType.match(/s$/)) singularType = singularType.replace(/s$/,''); // if it ends in 's', easy fix
   else if (singularType.match(/-/)) { // if it has a dash, maybe it is like letters-of-guarantee (first thing plural)
     const parts = _.split(singularType, '-');
     if (parts[0] && parts[0].match(/s$/)) {
