@@ -142,14 +142,15 @@ async function newJob(job, { jobId, log, oada }) {
             trace(`Fetching lookups for doctype = ${doctype}, doc = `,doc,`, getting /${doc._id}/_meta/lookups`);
             const lookups = await oada.get({ path: `/${doc._id}/_meta/lookups` }).then(r=>r.data);
             trace(`lookups = `, lookups);
-            let facility;
+            let facilityid;
             switch (doctype) {
               case 'fsqa-audits': 
-                facility = await oada.get({ path: `/${lookups['fsqa-audit'].organization._ref}` });
-                await pushSharesForFacility({facility, doc, dockey})
+                facilityid = lookups['fsqa-audit'].organization._ref;
+                pushSharesForFacility({facilityid, doc, dockey, shares})
+              break;
               case 'fsqa-certificates': 
-                facility = await oada.get({ path: `/${lookups['fsqa-certificate'].organization._ref}` });
-                await pushSharesForFacility({facility, doc, dockey})
+                facilityid = lookups['fsqa-certificate'].organization._ref;
+                pushSharesForFacility({facilityid, doc, dockey, shares})
               break;
               case 'cois': 
                 const holder = await oada.get({ path: `/${lookups.coi.holder._ref}` }).then(r=>r.data);
@@ -234,12 +235,17 @@ async function newJob(job, { jobId, log, oada }) {
 }
 
 
-async function pushSharesForFacility({facility, doc, dockey, shares}) {
+async function pushSharesForFacility({facilityid, doc, dockey, shares}) {
   const ei = expandIndex['trading-partners'];
+  trace(`Looking for facility `,facilityid,` in ${_.keys(ei).length} trading partners`);
   _.each(_.keys(ei), tpkey => {
     if (!ei[tpkey] || !ei[tpkey].facilities) return; // tp has no facilities
-    if (!_.find(ei[tpkey].facilities, (flink, fmasterid) => flink._id === facility._id)) return; // have facilities, just not this one
-    shares.push({tp: ei[tpkey], doc, dockey });
+    if (!_.find(ei[tpkey].facilities, (flink, fmasterid) => flink._id === facilityid)) return; // have facilities, just not this one
+    const tp = _.cloneDeep(ei[tpkey]);
+    tp._id = tp.id; // expand-index doesn't have _id because it isn't links
+    const s = { tp, doc, dockey};
+    shares.push(s);
+    trace(`Added share to running list: `,s);
   });
 }
 
