@@ -33,6 +33,7 @@ if (DOMAIN === 'localhost') {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 }
 
+let expandIndex = false;
 
 const service = new Service('target', DOMAIN, TOKEN, 1, { 
   finishReporters: [ 
@@ -55,6 +56,15 @@ async function newJob(job, { jobId, log, oada }) {
   await oada.put({ path: `/bookmarks/services/target/jobs/${jobId}/config/pdf/_meta/services/target/jobs`, data: {
     [jobId]: { _ref: `resources/${jobId}` }
   }});
+
+  // setup Expand index
+  if (!expandIndex) {
+    trace(`First time through, fetching expandIndex`);
+    expandIndex = await Promise.props({
+      'coi-holders': await oada.get({path: `/bookmarks/trellisfw/coi-holders/expand-index`}).then(r=>r.data),
+      'trading-partners': await oada.get({path: `/bookmarks/trellisfw/trading-partners/expand-index`}).then(r=>r.data),
+    });
+  }
 
   return new Promise(async (resolve, reject) => {
     try {
@@ -136,12 +146,10 @@ async function newJob(job, { jobId, log, oada }) {
             switch (doctype) {
               case 'fsqa-audits': 
                 facility = await oada.get({ path: `/${lookups['fsqa-audit'].organization._ref}` });
-                // TODO: lookup all the trading partners based on facility.  Will do when COI is done and working
-                throw new Error('Facility lookup for trading partners from audits and certificates not yet implemented!');
+                await pushSharesForFacility({facility, doc, dockey})
               case 'fsqa-certificates': 
                 facility = await oada.get({ path: `/${lookups['fsqa-certificate'].organization._ref}` });
-                // TODO: lookup all the trading partners based on facility.  Will do when COI is done and working
-                throw new Error('Facility lookup for trading partners from audits and certificates not yet implemented!');
+                await pushSharesForFacility({facility, doc, dockey})
               break;
               case 'cois': 
                 const holder = await oada.get({ path: `/${lookups.coi.holder._ref}` }).then(r=>r.data);
@@ -177,7 +185,7 @@ async function newJob(job, { jobId, log, oada }) {
             }}).then(r=>r.headers['content-location'].replace(/^\//,''));
             const reskey = resid.replace(/^resources\//,'');
             trace('Shares job posted as resid = ', resid);
-            const jobpath = await oada.put( { path: `/bookmarks/services/trellis-shares/jobs`, data: { [reskey]: { _id: resid, _rev: 0 } }, tree }).then(r=>r.headers['content-location']);
+            const jobpath = await oada.put( { path: `/bookmarks/services/trellis-shares/jobs`, data: { [reskey]: { _id: resid  } }, tree }).then(r=>r.headers['content-location']);
             const jobkey = jobpath.replace(/^\/resources\/[^\/]+\//,'');
             trace('Posted jobkey ',jobkey, ' for shares');
           });
@@ -225,6 +233,15 @@ async function newJob(job, { jobId, log, oada }) {
   });
 }
 
+
+async function pushSharesForFacility({facility, doc, dockey, shares}) {
+  const ei = expandIndex['trading-partners'];
+  _.each(_.keys(ei), tpkey => {
+    if (!ei[tpkey] || !ei[tpkey].facilities) return; // tp has no facilities
+    if (!_.find(ei[tpkey].facilities, (flink, fmasterid) => flink._id === facility._id)) return; // have facilities, just not this one
+    shares.push({tp: ei[tpkey], doc, dockey });
+  });
+}
 
 
 async function signResourceForTarget({ _id, oada, log }) {  
@@ -288,6 +305,7 @@ function treeForDocType(doctype) {
           _type: `application/vnd.trellis.${doctype}.1+json`, // plural word: cois, letters-of-guarantee
           '*': {
             _type: `application/vnd.trellis.${singularType}.1+json`, // coi, letter-of-guarantee
+            _rev: 1, // links within each type of thing are versioned
           }
         }
       }
