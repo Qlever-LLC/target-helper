@@ -121,9 +121,17 @@ async function newJob(job, { jobId, log, oada }) {
           tree.bookmarks.trellisfw[doctype] = { _type: `application/vnd.trellis.${doctype}.1+json` };
           await oada.put({ path: `/bookmarks/trellisfw/${doctype}`, data: versionedResult[doctype], tree });
         });
+
+        //-------------- 5: unlink PDF from unidentified documents
+        if (!job.config.bookmarksPath) {
+          warn(`WARNING: job had no bookmarksPath, cannot unlink PDF`);
+        } else {
+          log.info(`unlinking-pdf`, `Unlinking PDF from ${job.config.bookmarksPath} now that it is no longer unidentified`);
+          await oada.delete({ path: job.config.bookmarksPath });
+        }
   
         // HARDCODED UNTIL AINZ IS UPDATED:
-        // ------------- 5: lookup shares, post job to shares service
+        // ------------- 6: lookup shares, post job to shares service
         await Promise.each(_.keys(job.result), async doctype => {
           const shares = [];
           const doclist = job.result[doctype];
@@ -265,6 +273,8 @@ async function signResourceForTarget({ _id, oada, log }) {
   return true; // success!
 }
 
+
+
 function treeForDocType(doctype) {
   let singularType = doctype;
   if (singularType.match(/s$/)) singularType.replace(/s$/,''); // if it ends in 's', easy fix
@@ -329,6 +339,7 @@ oadaclient.connect({domain: DOMAIN,token: TOKEN})
         config: {
           type: 'pdf',
           pdf: { _id: v._id },
+          bookmarksPath: `/bookmarks/trellisfw/documents/${k}`,
         },
       }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
       .catch(e => error('ERROR: failed to get jobkey when posting job resource, e = ', e));
