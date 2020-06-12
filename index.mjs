@@ -75,7 +75,8 @@ async function newJob(job, { jobId, log, oada }) {
         await unwatch();
         // Get the latest copy of job
         const job = await oada.get({ path: `/resources/${jobId}` }).then(r=>r.data);
-        
+
+
         // ------------- 1: cross link vdoc for pdf <-> audits,cois,lettters,etc.
         log.info('link-refs-pdf', 'helper: linking result _refs under <pdf>/_meta/vdoc');
         const pdfid = job.config.pdf._id;
@@ -91,7 +92,8 @@ async function newJob(job, { jobId, log, oada }) {
         await oada.put({ path: `/${pdfid}/_meta`, data: {
           vdoc: recursiveReplaceLinksWithRefs(job.result), // fsqa-audits { ...links... }, or fsqa-certificates { ...links... }, etc.
         }});
-  
+
+
         // ------------- 2: Look through all the things in result recursively, if any are links then go there and set _meta/vdoc/pdf
         log.info('helper: linking _meta/vdoc/pdf for each link in result');
         async function recursivePutVdocAtLinks(obj) {
@@ -104,7 +106,8 @@ async function newJob(job, { jobId, log, oada }) {
           return Promise.each(_.keys(obj), k => recursivePutVdocAtLinks(obj[k]));
         }
         await recursivePutVdocAtLinks(job.result);
-  
+
+
         // ------------- 3: sign audit/coi/etc.
         log.info('helper: signing all links in result');
         async function recursiveSignLinks(obj) {
@@ -113,7 +116,8 @@ async function newJob(job, { jobId, log, oada }) {
           return Promise.each(_.keys(obj), k => recursiveSignLinks(obj[k]));
         }
         await recursiveSignLinks(job.result);
-  
+
+
         // ------------- 4: put audits/cois/etc. to proper home
         function recursiveMakeAllLinksVersioned(obj) {
           if (!obj || typeof obj !== 'object') return obj;
@@ -131,7 +135,17 @@ async function newJob(job, { jobId, log, oada }) {
           tree.bookmarks.trellisfw[doctype] = { _type: `application/vnd.trellis.${doctype}.1+json` };
           await oada.put({ path: `/bookmarks/trellisfw/${doctype}`, data: versionedResult[doctype], tree });
         });
-  
+
+
+        // -------------- 5: delete link from /bookmarks/trellisfw/documents now that it is identified
+        if (job.config.documentsKey) {
+          log.info(`Unlinking from unidentified documents now that it is identified`);
+          await oada.delete({ path: `/bookmarks/trellisfw/documents/${job.config.documentsKey}` });
+        } else {
+          log.info(`WARNING: Job had no documents key!`);
+        }
+
+
         // HARDCODED UNTIL AINZ IS UPDATED:
         // ------------- 5: lookup shares, post job to shares service
         await Promise.each(_.keys(job.result), async doctype => {
@@ -226,8 +240,15 @@ async function newJob(job, { jobId, log, oada }) {
           });
         } catch(e) { reject(e); }
       }
-      const unwatch = async () => await oada.get({ path: `/bookmarks/services/target/jobs/${jobId}`, unwatch: true });
-      const watch = async () => await oada.get({ path: `/bookmarks/services/target/jobs/${jobId}`, watchCallback: jobChange }).then(r=>r.data);
+      let watchhandle = false;
+      const unwatch = async () => {
+        await oada.unwatch(watchhandle);
+      };
+      const watch = async () => {
+        if (watchhandle) { warn(`WARNING: watchhandle already exists, but watch() was called again`); }
+        watchhandle = await oada.watch({ path: `/bookmarks/services/target/jobs/${jobId}`, watchCallback: jobChange });
+        return await oada.get({ path: `/bookmarks/services/target/jobs/${jobId}` }).then(r=>r.data);
+      };
       jobChange({ path: '', body: await watch(), type: 'merge' }); // initially just the original job is the "body" for a synthetic change
     } catch(e) { reject(e) }; // have to actually reject the promise
 
@@ -353,6 +374,7 @@ oadaclient.connect({domain: DOMAIN,token: TOKEN})
         config: {
           type: 'pdf',
           pdf: { _id: v._id },
+          documentsKey: k,
         },
       }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
       .catch(e => error('ERROR: failed to get jobkey when posting job resource, e = ', e));
