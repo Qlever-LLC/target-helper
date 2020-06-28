@@ -47,7 +47,7 @@ const tree = {
 };
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-describe('success job', () => {
+describe('error job', () => {
   let con = false;
 
   before(async function() {
@@ -71,8 +71,11 @@ describe('success job', () => {
     // Example of a successful normal job: go ahead and put that up, tests will check results later
     jobkey = await con.post({ path: `/resources`, headers: { 'content-type': 'application/vnd.oada.job.1+json' }, data: {
       service: 'target',
-      type: 'pdf',
-      config: { pdf: { _id: `resources/${pdfkey}` } },
+      type: 'transcription',
+      config: { 
+        type: 'pdf',
+        pdf: { _id: `resources/${pdfkey}` } 
+      },
     }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''));
     console.log('Before: job posted, key = ', jobkey);
 

@@ -52,10 +52,12 @@ describe('success job', () => {
 
   before(async function() {
     this.timeout(10000);
+    console.log('Before 1: connecting to oada');
     con = await oada.connect({ domain, token });
 
     //------------------------------------------
     // Do some cleanup: get rid of coi and pdf and /bookmarks/trellisfw/cois/${coikey}
+    console.log('Before 2: deleting pdf and coi');
     await Promise.each([ 
       `/resources/${pdfkey}`, `/resources/${coikey}`, `/bookmarks/trellisfw/cois/${coikey}` 
     ], path => con.get({path}).then(() => con.delete({path})).catch(e=>{}));
@@ -71,8 +73,11 @@ describe('success job', () => {
     // Example of a successful normal job: go ahead and put that up, tests will check results later
     jobkey = await con.post({ path: `/resources`, headers: { 'content-type': 'application/vnd.oada.job.1+json' }, data: {
       service: 'target',
-      type: 'pdf',
-      config: { pdf: { _id: `resources/${pdfkey}` } },
+      type: 'transcription',
+      config: { 
+        type: 'pdf',
+        pdf: { _id: `resources/${pdfkey}` } 
+      },
     }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''));
     console.log('Before: job posted, key = ', jobkey);
 
