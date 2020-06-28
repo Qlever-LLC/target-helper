@@ -1,14 +1,15 @@
-import _ from 'lodash'
-import chai from 'chai'
-import chaiAsPromised from 'chai-as-promised'
-import oada from '@oada/client'
-import Promise from 'bluebird'
-import moment from 'moment'
-
-import config from '../config.js'
+const _ = require('lodash')
+const chai = require('chai')
+const chaiAsPromised = require('chai-as-promised')
+const oada = require('@oada/client')
+const Promise = require('bluebird')
+const moment = require('moment')
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
+
+const domain = 'proxy';
+const token = 'god-proxy';
 
 let jobkey = false;
 const jobpath = `/bookmarks/services/target/jobs`;
@@ -51,11 +52,7 @@ describe('success job', () => {
 
   before(async function() {
     this.timeout(10000);
-    console.log('Before 1: started');
-    const domain = config.get('domain').replace(/^https:\/\//,'');
-    console.log('Before 2: connecting to oada');
-    con = await oada.connect({ domain, token: config.get('token') });
-    console.log('Before 3: connected.  Getting pdf');
+    con = await oada.connect({ domain, token });
 
     //------------------------------------------
     // Do some cleanup: get rid of coi and pdf and /bookmarks/trellisfw/cois/${coikey}

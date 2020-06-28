@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
-export default {
-  domain: 'localhost',
-  token: 'god',
-  privateJWK: './keys/private_key.jwk',
-  signer: { name: 'Test signer', url: 'https://oatscenter.org' },
-  signatureType: 'transcription',
-  timeout: 5 * 60 * 1000, // 5 minutes
-  slackposturl: 'https://example.com', // use a real slack webhook URL
+// TODO: Publish this to npm instead?
+import libConfig from './lib-config.cjs'
+import config from './config.defaults.mjs'
+
+const exp = libConfig(config);
+
+if (!exp.get('domain').match(/^http/)) {
+  exp.set('domain', 'https://'+exp.get('domain'));
 }
+export default exp;

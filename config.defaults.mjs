@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-// TODO: Publish this to npm instead?
-import libConfig from './lib-config.cjs'
-import config from './config.defaults.js'
-
-const exp = libConfig(config);
-
-if (!exp.get('domain').match(/^http/)) {
-  exp.set('domain', 'https://'+exp.get('domain'));
+export default {
+  domain: 'proxy',
+  token: 'god-proxy',
+  privateJWK: './keys/private_key.jwk',
+  signer: { name: 'Test signer', url: 'https://oatscenter.org' },
+  signatureType: 'transcription',
+  timeout: 5 * 60 * 1000, // 5 minutes
+  asntimeout: 10 * 60 * 1000, // 10 minutes
+  slackposturl: 'https://localhost', // use a real slack webhook URL
 }
-export default exp;
