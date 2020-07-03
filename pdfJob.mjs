@@ -174,6 +174,7 @@ async function jobHandler(job, { jobId, log, oada }) {
               service: 'trellis-shares',
               config: {
                 src: `/${doc._id}`,
+                copy: true, // make a copy of the resource to link instead of just linking original
                 doctype, // fsqa-audits, cois, fsqa-certificates, trading-partners
                 dest: `/bookmarks/trellisfw/${doctype}/${dockey}`, // this doubles-up bookmarks, but I think it's the most understandable to look at
                 user, // { id, bookmarks }
