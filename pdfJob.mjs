@@ -159,9 +159,17 @@ async function jobHandler(job, { jobId, log, oada }) {
                 });
               break;
               case 'letters-of-guarantee':
-                // TODO: handle these lookups too
-                throw new Error('Lookups for letters-of-guarantee not implemented!');
+                const buyer = await oada.get({ path: `/${lookups['letter-of-guarantee'].buyer._ref}` }).then(r=>r.data);
+                trace(`Retrieved buyer`, buyer);
+                await Promise.each(_.keys(buyer['trading-partners']), async tplinkkey => {
+                  const tplink = buyer['trading-partners'][tplinkkey];
+                  const tp = await oada.get({ path: `/${tplink._id}` }).then(r=>r.data);
+                  shares.push({ tp, doc, dockey });
+                });
+
               break;
+              default:
+                throw new Error('Unknown document type ('+doctype+') when attempting to do lookups');
             }
           });
           log.info('sharing', `Posting ${shares.length} shares jobs for doctype ${doctype} resulting from this transcription`);
