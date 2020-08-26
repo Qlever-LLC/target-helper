@@ -8,6 +8,7 @@ import tsig from '@trellisfw/signatures';
 import tree from './tree.js';
 import pdf from './pdfJob.mjs';
 import asn from './asnJob.mjs';
+import 'make-promises-safe';
 
 import config from './config.mjs'
 
@@ -25,6 +26,7 @@ if (domain.match(/^http/)) domain = domain.replace(/^https:\/\//, '');
 if (domain === 'localhost' || domain==="proxy") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 }
+trace(`Using domain = ${domain}, token = ${token}`);
 
 //--------------------------------------------------
 // Create the service

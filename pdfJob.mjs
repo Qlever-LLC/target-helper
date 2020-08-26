@@ -2,9 +2,11 @@ import { readFileSync } from 'fs';
 import Promise from 'bluebird';
 import _ from 'lodash';
 import oadaclient from '@oada/client';
+import oadalist from '@oada/list-lib';
 import debug from 'debug';
 import tsig from '@trellisfw/signatures';
 import tree from './tree.js';
+import oerror from '@overleaf/o-error';
 
 import config from './config.mjs';
 
@@ -12,6 +14,7 @@ const error = debug('target-helper:error');
 const warn = debug('target-helper:warn');
 const info = debug('target-helper:info');
 const trace = debug('target-helper:trace');
+const ListWatch = oadalist.ListWatch; // not sure why I can't just import this directly
 
 export default {
   jobHandler,
@@ -338,46 +341,46 @@ function treeForDocType(doctype) {
 
 //-------------------------------------------------------------------------------------------------------
 // Start watching /bookmarks/trellisfw/documents and create target jobs for each new one
+let con = false;
 async function startJobCreator({ domain, token }) {
   try {
-    const con = await oadaclient.connect({domain,token});
-    // ensure the thing exists
+    con = await oadaclient.connect({domain,token});
+
+    // ensure the documents endpoint exists because Target is an enabler of that endpoint
     const exists = await con.get({ path: `/bookmarks/trellisfw/documents`}).then(r=>r.status).catch(e => e.status);
     if (exists !== 200) {
       info(`/bookmarks/trellisfw/documents does not exist, creating....`);
       await con.put({path: '/bookmarks/trellisfw/documents', data: {}, tree });
     }
-  
-    await con.get({ path: `/bookmarks/trellisfw/documents`, watchCallback: async function handleDocChange(c) {
-      if (c.path !== '') return; // not a change to root resource
-      if (c.type !== 'merge') return;
-      // Is there a link in here?
-      const keys = _.filter(_.keys(c.body), k => !k.match(/^_/));
-      if (keys.length < 1) return;
-      // Have a real key that could be a new doc link, check if _id is in the link (that means it's a new link)
-      await Promise.each(keys, async k => {
-        const v = c.body[k];
-        if (!v || !v._id) return; // not a link
-        // Otherwise, it is a new link, post a job to ourselves
-        info('RECEIVED NEW PDF DOCUMENT: ', v._id);
-        const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
-          type: 'transcription',
-          service: 'target',
-          config: {
-            type: 'pdf',
-            pdf: { _id: v._id },
-            documentsKey: k,
-          },
-        }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
-        .catch(e => error('ERROR: failed to get jobkey when posting job resource, e = ', e));
-        console.log('Posted job resource, jobkey = ', jobkey);
-        await con.put({path: `/bookmarks/services/target/jobs`, tree, data: {
-          [jobkey]: { _id: `resources/${jobkey}` },
-        }});
-        trace('Posted new PDF document to target task queue');
-      });
-    }});
-  } catch(e) {
-    error('ERROR: uncaught exception in watching /bookmarks/trellisfw/documents.  Error was: ', e);
+ 
+    const watch = new ListWatch({
+      path: `/bookmarks/trellisfw/documents`,
+      name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
+      conn: con,
+      onAddItem: documentAdded,
+   });
+  } catch (e) {
+    oerror.tag(e, 'ListWatch failed!');
+    throw e;
   }
+}
+
+async function documentAdded(item, key) {
+  info('New Document posted at key = ', key, ', item = ', item);
+  const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
+    type: 'transcription',
+    service: 'target',
+    config: {
+      type: 'pdf',
+      pdf: { _id: item._id },
+      documentsKey: key,
+    },
+  }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
+  .catch(e => { throw oerror.tag(e, 'Failed to create new job resource for item ', item._id); })
+
+  info('Posted job resource, jobkey = ', jobkey);
+  await con.put({path: `/bookmarks/services/target/jobs`, tree, data: {
+    [jobkey]: { _id: `resources/${jobkey}` },
+  }}).catch(e => { throw oerror.tag(e, 'Failed to PUT job link under target job queue for job key ', jobkey) } );
+  trace('Posted new PDF document to target task queue');
 }

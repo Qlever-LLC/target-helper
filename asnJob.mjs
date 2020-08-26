@@ -3,12 +3,15 @@ import Promise from 'bluebird';
 import _ from 'lodash';
 import oadaclient from '@oada/client';
 import debug from 'debug';
+import oadalist from '@oada/list-lib';
+import oerror from '@overleaf/o-error'
 import tree from './tree.js';
 
 const error = debug('target-helper#asn:error');
 const warn = debug('target-helper#asn:warn');
 const info = debug('target-helper#asn:info');
 const trace = debug('target-helper#asn:trace');
+const ListWatch = oadalist.ListWatch; // not sure why I can't just import this directly
 
 export default {
   jobHandler,
@@ -87,46 +90,46 @@ async function jobHandler(job, { jobId, log, oada }) {
 
 //-------------------------------------------------------------------------------------------------------
 // Start watching /bookmarks/trellisfw/asns and create target jobs for each new one
+let con = false;
 async function startJobCreator({ domain, token }) {
   try {
-    const con = await oadaclient.connect({domain,token});
-    // ensure the thing exists
+    con = await oadaclient.connect({domain,token});
+    // ensure the thing exists because we are in charge of this endpoint
     const exists = await con.get({ path: `/bookmarks/trellisfw/asns`}).then(r=>r.status).catch(e => e.status);
     if (exists !== 200) {
       info(`/bookmarks/trellisfw/asn-staging does not exist, creating....`);
       await con.put({path: '/bookmarks/trellisfw/asns', data: {}, tree });
     }
-  
-    await con.get({ path: `/bookmarks/trellisfw/asns`, watchCallback: async function handleDocChange(c) {
-      if (c.path !== '') return; // not a change to root resource
-      if (c.type !== 'merge') return;
-      // Is there a non-oada key (i.e. a link) in here?
-      const keys = _.filter(_.keys(c.body), k => !k.match(/^_/));
-      if (keys.length < 1) return;
-      // Have a real key that could be a new doc link, check if _id is in the link (that means it's a new link)
-      await Promise.each(keys, async k => {
-        const v = c.body[k];
-        if (!v || !v._id) return; // not a link
-        // Otherwise, it is a new link, post a job to ourselves
-        trace('RECEIVED NEW ASN DOCUMENT: ', v._id);
-        const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
-          type: 'asn',
-          service: 'target',
-          config: {
-            type: 'asn',
-            asn: { _id: v._id },
-            documentsKey: k,
-          },
-        }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
-        .catch(e => error('ERROR: failed to get jobkey when posting ASN job resource, e = ', e));
-        info('Posted ASN job resource, jobkey = ', jobkey);
-        await con.put({path: `/bookmarks/services/target/jobs`, tree, data: {
-          [jobkey]: { _id: `resources/${jobkey}` },
-        }});
-        trace('Posted new ASN to target job queue');
-      });
-    }});
+
+    const watch = new ListWatch({
+      path: `/bookmarks/trellisfw/asns`,
+      name: 'TARGET-1gdQycxI4C1QLq5QfHbF99R3wpD',
+      conn: con,
+      onAddItem: asnAdded,
+    });
+
   } catch(e) {
     error('ERROR: uncaught exception in watching /bookmarks/trellisfw/asns.  Error was: ', e);
   }
 }
+
+
+
+async function asnAdded(item, key) {
+  info(`New ASN posted at key = `, key);
+  const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
+    type: 'asn',
+    service: 'target',
+    config: {
+      type: 'asn',
+      asn: { _id: item._id },
+      documentsKey: key,
+    },
+  }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
+  .catch(e => { throw oerror.tag(e, 'ERROR: failed to get jobkey when posting ASN job resource, e = ') });
+  trace('Posted ASN job resource, jobkey = ', jobkey);
+  await con.put({path: `/bookmarks/services/target/jobs`, tree, data: {
+    [jobkey]: { _id: `resources/${jobkey}` },
+  }});
+  info('Posted new ASN to target job queue');
+};
