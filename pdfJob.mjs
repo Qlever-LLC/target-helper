@@ -180,6 +180,15 @@ async function jobHandler(job, { jobId, log, oada }) {
             const {dockey, doc, tp} = s;
             const tpkey = tp._id.replace(/^resources\//,'');
             const user = await oada.get({ path: `/${tp._id}/user` }).then(r=>r.data);
+            // HACK FOR DEMO UNTIL WE GET MASKING SETTINGS:
+            let mask = false;
+            if (tpkey.match(/REDDYRAW/)) {
+              info('COPY WILL MASK LOCATIONS FOR REDDYRAW
+              mask = {
+                keys_to_mask = [ 'location' ];
+              };
+            }
+            // END HACK FOR DEMO
             const resid = await oada.post({ path: `/resources`, headers: { 'content-type': tree.bookmarks.services['*'].jobs['*']._type }, data: {
               type: 'share-user-link',
               service: 'trellis-shares',
@@ -188,8 +197,9 @@ async function jobHandler(job, { jobId, log, oada }) {
                 copy: { // If "copy" key is not present it will link to original rather than copy
                   original: true, // copy full original as-is (rather than some subset of keys/paths)
                   meta: { vdoc: true }, // copy only the vdoc path from _meta for the copy
+                  mask,
                 },
-                doctype, // fsqa-audits, cois, fsqa-certificates, trading-partners
+                doctype, // fsqa-audits, cois, fsqa-certificates, letters-of-guarantee
                 dest: `/bookmarks/trellisfw/${doctype}/${dockey}`, // this doubles-up bookmarks, but I think it's the most understandable to look at
                 user, // { id, bookmarks }
                 chroot: `/bookmarks/trellisfw/trading-partners/${tpkey}/user/bookmarks`,
