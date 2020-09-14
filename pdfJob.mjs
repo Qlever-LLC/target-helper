@@ -183,9 +183,11 @@ async function jobHandler(job, { jobId, log, oada }) {
             // HACK FOR DEMO UNTIL WE GET MASKING SETTINGS:
             let mask = false;
             if (tpkey.match(/REDDYRAW/)) {
-              info('COPY WILL MASK LOCATIONS FOR REDDYRAW
+              info('COPY WILL MASK LOCATIONS FOR REDDYRAW');
+              trace('pdf is only generated for fsqa-audit or coi, doctype is ', doctype);
               mask = {
-                keys_to_mask = [ 'location' ];
+                keys_to_mask: [ 'location' ],
+                generate_pdf: (doctype === 'fsqa-audit' || doctype === 'coi'),
               };
             }
             // END HACK FOR DEMO
@@ -195,7 +197,9 @@ async function jobHandler(job, { jobId, log, oada }) {
               config: {
                 src: `/${doc._id}`,
                 copy: { // If "copy" key is not present it will link to original rather than copy
-                  original: true, // copy full original as-is (rather than some subset of keys/paths)
+                  // copy full original as-is (rather than some subset of keys/paths).  
+                  // Note that this will screw up the signature if set to anything other than true.  Also, ignored if mask is truthy since original must exist unmasked.
+                  original: true, 
                   meta: { vdoc: true }, // copy only the vdoc path from _meta for the copy
                   mask,
                 },
