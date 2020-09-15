@@ -105,6 +105,7 @@ async function startJobCreator({ domain, token }) {
       path: `/bookmarks/trellisfw/asns`,
       name: 'TARGET-1gdQycxI4C1QLq5QfHbF99R3wpD',
       conn: con,
+      resume: true,
       onAddItem: asnAdded,
     });
 
