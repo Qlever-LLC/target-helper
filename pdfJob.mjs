@@ -37,6 +37,7 @@ let expandIndex = false;
 // - receive the job from oada-jobs
 
 async function jobHandler(job, { jobId, log, oada }) {
+  trace('Received job: ', job);
   // until oada-jobs adds cross-linking, make sure we are linked under pdf's jobs
   trace('Linking job under pdf/_meta until oada-jobs can do that natively');
   await oada.put({ path: `/bookmarks/services/target/jobs/${jobId}/config/pdf/_meta/services/target/jobs`, data: {
@@ -371,6 +372,7 @@ async function startJobCreator({ domain, token }) {
       path: `/bookmarks/trellisfw/documents`,
       name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
       conn: con,
+      resume: true,
       onAddItem: documentAdded,
    });
   } catch (e) {
@@ -381,12 +383,18 @@ async function startJobCreator({ domain, token }) {
 
 async function documentAdded(item, key) {
   info('New Document posted at key = ', key);
+  // Get the _id for the actual PDF
+  const docid = await con.get({ path: `/bookmarks/trellisfw/documents` })
+    // Hack: have to get the whole list, then get the link for this key in order to figure out the _id at the moment.
+    .then(r=>r.data[key])
+    .then(l => (l && l._id) ? l._id : false);
+
   const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
     type: 'transcription',
     service: 'target',
     config: {
       type: 'pdf',
-      pdf: { _id: item._id },
+      pdf: { _id: docid },
       documentsKey: key,
     },
   }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
