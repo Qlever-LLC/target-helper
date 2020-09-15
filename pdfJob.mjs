@@ -380,7 +380,7 @@ async function startJobCreator({ domain, token }) {
 }
 
 async function documentAdded(item, key) {
-  info('New Document posted at key = ', key, ', item = ', item);
+  info('New Document posted at key = ', key);
   const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
     type: 'transcription',
     service: 'target',
