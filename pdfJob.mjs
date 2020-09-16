@@ -185,10 +185,10 @@ async function jobHandler(job, { jobId, log, oada }) {
             let mask = false;
             if (tpkey.match(/REDDYRAW/)) {
               info('COPY WILL MASK LOCATIONS FOR REDDYRAW');
-              trace('pdf is only generated for fsqa-audit or coi, doctype is ', doctype);
+              trace('pdf is only generated for fsqa-audits or cois, doctype is ', doctype);
               mask = {
                 keys_to_mask: [ 'location' ],
-                generate_pdf: (doctype === 'fsqa-audit' || doctype === 'coi'),
+                generate_pdf: (doctype === 'fsqa-audits' || doctype === 'cois'),
               };
             }
             // END HACK FOR DEMO
