@@ -382,6 +382,8 @@ async function startJobCreator({ domain, token }) {
 }
 
 async function documentAdded(item, key) {
+  // bugfix leading slash that sometimes appears in key
+  key = key.replace(/^\//, '');
   info('New Document posted at key = ', key);
   // Get the _id for the actual PDF
   const docid = await con.get({ path: `/bookmarks/trellisfw/documents` })
