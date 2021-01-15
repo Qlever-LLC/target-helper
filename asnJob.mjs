@@ -88,6 +88,7 @@ async function jobHandler(job, { jobId, log, oada }) {
 }
 
 
+
 //-------------------------------------------------------------------------------------------------------
 // Start watching /bookmarks/trellisfw/asns and create target jobs for each new one
 let con = false;
@@ -103,10 +104,14 @@ async function startJobCreator({ domain, token }) {
 
     const watch = new ListWatch({
       path: `/bookmarks/trellisfw/asns`,
+      // Need tree and itemsPath for this to work
+      tree,
+      itemsPath: `$.day-index.*.*`,
       name: 'TARGET-1gdQycxI4C1QLq5QfHbF99R3wpD',
       conn: con,
       resume: true,
       onAddItem: asnAdded,
+      onNewList: ListWatch.AssumeHandled,
     });
 
   } catch(e) {

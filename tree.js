@@ -8,6 +8,14 @@ export default {
       },
       asns: {
         _type: 'application/vnd.trellisfw.asns.1+json',
+        'day-index': {
+          '*': {
+            _type: 'application/vnd.trellisfw.asns.1+json',
+            '*': {
+               _type: 'application/vnd.trellisfw.asn.sf.1+json',
+            },
+          },
+        },
       },
     },
     services: {

@@ -68,6 +68,42 @@ describe('External ASN tests of target-helper, run from admin', () => {
       expect(doesnotexist).to.equal(true);
     });
 
+    it('Should error on an ASN job which posts an invalid update (i.e. update is a string)', async function() {
+       this.timeout(5000);
+
+      // get the initial job queue so we can figure out which job was created as a result of our posted test doc
+      const oldJobs = await con.get({ path: `/bookmarks/services/target/jobs` }).then(r=>r.data);
+
+      // post the test doc
+      await con.put({ path: `/${asnid}`, data: testasn, headers});
+      await con.put({ path: `/bookmarks/trellisfw/asns/${asnkey}`, data: { _id: asnid, _rev: 0 }, headers: listheaders });
+      await Promise.delay(500); // give it a second to make the job
+      const day = moment().format('YYYY-MM-DD'); // keep this for the day-index below
+
+      // get the new job list, find the new key
+      const newJobs = await con.get({ path: `/bookmarks/services/target/jobs` }).then(r=>r.data);
+      jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]; // assume first difference is new one
+      expect(jobkey).to.be.a('string');
+      expect(jobkey).to.have.length.above(0);
+      if (!jobkey || jobkey.length < 1) {
+        throw new Error('TEST ERROR: job never showed up for ASN');
+      }
+
+      // get the job info, validate it
+      const job = await con.get({ path: `/bookmarks/services/target/jobs/${jobkey}` }).then(r=>r.data);
+      expect(job.type).to.equal('asn');
+      expect(job.config.type).to.equal('asn');
+      expect(job.config.asn).to.deep.equal({ _id: asnid });
+
+      // Put the "bad" status update
+      await con.put({ path: `/bookmarks/services/target/jobs/${jobkey}/updates`, data: { "status": "error_bad_update" }, headers: jobsheaders });
+      await Promise.delay(1500); // wait for oada-jobs to move it to jobs-error
+      const doesnotexist = await con.get({ path: `/bookmarks/services/target/jobs/${jobkey}`}).then(r=>r.data).catch(e => (e.status === 404));
+      const errorexists = await con.get({ path: `/bookmarks/services/target/jobs-failure/day-index/${day}/${jobkey}`}).then(r=>!!r.data).catch(e => false);
+      expect(doesnotexist).to.equal(true);
+      expect(errorexists).to.equal(true);
+    });
+
 })
 
 async function cleanup() {
