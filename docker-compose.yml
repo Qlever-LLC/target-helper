@@ -5,16 +5,6 @@ services:
   # Overrides for oada-core services:
   ##########################################
 
-  # Add ourselves to yarn to do yarn install
-  yarn:
-    volumes:
-      - ./services-available/target-helper:/code/target-helper
-
-  # Add ourselves to admin container:
-  admin:
-    volumes:
-      - ./services-available/target-helper:/code/target-helper
-
   ###############################################
   # This service's definition:
   ###############################################
