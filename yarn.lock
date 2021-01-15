@@ -28,10 +28,10 @@
     p-queue "^6.4.0"
     ws "^7.2.3"
 
-"@oada/client@^1.0.4":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@oada/client/-/client-1.0.4.tgz#e00ccf2bc67e6b7c4ddbe33ba022c6dccb6e34ce"
-  integrity sha512-lPddepKajzj2j2r+O84dJ5v4U+Td9NuB/+0dU0qhEhnpnam+1IkZHD46MzMmrZLilrD3lyviK84O+jZhLBgYrw==
+"@oada/client@^1.1.3":
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/@oada/client/-/client-1.1.4.tgz#f1ca08983d844544da52ce77301a2e8f1ec00181"
+  integrity sha512-FWwDfksrzZCLDiemjlEtrE8n/PimMwRBYMB3XCgFDsTUZD/6uXT4x+RbOpfoOznI4vu3Ty4Mx5O30fREe6r5bg==
   dependencies:
     "@oada/types" "^1.0.6"
     debug "^4.1.1"
@@ -71,12 +71,12 @@
     p-timeout "^3.2.0"
     tiny-json-http "^7.1.2"
 
-"@oada/list-lib@^2.0.2":
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/@oada/list-lib/-/list-lib-2.0.2.tgz#1d2e9dc11d941db205b816d87349836cc4a581a9"
-  integrity sha512-xxqVyFvrcaIPj0NjYCoaMWPk9Qjiif4evvttJDHLlK3SOVSOZLpBMKOCy3Nf/IsVnULJns+xrTA9+Dd+bFpIyA==
+"@oada/list-lib@^2.0.3":
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@oada/list-lib/-/list-lib-2.0.3.tgz#26edb516ee53efc42853b0c4862d3376ab4620d7"
+  integrity sha512-P0xTyiPp6oIwW/ulgoqbXBRCu/00yv9QHsrdEnafq5RC96pGqY7pGk7RdYfPs5OMEIL+IzSN2RGYl9Jw/lIFyw==
   dependencies:
-    "@oada/client" "^1.0.4"
+    "@oada/client" "^1.1.3"
     "@oada/types" "^1.1.1-beta.75"
     "@types/bluebird" "^3.5.32"
     "@types/debug" "^4.1.5"
