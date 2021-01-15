@@ -33,8 +33,6 @@ describe('External ASN tests of target-helper, run from admin', () => {
       await cleanup()
     });
 
-    after(async () => await cleanup());
-
     it(`Shouldn't reprocess existing queue items if resume is set to true`, async function() {
       this.timeout(5000);
 
