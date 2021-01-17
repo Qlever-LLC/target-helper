@@ -28,16 +28,18 @@
     p-queue "^6.4.0"
     ws "^7.2.3"
 
-"@oada/client@^1.1.3":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@oada/client/-/client-1.1.4.tgz#f1ca08983d844544da52ce77301a2e8f1ec00181"
-  integrity sha512-FWwDfksrzZCLDiemjlEtrE8n/PimMwRBYMB3XCgFDsTUZD/6uXT4x+RbOpfoOznI4vu3Ty4Mx5O30fREe6r5bg==
+"@oada/client@^2.1.1":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@oada/client/-/client-2.1.1.tgz#26700ec0aac3ab4a9cf04b27dd7b41e9c89add58"
+  integrity sha512-AZO07n7Bz6+Ay9GaE9ZludbEGYfMVlCnCux9nvJ9Oa+rNu355aGdoDJ4EzLCNJA59ZU0v0kqryvGthpbsD5J5Q==
   dependencies:
     "@oada/types" "^1.0.6"
+    cross-fetch "^3.0.6"
     debug "^4.1.1"
     isomorphic-ws "^4.0.1"
     ksuid "^1.2.0"
     p-queue "^6.4.0"
+    reconnecting-websocket "^4.4.0"
     ws "^7.2.3"
 
 "@oada/formats@^1.1.2":
@@ -71,19 +73,19 @@
     p-timeout "^3.2.0"
     tiny-json-http "^7.1.2"
 
-"@oada/list-lib@^2.0.3":
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/@oada/list-lib/-/list-lib-2.0.3.tgz#26edb516ee53efc42853b0c4862d3376ab4620d7"
-  integrity sha512-P0xTyiPp6oIwW/ulgoqbXBRCu/00yv9QHsrdEnafq5RC96pGqY7pGk7RdYfPs5OMEIL+IzSN2RGYl9Jw/lIFyw==
+"@oada/list-lib@^2.0.4":
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/@oada/list-lib/-/list-lib-2.0.4.tgz#ecfbfafa38a840a249ffc1cf62768ad4ad7033dd"
+  integrity sha512-2i3e4KJ40ABe9c3cDtX01SPXAf58jcl77oXoDzOlWGGYi+vkL2oXnLqujixx4HhxnIDCExW7pRlWRTMLFezWqQ==
   dependencies:
-    "@oada/client" "^1.1.3"
+    "@oada/client" "^2.1.1"
     "@oada/types" "^1.1.1-beta.75"
     "@types/bluebird" "^3.5.32"
     "@types/debug" "^4.1.5"
     bluebird "^3.7.2"
-    debug "^4.1.1"
+    debug "^4.3.1"
     json-pointer "^0.6.0"
-    jsonpath-plus "^4.0.0"
+    jsonpath-plus "^5.0.2"
     jsonschema8 "^1.1.0"
     object-assign-deep "^0.4.0"
 
@@ -651,6 +653,13 @@ core-js@^3.6.4:
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-3.6.5.tgz#7395dc273af37fb2e50e9bd3d9fe841285231d1a"
   integrity sha512-vZVEEwZoIsI+vPEuoF9Iqf5H7/M3eeQqWlQnYa8FSKKePuYTf5MWnxb5SDAzCa60b3JBRS5g9b+Dq7b1y/RCrA==
 
+cross-fetch@^3.0.6:
+  version "3.0.6"
+  resolved "https://registry.yarnpkg.com/cross-fetch/-/cross-fetch-3.0.6.tgz#3a4040bc8941e653e0e9cf17f29ebcd177d3365c"
+  integrity sha512-KBPUbqgFjzWlVcURG+Svp9TlhA5uliYtiNx/0r8nv0pdypeQCRJ9IaSIc3q/x3q8t3F75cHuwxVql1HFGHCNJQ==
+  dependencies:
+    node-fetch "2.6.1"
+
 crypto-random-string@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/crypto-random-string/-/crypto-random-string-2.0.0.tgz#ef2a7a966ec11083388369baa02ebead229b30d5"
@@ -683,6 +692,13 @@ debug@^4.1.1:
   integrity sha512-pYAIzeRo8J6KPEaJ0VWOh5Pzkbw/RetuzehGM7QRRX5he4fPHx2rdKMB256ehJCkX+XRQm16eZLqLNS8RSZXZw==
   dependencies:
     ms "^2.1.1"
+
+debug@^4.3.1:
+  version "4.3.1"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.1.tgz#f0d229c505e0c6d8c49ac553d1b13dc183f6b2ee"
+  integrity sha512-doEwdvm4PCeK4K3RQN2ZC2BYUBaxwLARCqZmMjtF8a51J2Rb0xpVloFRnCODwqjpwnAoao4pelN8l3RJdv3gRQ==
+  dependencies:
+    ms "2.1.2"
 
 decamelize@^1.1.1, decamelize@^1.2.0:
   version "1.2.0"
@@ -1294,10 +1310,10 @@ json-schema-traverse@^0.4.1:
   resolved "https://registry.yarnpkg.com/json-schema-traverse/-/json-schema-traverse-0.4.1.tgz#69f6a87d9513ab8bb8fe63bdb0979c448e684660"
   integrity sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==
 
-jsonpath-plus@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/jsonpath-plus/-/jsonpath-plus-4.0.0.tgz#954b69faa3d8b07f30ae2f9e601176a4b0d2806e"
-  integrity sha512-e0Jtg4KAzDJKKwzbLaUtinCn0RZseWBVRTRGihSpvFlM3wTR7ExSp+PTdeTsDrLNJUe7L7JYJe8mblHX5SCT6A==
+jsonpath-plus@^5.0.2:
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/jsonpath-plus/-/jsonpath-plus-5.0.2.tgz#ede88d064264172560ab1420a366a106cfab683d"
+  integrity sha512-J1StEInJIb5INbUkzf/DM6mby0hEyU2o6kw+AUzrJnrgMunvDKdZgGFXEqH5qA2TVF3mVH7A6ZZQJpcNXXg90A==
 
 jsonpointer@^4.1.0:
   version "4.1.0"
@@ -1503,7 +1519,7 @@ ms@2.1.1:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.1.tgz#30a5864eb3ebb0a66f2ebe6d727af06a09d86e0a"
   integrity sha512-tgp+dl5cGk28utYktBsrFqA7HKgrhgPsg6Z/EfhWI4gl1Hwq8B/GmY/0oXZ6nF8hDVesS/FpnYaD/kOWhYQvyg==
 
-ms@^2.1.1:
+ms@2.1.2, ms@^2.1.1:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
   integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
@@ -1530,6 +1546,11 @@ node-environment-flags@1.0.6:
   dependencies:
     object.getownpropertydescriptors "^2.0.3"
     semver "^5.7.0"
+
+node-fetch@2.6.1:
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
+  integrity sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==
 
 node-forge@^0.8.5:
   version "0.8.5"
@@ -1830,6 +1851,11 @@ readdirp@~3.4.0:
   integrity sha512-0xe001vZBnJEK+uKcj8qOhyAKPzIT+gStxWr3LCB0DwcXR5NZJ3IaC+yGnHCYzB/S7ov3m3EEbZI2zeNvX+hGQ==
   dependencies:
     picomatch "^2.2.1"
+
+reconnecting-websocket@^4.4.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/reconnecting-websocket/-/reconnecting-websocket-4.4.0.tgz#3b0e5b96ef119e78a03135865b8bb0af1b948783"
+  integrity sha512-D2E33ceRPga0NvTDhJmphEgJ7FUYF0v4lr1ki0csq06OdlxKfugGzN0dSkxM/NfqCxYELK4KcaTOUOjTV6Dcng==
 
 regenerator-runtime@^0.13.3:
   version "0.13.5"
