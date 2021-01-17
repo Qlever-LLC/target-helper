@@ -99,9 +99,11 @@ const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
   //---------------------------------------------------
   // Wait until ready, then keeping post new ASNs and waiting until they say stop:
   const newasnday = Object.keys(data)[0];
-  const newasnid = ksuid.randomSync().string;
+  const newasnids = [];
   let response = ''
   do {
+    const newasnid = ksuid.randomSync().string;
+    newasnids.push(newasnid);
     response = await new Promise((resolve,reject) => {
       rl.question(`When you press enter, I will put a new dummy ASN to /bookmarks/trellisfw/asns/day-index/${newasnday}/${newasnid}.  To stop, type stop and then hit enter`, resolve);
     });
@@ -122,7 +124,7 @@ const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
   console.log('Deleting all those resources to cleanup');
 
   const ids = [
-    newasnid,
+    ...newasnids,
     listid,
     ...(Object.keys(data).reduce((acc,day) => {
       acc.push(data[day].id);
