@@ -111,7 +111,8 @@ async function startJobCreator({ domain, token }) {
       conn: con,
       resume: true,
       onAddItem: asnAdded,
-      onNewList: ListWatch.AssumeHandled,
+      onNewList: ListWatch.AssumeHandled, // TODO: actually check if each thing has a target job in its _meta?
+      // TODO: onDeleteList
     });
 
   } catch(e) {
