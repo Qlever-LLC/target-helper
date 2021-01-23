@@ -13,6 +13,7 @@
   "license": "None",
   "private": true,
   "dependencies": {
+    "@oada/client": "^2.1.1",
     "@oada/jobs": "^2.0.2",
     "@oada/list-lib": "^2.0.5",
     "@overleaf/o-error": "^3.0.0",
@@ -29,6 +30,7 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "mocha": "^7.1.2",
-    "moment": "^2.27.0"
+    "moment": "^2.27.0",
+    "object-hash": "^2.1.1"
   }
 }

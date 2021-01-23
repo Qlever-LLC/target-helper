@@ -73,10 +73,10 @@
     p-timeout "^3.2.0"
     tiny-json-http "^7.1.2"
 
-"@oada/list-lib@^2.0.4":
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/@oada/list-lib/-/list-lib-2.0.4.tgz#ecfbfafa38a840a249ffc1cf62768ad4ad7033dd"
-  integrity sha512-2i3e4KJ40ABe9c3cDtX01SPXAf58jcl77oXoDzOlWGGYi+vkL2oXnLqujixx4HhxnIDCExW7pRlWRTMLFezWqQ==
+"@oada/list-lib@^2.0.5":
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/@oada/list-lib/-/list-lib-2.0.6.tgz#2bce4b9efd2f05756212a9a1315df8245d3df381"
+  integrity sha512-M6Rcf7rYV41JzTWiilH3vNnug1FHuszYDKWRM70e/cNSMz4TrsXXFqBIH9Z97QNsl7XJV6K8SfaNm+IBoN2jiw==
   dependencies:
     "@oada/client" "^2.1.1"
     "@oada/types" "^1.1.1-beta.75"
@@ -1615,6 +1615,11 @@ object-assign-deep@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/object-assign-deep/-/object-assign-deep-0.4.0.tgz#43505d3679abb9686ab359b97ac14cc837a9d143"
   integrity sha512-54Uvn3s+4A/cMWx9tlRez1qtc7pN7pbQ+Yi7mjLjcBpWLlP+XbSHiHbQW6CElDiV4OvuzqnMrBdkgxI1mT8V/Q==
+
+object-hash@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/object-hash/-/object-hash-2.1.1.tgz#9447d0279b4fcf80cff3259bf66a1dc73afabe09"
+  integrity sha512-VOJmgmS+7wvXf8CjbQmimtCnEx3IAoLxI3fp2fbWehxrWBcAQFbk+vcwb6vzR0VZv/eNCJ/27j151ZTwqW/JeQ==
 
 object-inspect@^1.7.0:
   version "1.8.0"
