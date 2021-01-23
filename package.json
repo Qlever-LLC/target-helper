@@ -13,9 +13,9 @@
   "license": "None",
   "private": true,
   "dependencies": {
-    "@oada/client": "^2.1.1",
+    "@oada/client": "^2.2.1",
     "@oada/jobs": "^2.0.2",
-    "@oada/list-lib": "^2.0.5",
+    "@oada/list-lib": "^2.0.6",
     "@overleaf/o-error": "^3.0.0",
     "@trellisfw/signatures": "^2.1.3",
     "bluebird": "^3.7.2",

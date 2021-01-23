@@ -98,7 +98,7 @@ async function startJobCreator({ domain, token }) {
     // ensure the thing exists because we are in charge of this endpoint
     const exists = await con.get({ path: `/bookmarks/trellisfw/asns`}).then(r=>r.status).catch(e => e.status);
     if (exists !== 200) {
-      info(`/bookmarks/trellisfw/asn-staging does not exist, creating....`);
+      info(`/bookmarks/trellisfw/asns does not exist, creating....`);
       await con.put({path: '/bookmarks/trellisfw/asns', data: {}, tree });
     }
 
@@ -124,6 +124,33 @@ async function startJobCreator({ domain, token }) {
 
 async function asnAdded(item, key) {
   info(`New ASN posted at key = `, key);
+
+  // If this ASN's most recent job has been successfully handled by target, do not re-post it unless _meta/services/target says force
+  const asnmeta = await con.get({path: `/${item._id}/_meta`}).then(r=>r.data)
+    .catch(e => { throw oerror.tag(e, 'ERROR: failed to retrieve _meta for new ASN ${item._id} at key ${key}'); });
+
+  const force = _.get(asnmeta, 'services.target.force', false);
+  if (force) {
+    info(`ASN at key ${key} hase _meta/services/target/force as truthy, so we will send job to target regardless of whether last job was success.`);
+  }
+  else if (_.has(asnmeta, 'services.target.jobs')) {
+    const refslist = asnmeta.services.target.jobs;
+    const jobkeys = _.keys(refslist);
+    trace(`ASN at key ${key} has ${jobkeys.length} previous target jobs, checking if the last one was success.  To force, put true at /${item._id}/_meta/services/target/force`);
+    const lastjobkey = _.last(jobkeys.sort()); // keys are ksuids, so they sort naturally with latest on bottom
+    const lastjobid = refslist[lastjobkey]._ref;
+
+    trace(`Retrieving last job ${lastjobid} at key ${lastjobkey}`);
+    const lastjob = await con.get({ path: `/${lastjobid}` }).then(r=>r.data)
+      .catch(e => { throw oerror.tag(e, 'ERROR: failed to retrieve last job ${lastjobid} at key ${lastjobkey} for ASN at key ${key}'); });
+
+    const lastjobsuccess = _.get(lastjob, 'status', 'failure').toLowerCase() === 'success';
+    if (lastjobsuccess) {
+      info(`Last job for ASN ${item._id} at key ${key} has status "success" and _meta/services/target/force is not set on ASN, so we are NOT posting this to target job queue.`);
+      return true;
+    }
+  }
+
   const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
     type: 'asn',
     service: 'target',
@@ -133,10 +160,10 @@ async function asnAdded(item, key) {
       documentsKey: key,
     },
   }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
-  .catch(e => { throw oerror.tag(e, 'ERROR: failed to get jobkey when posting ASN job resource, e = ') });
+  .catch(e => { throw oerror.tag(e, 'ERROR: failed to get a valid jobkey from content-location when posting ASN job resource, e = ') });
   trace('Posted ASN job resource, jobkey = ', jobkey);
   await con.put({path: `/bookmarks/services/target/jobs`, tree, data: {
     [jobkey]: { _id: `resources/${jobkey}` },
-  }});
-  info('Posted new ASN to target job queue');
+  }}).catch(e => { throw oerror.tag(e, 'ERROR: failed to PUT link in jobs queue for new job resources/${jobkey}') });
+  info(`Posted new ASN ${item._id} at key ${key} to target job queue as job id resources/${jobkey} at key ${jobkey} in jobs queue`);
 };

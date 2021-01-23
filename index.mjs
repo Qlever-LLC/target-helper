@@ -14,10 +14,10 @@ import config from './config.mjs'
 
 const { Service } = Jobs; // no idea why I have to do it this way
 
-const error = debug('target-helper#pdf:error');
-const warn = debug('target-helper#pdf:warn');
-const info = debug('target-helper#pdf:info');
-const trace = debug('target-helper#pdf:trace');
+const error = debug('target-helper:error');
+const warn = debug('target-helper:warn');
+const info = debug('target-helper:info');
+const trace = debug('target-helper:trace');
 
 const token = config.get('token');
 let domain = config.get('domain') || '';
@@ -26,7 +26,8 @@ if (domain.match(/^http/)) domain = domain.replace(/^https:\/\//, '');
 if (domain === 'localhost' || domain==="proxy") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 }
-trace(`Using domain = ${domain}, token = ${token}`);
+trace(`Using token = ${token}`);
+info(`Using domain = ${domain}`);
 
 //--------------------------------------------------
 // Create the service
@@ -42,7 +43,7 @@ const service = new Service('target', domain, token, 1, {
 
 //--------------------------------------------------
 // Set the job type handlers
-service.on('transcription', config.get('timeout'),    pdf.jobHandler);
+service.on('transcription', config.get('pdftimeout'),    pdf.jobHandler);
 service.on(          'asn', config.get('asntimeout'), asn.jobHandler);
 
 //--------------------------------------------------
@@ -54,4 +55,5 @@ service.start().catch(e =>
 // Start the things watching to create jobs
 pdf.startJobCreator({domain, token});
 asn.startJobCreator({domain, token});
-
+info(`Started pdf and asn job creator processes`);
+info(`Ready`);
