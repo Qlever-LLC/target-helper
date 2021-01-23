@@ -42,7 +42,7 @@ const service = new Service('target', domain, token, 1, {
 
 //--------------------------------------------------
 // Set the job type handlers
-service.on('transcription', config.get('timeout'),    pdf.jobHandler);
+service.on('transcription', config.get('pdftimeout'),    pdf.jobHandler);
 service.on(          'asn', config.get('asntimeout'), asn.jobHandler);
 
 //--------------------------------------------------

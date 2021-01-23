@@ -98,7 +98,7 @@ async function startJobCreator({ domain, token }) {
     // ensure the thing exists because we are in charge of this endpoint
     const exists = await con.get({ path: `/bookmarks/trellisfw/asns`}).then(r=>r.status).catch(e => e.status);
     if (exists !== 200) {
-      info(`/bookmarks/trellisfw/asn-staging does not exist, creating....`);
+      info(`/bookmarks/trellisfw/asns does not exist, creating....`);
       await con.put({path: '/bookmarks/trellisfw/asns', data: {}, tree });
     }
 
