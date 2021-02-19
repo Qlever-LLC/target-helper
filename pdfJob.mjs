@@ -138,7 +138,10 @@ async function jobHandler(job, { jobId, log, oada }) {
 
         // HARDCODED UNTIL AINZ IS UPDATED:
         // ------------- 6: lookup shares, post job to shares service
-        await Promise.each(_.keys(job.result), async doctype => {
+        //Only share for smithfield
+        let result = job['trading-partner'] ? {} : job.result;
+
+        await Promise.each(_.keys(result), async doctype => {
           const shares = [];
           const doclist = job.result[doctype];
           await Promise.each(_.keys(doclist), async dockey => {
