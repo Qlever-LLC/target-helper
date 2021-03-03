@@ -3,7 +3,7 @@ version: '3.9'
 services:
   target-helper:
     build:
-      context: .
+      context: ./services/target-helper
     restart: unless-stopped
     volumes:
       - ./services/target-helper:/code/target-helper
