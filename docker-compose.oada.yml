@@ -6,7 +6,7 @@ services:
       context: .
     restart: unless-stopped
     volumes:
-      - .:/code/target-helper
+      - ./services/target-helper:/code/target-helper
     environment:
       - NODE_TLS_REJECT_UNAUTHORIZED
       - NODE_ENV=${NODE_ENV:-development}
