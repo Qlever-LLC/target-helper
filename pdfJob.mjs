@@ -114,20 +114,23 @@ async function jobHandler(job, { jobId, log, oada }) {
             return acc;
           }, {});
         }
+        const rootPath = job['trading-partner'] ? 
+          `/bookmarks/trellisfw/trading-partners/${job['trading-partner']}/bookmarks/trellisfw/documents`
+          : `/bookmarks/trellisfw/documents`;
         const versionedResult = recursiveMakeAllLinksVersioned(job.result);
         trace(`all versioned links to bookmarks = `, versionedResult);
         await Promise.each(_.keys(versionedResult), async doctype => { // top-level keys are doc types
           log.info('linking', `Linking doctype ${doctype} from result`);
           // Automatically augment the base tree with the right content-type
           tree.bookmarks.trellisfw[doctype] = { _type: `application/vnd.trellis.${doctype}.1+json` };
-          await oada.put({ path: `/bookmarks/trellisfw/${doctype}`, data: versionedResult[doctype], tree });
+          await oada.put({ path: `{rootPath}/${docType}`, data: versionedResult[doctype], tree });
         });
 
 
         // -------------- 5: delete link from /bookmarks/trellisfw/documents now that it is identified
         if (job.config.documentsKey) {
           log.info(`Unlinking from unidentified documents now that it is identified`);
-          await oada.delete({ path: `/bookmarks/trellisfw/documents/${job.config.documentsKey}` });
+          await oada.delete({ path: `${rootPath}/${job.config.documentsKey}` });
         } else {
           log.info(`WARNING: Job had no documents key!`);
         }
@@ -135,7 +138,10 @@ async function jobHandler(job, { jobId, log, oada }) {
 
         // HARDCODED UNTIL AINZ IS UPDATED:
         // ------------- 6: lookup shares, post job to shares service
-        await Promise.each(_.keys(job.result), async doctype => {
+        //Only share for smithfield
+        let result = job['trading-partner'] ? {} : job.result;
+
+        await Promise.each(_.keys(result), async doctype => {
           const shares = [];
           const doclist = job.result[doctype];
           await Promise.each(_.keys(doclist), async dockey => {
@@ -361,6 +367,35 @@ async function startJobCreator({ domain, token }) {
   try {
     con = await oadaclient.connect({domain,token});
 
+    
+    const tp_exists = await con.get({ path: `/bookmarks/trellisfw/trading-partners`}).then(r=>r.status).catch(e => e.status);
+    if (exists !== 200) {
+      info(`/bookmarks/trellisfw/trading-partners does not exist, creating....`);
+      await con.put({path: '/bookmarks/trellisfw/trading-partners', data: {}, tree });
+    }
+ 
+    if (config.tradingPartnersEnabled) {
+      await Promise.each(Object.keys(tp_exists), async (tp) => {
+        if (tp.charAt(0) === '_') return;
+        const tp_watch = new ListWatch({
+          path: `/bookmarks/trellisfw/trading-partners/${tp}/bookmarks/trellisfw/documents`,
+          name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
+          conn: con,
+          resume: true,
+          onAddItem: documentAdded(tp),
+        });
+
+        const tp_watch_b = new ListWatch({
+          path: `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`,
+          name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
+          conn: con,
+          resume: true,
+          onAddItem: documentAdded(tp),
+        });
+      })
+    }
+
+
     // ensure the documents endpoint exists because Target is an enabler of that endpoint
     const exists = await con.get({ path: `/bookmarks/trellisfw/documents`}).then(r=>r.status).catch(e => e.status);
     if (exists !== 200) {
@@ -373,7 +408,7 @@ async function startJobCreator({ domain, token }) {
       name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
       conn: con,
       resume: true,
-      onAddItem: documentAdded,
+      onAddItem: documentAdded(),
    });
   } catch (e) {
     oerror.tag(e, 'ListWatch failed!');
@@ -381,17 +416,22 @@ async function startJobCreator({ domain, token }) {
   }
 }
 
-async function documentAdded(item, key) {
+async function documentAdded(tp) {
+  return async function(item, key) {
   // bugfix leading slash that sometimes appears in key
   key = key.replace(/^\//, '');
   info('New Document posted at key = ', key);
   // Get the _id for the actual PDF
-  const docid = await con.get({ path: `/bookmarks/trellisfw/documents` })
+  const docid = await con.get({ 
+    path: tp ? `bookmarks/trellisfw/trading-partners/${tp}/bookmarks/trellisfw/documents`
+      : `/bookmarks/trellisfw/documents` 
+  })
     // Hack: have to get the whole list, then get the link for this key in order to figure out the _id at the moment.
     .then(r=>r.data[key])
     .then(l => (l && l._id) ? l._id : false);
 
   const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
+    'trading-partner': tp,
     type: 'transcription',
     service: 'target',
     config: {

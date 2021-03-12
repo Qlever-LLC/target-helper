@@ -22,4 +22,5 @@ export default {
   timeout:    3600000, // 1 hour
   asntimeout: 3600000, // 1 hour
   slackposturl: 'https://localhost', // use a real slack webhook URL
+  tradingPartnersEnabled: false,
 }
