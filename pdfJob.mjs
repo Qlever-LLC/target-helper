@@ -115,22 +115,22 @@ async function jobHandler(job, { jobId, log, oada }) {
           }, {});
         }
         const rootPath = job['trading-partner'] ? 
-          `/bookmarks/trellisfw/trading-partners/${job['trading-partner']}/bookmarks/trellisfw/documents`
-          : `/bookmarks/trellisfw/documents`;
+          `/bookmarks/trellisfw/trading-partners/${job['trading-partner']}/bookmarks/trellisfw`
+          : `/bookmarks/trellisfw`;
         const versionedResult = recursiveMakeAllLinksVersioned(job.result);
         trace(`all versioned links to bookmarks = `, versionedResult);
         await Promise.each(_.keys(versionedResult), async doctype => { // top-level keys are doc types
           log.info('linking', `Linking doctype ${doctype} from result`);
           // Automatically augment the base tree with the right content-type
           tree.bookmarks.trellisfw[doctype] = { _type: `application/vnd.trellis.${doctype}.1+json` };
-          await oada.put({ path: `{rootPath}/${docType}`, data: versionedResult[doctype], tree });
+          await oada.put({ path: `${rootPath}/${doctype}`, data: versionedResult[doctype], tree });
         });
 
 
         // -------------- 5: delete link from /bookmarks/trellisfw/documents now that it is identified
         if (job.config.documentsKey) {
           log.info(`Unlinking from unidentified documents now that it is identified`);
-          await oada.delete({ path: `${rootPath}/${job.config.documentsKey}` });
+          await oada.delete({ path: `${rootPath}/documents/${job.config.documentsKey}` });
         } else {
           log.info(`WARNING: Job had no documents key!`);
         }
@@ -219,7 +219,7 @@ async function jobHandler(job, { jobId, log, oada }) {
             }}).then(r=>r.headers['content-location'].replace(/^\//,''));
             const reskey = resid.replace(/^resources\//,'');
             trace('Shares job posted as resid = ', resid);
-            const jobpath = await oada.put( { path: `/bookmarks/services/trellis-shares/jobs`, data: { [reskey]: { _id: resid  } }, tree }).then(r=>r.headers['content-location']);
+            const jobpath = await oada.put( { path: `/bookmarks/services/trellis-shares/jobs`, data: { [reskey]: { _id: resid, _rev: 0  } }, tree }).then(r=>r.headers['content-location']);
             const jobkey = jobpath.replace(/^\/resources\/[^\/]+\//,'');
             trace('Posted jobkey ',jobkey, ' for shares');
           });
@@ -228,12 +228,6 @@ async function jobHandler(job, { jobId, log, oada }) {
         log.info('done', 'Completed all helper tasks');
         return resolve(job.result);
         
-      }
-      const targetError = ({ update, key, change }) => {
-        // notify oada-jobs of error    
-        // post to slack if oada-jobs doesn't do that yet
-        log.info('helper-error', 'Target returned error, target-helper throwing to oada/jobs');
-        return reject({ message: "Target returned error: "+JSON.stringify(update,false,'  ') });
       }
       const jobChange = async c => {
         try { 
@@ -252,9 +246,10 @@ async function jobHandler(job, { jobId, log, oada }) {
               await targetSuccess({ update: v, key: k, change: c});
             }
             if (v.status && v.status === 'error') {
-                trace('#jobChange: unwatching job and moving on with error tasks');
+              error('#jobChange: unwatching job and moving on with error tasks');
               await unwatch();
-              await targetError({ update: v, key: k, change: c});
+              if (v.information) error(`Target job [${jobId}] failed: ${v.information}`)
+              throw new Error("Target returned error: "+JSON.stringify(update,false,'  '));
             }
           });
         } catch(e) { reject(e); }
@@ -368,15 +363,21 @@ async function startJobCreator({ domain, token }) {
     con = await oadaclient.connect({domain,token});
 
     
-    const tp_exists = await con.get({ path: `/bookmarks/trellisfw/trading-partners`}).then(r=>r.status).catch(e => e.status);
-    if (exists !== 200) {
+    const tp_exists = await con.get({ path: `/bookmarks/trellisfw/trading-partners`}).then(r=>r).catch(e => e);
+    if (tp_exists.status !== 200) {
       info(`/bookmarks/trellisfw/trading-partners does not exist, creating....`);
       await con.put({path: '/bookmarks/trellisfw/trading-partners', data: {}, tree });
     }
  
-    if (config.tradingPartnersEnabled) {
-      await Promise.each(Object.keys(tp_exists), async (tp) => {
+    trace(`Trading partners enabled ${config.get('tradingPartnersEnabled')}`);
+    console.log(`Trading partners enabled ${config.get('tradingPartnersEnabled')}`);
+    if (config.get('tradingPartnersEnabled')) {
+      await Promise.each(['601af61b53b391000e4a7a3e'], async (tp) => {
+//      await Promise.each(Object.keys(tp_exists.data), async (tp) => {
         if (tp.charAt(0) === '_') return;
+
+        let func = documentAdded(tp);
+        /*
         const tp_watch = new ListWatch({
           path: `/bookmarks/trellisfw/trading-partners/${tp}/bookmarks/trellisfw/documents`,
           name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
@@ -384,13 +385,16 @@ async function startJobCreator({ domain, token }) {
           resume: true,
           onAddItem: documentAdded(tp),
         });
+        */
+
+        trace('Starting listwatch on ', `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`);
 
         const tp_watch_b = new ListWatch({
           path: `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`,
           name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
           conn: con,
           resume: true,
-          onAddItem: documentAdded(tp),
+          onAddItem: func,
         });
       })
     }
@@ -403,12 +407,14 @@ async function startJobCreator({ domain, token }) {
       await con.put({path: '/bookmarks/trellisfw/documents', data: {}, tree });
     }
  
+
+    let func = documentAdded();
     const watch = new ListWatch({
       path: `/bookmarks/trellisfw/documents`,
       name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
       conn: con,
       resume: true,
-      onAddItem: documentAdded(),
+      onAddItem: func,
    });
   } catch (e) {
     oerror.tag(e, 'ListWatch failed!');
@@ -416,35 +422,40 @@ async function startJobCreator({ domain, token }) {
   }
 }
 
-async function documentAdded(tp) {
+function documentAdded(tp) {
   return async function(item, key) {
-  // bugfix leading slash that sometimes appears in key
-  key = key.replace(/^\//, '');
-  info('New Document posted at key = ', key);
-  // Get the _id for the actual PDF
-  const docid = await con.get({ 
-    path: tp ? `bookmarks/trellisfw/trading-partners/${tp}/bookmarks/trellisfw/documents`
-      : `/bookmarks/trellisfw/documents` 
-  })
-    // Hack: have to get the whole list, then get the link for this key in order to figure out the _id at the moment.
-    .then(r=>r.data[key])
-    .then(l => (l && l._id) ? l._id : false);
+  try {
+    // bugfix leading slash that sometimes appears in key
+    key = key.replace(/^\//, '');
+    info('New Document posted at key = ', key);
+    // Get the _id for the actual PDF
+    const docid = await con.get({
+      path: tp ? `bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`
+        : `/bookmarks/trellisfw/documents` 
+    })
+      // Hack: have to get the whole list, then get the link for this key in order to figure out the _id at the moment.
+      .then(r=>r.data[key])
+      .then(l => (l && l._id) ? l._id : false);
 
-  const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
-    'trading-partner': tp,
-    type: 'transcription',
-    service: 'target',
-    config: {
-      type: 'pdf',
-      pdf: { _id: docid },
-      documentsKey: key,
-    },
-  }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
-  .catch(e => { throw oerror.tag(e, 'Failed to create new job resource for item ', item._id); })
+    const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
+      'trading-partner': tp,
+      type: 'transcription',
+      service: 'target',
+      config: {
+        type: 'pdf',
+        pdf: { _id: docid },
+        documentsKey: key,
+      },
+    }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
+    .catch(e => { throw oerror.tag(e, 'Failed to create new job resource for item ', item._id); })
 
-  info('Posted job resource, jobkey = ', jobkey);
-  await con.put({path: `/bookmarks/services/target/jobs`, tree, data: {
-    [jobkey]: { _id: `resources/${jobkey}` },
-  }}).catch(e => { throw oerror.tag(e, 'Failed to PUT job link under target job queue for job key ', jobkey) } );
-  trace('Posted new PDF document to target task queue');
+    info('Posted job resource, jobkey = ', jobkey);
+    await con.put({path: `/bookmarks/services/target/jobs`, tree, data: {
+      [jobkey]: { _id: `resources/${jobkey}`, _rev: 0 },
+    }}).catch(e => { throw oerror.tag(e, 'Failed to PUT job link under target job queue for job key ', jobkey) } );
+    trace('Posted new PDF document to target task queue');
+    } catch(err) {
+      console.log(err);
+    }
+  }
 }

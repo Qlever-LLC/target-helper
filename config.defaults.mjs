@@ -19,8 +19,8 @@ export default {
   privateJWK: './keys/private_key.jwk',
   signer: { name: 'Test signer', url: 'https://oatscenter.org' },
   signatureType: 'transcription',
-  timeout:    3600000, // 1 hour
+  pdftimeout:    3600000, // 1 hour
   asntimeout: 3600000, // 1 hour
   slackposturl: 'https://localhost', // use a real slack webhook URL
-  tradingPartnersEnabled: false,
+  tradingPartnersEnabled: true,
 }
