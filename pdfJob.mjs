@@ -115,7 +115,7 @@ async function jobHandler(job, { jobId, log, oada }) {
           }, {});
         }
         const rootPath = job['trading-partner'] ? 
-          `/bookmarks/trellisfw/trading-partners/${job['trading-partner']}/bookmarks/trellisfw`
+          `/bookmarks/trellisfw/trading-partners/${job['trading-partner']}/shared/trellisfw`
           : `/bookmarks/trellisfw`;
         const versionedResult = recursiveMakeAllLinksVersioned(job.result);
         trace(`all versioned links to bookmarks = `, versionedResult);

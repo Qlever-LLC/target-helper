@@ -41,13 +41,6 @@ async function jobHandler(job, { jobId, log, oada }) {
         return resolve(job.result);
       }
 
-      const targetError = ({ update, key, change }) => {
-        // notify oada-jobs of error    
-        // post to slack if oada-jobs doesn't do that yet
-        log.info('helper-error', 'Target returned error, target-helper throwing to oada/jobs');
-        return reject({ message: "Target returned error: "+JSON.stringify(update,false,'  ') });
-      }
-
       const jobChange = async c => {
         try { 
           trace('#jobChange: received change, c = ', c);
@@ -67,7 +60,8 @@ async function jobHandler(job, { jobId, log, oada }) {
             if (v.status && v.status === 'error') {
                 trace('#jobChange: unwatching job and moving on with error tasks');
               await unwatch();
-              await targetError({ update: v, key: k, change: c});
+              if (v.information) error(`Target job [${jobId}] failed: ${v.information}`);
+              throw new Error("Target returned error: "+JSON.stringify(update,false,'  '));
             }
           });
         } catch(e) { reject(e); }
