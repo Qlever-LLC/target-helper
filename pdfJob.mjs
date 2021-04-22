@@ -368,23 +368,48 @@ async function startJobCreator({ domain, token }) {
     con = await oadaclient.connect({domain,token});
 
     
-    const tp_exists = await con.get({ path: `/bookmarks/trellisfw/trading-partners`}).then(r=>r.status).catch(e => e.status);
-    if (exists !== 200) {
+    const tp_exists = await con.get({ path: `/bookmarks/trellisfw/trading-partners`}).then(r=>r.data).catch(e => e.status);
+    if (tp_exists !== 200) {
       info(`/bookmarks/trellisfw/trading-partners does not exist, creating....`);
       await con.put({path: '/bookmarks/trellisfw/trading-partners', data: {}, tree });
     }
  
-    if (config.tradingPartnersEnabled) {
+    info(`trading partner document watching from config: ${config.get('tradingPartnersEnabled')}`);
+    if (config.get('tradingPartnersEnabled')) {
+      console.log({tp_exists});
       await Promise.each(Object.keys(tp_exists), async (tp) => {
         if (tp.charAt(0) === '_') return;
+        
+        const tp_doc_exists = await con.get({
+          path: `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`
+        }).then(r=>r.status).catch(e => e.status);
+
+        if (tp_doc_exists !== 200) {
+          info(`/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents does not exist, creating....`);
+          try {
+          let response = await con.put({
+            path: `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`,
+            data: {}, 
+            tree 
+          });
+          console.log(response);
+          } catch(err) {
+            console.log(err);
+          }
+        }
+        console.log('watching', `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`);
+        let onAddItem = documentAdded(tp);
+        console.log(onAddItem);
+        
         const tp_watch = new ListWatch({
-          path: `/bookmarks/trellisfw/trading-partners/${tp}/bookmarks/trellisfw/documents`,
+          path: `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`,
           name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
           conn: con,
           resume: true,
           onAddItem: documentAdded(tp, 'bookmarks'),
         });
 
+/*
         const tp_watch_b = new ListWatch({
           path: `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`,
           name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
@@ -392,6 +417,7 @@ async function startJobCreator({ domain, token }) {
           resume: true,
           onAddItem: documentAdded(tp, 'shared'),
         });
+        */
       })
     }
 
