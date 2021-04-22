@@ -382,7 +382,7 @@ async function startJobCreator({ domain, token }) {
           name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
           conn: con,
           resume: true,
-          onAddItem: documentAdded(tp),
+          onAddItem: documentAdded(tp, 'bookmarks'),
         });
 
         const tp_watch_b = new ListWatch({
@@ -390,7 +390,7 @@ async function startJobCreator({ domain, token }) {
           name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
           conn: con,
           resume: true,
-          onAddItem: documentAdded(tp),
+          onAddItem: documentAdded(tp, 'shared'),
         });
       })
     }
@@ -416,14 +416,14 @@ async function startJobCreator({ domain, token }) {
   }
 }
 
-async function documentAdded(tp) {
+async function documentAdded(tp, type) {
   return async function(item, key) {
   // bugfix leading slash that sometimes appears in key
   key = key.replace(/^\//, '');
   info('New Document posted at key = ', key);
   // Get the _id for the actual PDF
   const docid = await con.get({ 
-    path: tp ? `bookmarks/trellisfw/trading-partners/${tp}/bookmarks/trellisfw/documents`
+    path: tp ? `bookmarks/trellisfw/trading-partners/${tp}/${type}/trellisfw/documents`
       : `/bookmarks/trellisfw/documents` 
   })
     // Hack: have to get the whole list, then get the link for this key in order to figure out the _id at the moment.
