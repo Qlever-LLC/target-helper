@@ -370,32 +370,35 @@ async function startJobCreator({ domain, token }) {
     }
  
     trace(`Trading partners enabled ${config.get('tradingPartnersEnabled')}`);
-    console.log(`Trading partners enabled ${config.get('tradingPartnersEnabled')}`);
     if (config.get('tradingPartnersEnabled')) {
       await Promise.each(['601af61b53b391000e4a7a3e'], async (tp) => {
 //      await Promise.each(Object.keys(tp_exists.data), async (tp) => {
         if (tp.charAt(0) === '_') return;
 
         let func = documentAdded(tp);
-        /*
-        const tp_watch = new ListWatch({
-          path: `/bookmarks/trellisfw/trading-partners/${tp}/bookmarks/trellisfw/documents`,
-          name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
-          conn: con,
-          resume: true,
-          onAddItem: documentAdded(tp),
-        });
-        */
+        
+        const tp_doc_exists = await con.get({
+          path: `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`
+        }).then(r=>r.status).catch(e => e.status);
 
-        trace('Starting listwatch on ', `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`);
+        if (tp_doc_exists !== 200) {
+          info(`/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents does not exist, creating....`);
+          let response = await con.put({
+            path: `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`,
+            data: {}, 
+            tree 
+          });
+        }
 
         const tp_watch_b = new ListWatch({
           path: `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`,
           name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
           conn: con,
           resume: true,
-          onAddItem: func,
+          onAddItem: documentAdded(tp),
         });
+
+        trace('Started listwatch on ', `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`);
       })
     }
 
@@ -422,40 +425,35 @@ async function startJobCreator({ domain, token }) {
   }
 }
 
-function documentAdded(tp) {
+async function documentAdded(tp) {
   return async function(item, key) {
-  try {
-    // bugfix leading slash that sometimes appears in key
-    key = key.replace(/^\//, '');
-    info('New Document posted at key = ', key);
-    // Get the _id for the actual PDF
-    const docid = await con.get({
-      path: tp ? `bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`
-        : `/bookmarks/trellisfw/documents` 
-    })
-      // Hack: have to get the whole list, then get the link for this key in order to figure out the _id at the moment.
-      .then(r=>r.data[key])
-      .then(l => (l && l._id) ? l._id : false);
+  // bugfix leading slash that sometimes appears in key
+  key = key.replace(/^\//, '');
+  info('New Document posted at key = ', key);
+  // Get the _id for the actual PDF
+  const docid = await con.get({ 
+    path: tp ? `bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`
+      : `/bookmarks/trellisfw/documents` 
+  })
+    // Hack: have to get the whole list, then get the link for this key in order to figure out the _id at the moment.
+    .then(r=>r.data[key])
+    .then(l => (l && l._id) ? l._id : false);
 
-    const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
-      'trading-partner': tp,
-      type: 'transcription',
-      service: 'target',
-      config: {
-        type: 'pdf',
-        pdf: { _id: docid },
-        documentsKey: key,
-      },
-    }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
-    .catch(e => { throw oerror.tag(e, 'Failed to create new job resource for item ', item._id); })
+  const jobkey = await con.post({path: '/resources', headers: {'content-type': 'application/vnd.oada.job.1+json'}, data: {
+    'trading-partner': tp,
+    type: 'transcription',
+    service: 'target',
+    config: {
+      type: 'pdf',
+      pdf: { _id: docid },
+      documentsKey: key,
+    },
+  }}).then(r=>r.headers['content-location'].replace(/^\/resources\//,''))
+  .catch(e => { throw oerror.tag(e, 'Failed to create new job resource for item ', item._id); })
 
-    info('Posted job resource, jobkey = ', jobkey);
-    await con.put({path: `/bookmarks/services/target/jobs`, tree, data: {
-      [jobkey]: { _id: `resources/${jobkey}`, _rev: 0 },
-    }}).catch(e => { throw oerror.tag(e, 'Failed to PUT job link under target job queue for job key ', jobkey) } );
-    trace('Posted new PDF document to target task queue');
-    } catch(err) {
-      console.log(err);
-    }
-  }
+  info('Posted job resource, jobkey = ', jobkey);
+  await con.put({path: `/bookmarks/services/target/jobs`, tree, data: {
+    [jobkey]: { _id: `resources/${jobkey}` },
+  }}).catch(e => { throw oerror.tag(e, 'Failed to PUT job link under target job queue for job key ', jobkey) } );
+  trace('Posted new PDF document to target task queue');
 }
