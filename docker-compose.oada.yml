@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   target-helper:
     build:
@@ -11,5 +9,7 @@ services:
       - NODE_TLS_REJECT_UNAUTHORIZED
       - NODE_ENV=${NODE_ENV:-development}
       - DEBUG=${DEBUG:-"target-helper:info,*warn*,*error*"}
-      - domain
-      - token
+      - token=${TARGET_HELPER_TOKEN}
+      # Connect to host if DOMAIN not set?
+      # You should really not rely on this though. Set DOMAIN.
+      - domain=${DOMAIN:-host.docker.internal}

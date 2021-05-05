@@ -1,15 +1,5 @@
-version: '3.9'
-
 services:
   target-helper:
-    build:
-      context: .
-    restart: unless-stopped
-    volumes:
-      - .:/code/target-helper
-    environment:
-      - NODE_TLS_REJECT_UNAUTHORIZED
-      - NODE_ENV=${NODE_ENV:-development}
-      - DEBUG=${DEBUG:-"target-helper:info,*warn*,*error*"}
-      - domain
-      - token
+    extends:
+      file: ./services/target-helper/docker-compose.yml
+      service: target-helper
