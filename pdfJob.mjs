@@ -1,4 +1,6 @@
 import { readFileSync } from 'fs';
+import moment from 'moment';
+import axios from 'axios';
 import Promise from 'bluebird';
 import _ from 'lodash';
 import oadaclient from '@oada/client';
@@ -29,6 +31,8 @@ if (prvKey.jku) header.jku = prvKey.jku; // make sure we keep jku and kid
 if (prvKey.kid) header.kid = prvKey.kid;
 const signer = config.get('signer');
 const signatureType = config.get('signatureType');
+let DOMAIN;
+let TOKEN;
 
 // Will fill in expandIndex on first job to handle
 let expandIndex = false;
@@ -75,7 +79,7 @@ async function jobHandler(job, { jobId, log, oada }) {
             return acc;
           },{});
         }
-        trace('Linking _ref\'s into pdf/_meta, job.result before refs is: ',job.result,', and after refs replacement is ',  recursiveReplaceLinksWithRefs(job.result));
+        info('Linking _ref\'s into pdf/_meta, job.result before refs is: ',job.result,', and after refs replacement is ',  recursiveReplaceLinksWithRefs(job.result));
         await oada.put({ path: `/${pdfid}/_meta`, data: {
           vdoc: recursiveReplaceLinksWithRefs(job.result), // fsqa-audits { ...links... }, or fsqa-certificates { ...links... }, etc.
         }});
@@ -115,7 +119,7 @@ async function jobHandler(job, { jobId, log, oada }) {
           }, {});
         }
         const rootPath = job['trading-partner'] ? 
-          `/bookmarks/trellisfw/trading-partners/${job['trading-partner']}/bookmarks/trellisfw`
+          `/bookmarks/trellisfw/trading-partners/${job['trading-partner']}/shared/trellisfw`
           : `/bookmarks/trellisfw`;
         const versionedResult = recursiveMakeAllLinksVersioned(job.result);
         trace(`all versioned links to bookmarks = `, versionedResult);
@@ -130,6 +134,7 @@ async function jobHandler(job, { jobId, log, oada }) {
         // -------------- 5: delete link from /bookmarks/trellisfw/documents now that it is identified
         if (job.config.documentsKey) {
           log.info(`Unlinking from unidentified documents now that it is identified`);
+          info(`Unlinking from unidentified documents now that it is identified`);
           await oada.delete({ path: `${rootPath}/documents/${job.config.documentsKey}` });
         } else {
           log.info(`WARNING: Job had no documents key!`);
@@ -239,6 +244,9 @@ async function jobHandler(job, { jobId, log, oada }) {
           trace('#jobChange: it is a change we want (has an update)');
           await Promise.each(_.keys(c.body.updates), async k => {
             const v = c.body.updates[k];
+            let t = _.clone(v.time);
+            v.time = moment(v.time).toISOString();
+            if (v.time === null) v.time = moment(t, 'X')
             trace('#jobChange: change update is: ', v);
             if (v.status && v.status === 'success') {
               trace('#jobChange: unwatching job and moving on with success tasks');
@@ -359,6 +367,8 @@ function treeForDocType(doctype) {
 // Start watching /bookmarks/trellisfw/documents and create target jobs for each new one
 let con = false;
 async function startJobCreator({ domain, token }) {
+  DOMAIN = domain;
+  TOKEN = token;
   try {
     con = await oadaclient.connect({domain,token});
 
@@ -392,6 +402,7 @@ async function startJobCreator({ domain, token }) {
         const tp_watch_b = new ListWatch({
           path: `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`,
           name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
+          onNewList: ListWatch.AssumeHandled,
           conn: con,
           resume: true,
           onAddItem: func,
@@ -414,6 +425,7 @@ async function startJobCreator({ domain, token }) {
       name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
       conn: con,
       resume: true,
+      onNewList: ListWatch.AssumeHandled,
       onAddItem: func,
    });
   } catch (e) {

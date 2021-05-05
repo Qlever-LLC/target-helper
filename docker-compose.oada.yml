@@ -5,6 +5,8 @@ services:
     build:
       context: ./services/target-helper
     restart: unless-stopped
+    networks:
+      startup_net: {}
     volumes:
       - ./services/target-helper:/code/target-helper
     environment:

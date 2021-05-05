@@ -48,10 +48,10 @@
     p-timeout "^3.2.0"
     tiny-json-http "^7.1.2"
 
-"@oada/list-lib@^2.1.5":
-  version "2.1.5"
-  resolved "https://registry.yarnpkg.com/@oada/list-lib/-/list-lib-2.1.5.tgz#2457b76539968e9d0977ead6f8d1ddf508a01128"
-  integrity sha512-0zNLIEipyXR/nBCi6CT3aaRqCedfxR3POlTWE88Yw+b2x/w1JAuV0fdrkG0+UVcnQyp3ydlcdnLgpJ3FZky2WQ==
+"@oada/list-lib@^2.1.6":
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/@oada/list-lib/-/list-lib-2.1.6.tgz#2f7ca54edc32029d6602201b203e53f4dd773444"
+  integrity sha512-RLKoTf9Cj/LI7IJrdg8V8Q5fiMirLb4phSaaXXC1bYS2HxgdkGeJC5WktAKhag1HlmhyTDVR/L2tqWtnFlsP5w==
   dependencies:
     "@oada/client" "^2.3.0"
     "@oada/types" "^1.2.0"
@@ -242,6 +242,13 @@ available-typed-arrays@^1.0.2:
   integrity sha512-XWX3OX8Onv97LMk/ftVyBibpGwY5a8SmuxZPzeOxqmuEqUCOM9ZE+uIaD1VNJ5QnvU2UQusvmKbuM1FR8QWGfQ==
   dependencies:
     array-filter "^1.0.0"
+
+axios@^0.21.1:
+  version "0.21.1"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.1.tgz#22563481962f4d6bde9a76d516ef0e5d3c09b2b8"
+  integrity sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==
+  dependencies:
+    follow-redirects "^1.10.0"
 
 balanced-match@^1.0.0:
   version "1.0.0"
@@ -800,6 +807,11 @@ flat@^4.1.0:
   integrity sha512-FmTtBsHskrU6FJ2VxCnsDb84wu9zhmO3cUX2kGFb5tuwhfXxGciiT0oRY+cck35QmG+NmGh5eLz6lLCpWTqwpA==
   dependencies:
     is-buffer "~2.0.3"
+
+follow-redirects@^1.10.0:
+  version "1.13.3"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.13.3.tgz#e5598ad50174c1bc4e872301e82ac2cd97f90267"
+  integrity sha512-DUgl6+HDzB0iEptNQEXLx/KhTmDb8tZUHSeLqpnjpknR70H0nC2t9N73BK6fN4hOvJ84pKlIQVQ4k5FFlBedKA==
 
 foreach@^2.0.4, foreach@^2.0.5:
   version "2.0.5"
