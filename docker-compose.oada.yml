@@ -3,3 +3,5 @@ services:
     extends:
       file: ./services/target-helper/docker-compose.yml
       service: target-helper
+    networks:
+      - startup_net
