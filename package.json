@@ -22,7 +22,7 @@
     "bluebird": "^3.7.2",
     "debug": "^4.1.1",
     "jsonpointer": "^4.1.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "make-promises-safe": "^5.1.0",
     "nconf": "^0.10.0",
     "nodemon": "^2.0.4"
