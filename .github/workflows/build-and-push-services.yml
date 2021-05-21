@@ -1,0 +1,197 @@
+name: Build and push docker image
+
+on:
+  push:
+  pull_request:
+
+env:
+  # Set to true to push images to DockerHub
+  # NB: images are public unless you configure DockerHub repo properly
+  DOCKERHUB_PUSH:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.ref.outputs.version }}
+      release: ${{ steps.ref.outputs.release }}
+      major: ${{ steps.semver.outputs.major }}
+      minor: ${{ steps.semver.outputs.minor }}
+      patch: ${{ steps.semver.outputs.patch }}
+      prerelease: ${{ steps.semver.outputs.prerelease }}
+      build: ${{ steps.semver.outputs.build }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Parse Ref
+        id: ref
+        run: |
+          echo 'Processing git ref:' $GITHUB_REF
+
+          # Release version is just the release number
+          if [[ $GITHUB_REF == refs/heads/release/* ]]; then
+            VERSION=${GITHUB_REF#refs/heads/release/}
+            #RELEASE=true
+
+          elif [[ $GITHUB_REF == refs/tags/* ]]; then
+            if [[ $GITHUB_REF == refs/tags/v* ]]; then
+              VERSION=${GITHUB_REF#refs/tags/v}
+              RELEASE=true
+            else
+              VERSION=tag-${GITHUB_REF#refs/tags/}
+            fi
+
+          # Branch version is branch name (with '/' -> '-')
+          elif [[ $GITHUB_REF == refs/heads/* ]]; then
+            VERSION=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's#/+#-#g')
+
+            # Expect for the default_branch, which gets version "next"
+            if [ "$VERSION" == "${{ github.event.repository.default_branch }}" ]; then
+              VERSION=next
+            fi
+
+          # PR versions are pr-<github pr number>
+          elif [[ $GITHUB_REF == refs/pull/* ]]; then
+            VERSION=pr-${{ github.event.number }}
+
+          else
+            echo ::error ::Can not determine version of service -- unexpected job trigger? Stopping.
+            exit 1
+          fi
+
+          echo ::set-output name=version::${VERSION}
+          echo ::set-output name=release::${RELEASE}
+
+      - name: Parse Semver
+        id: semver
+        if: ${{ steps.ref.outputs.release }}
+        uses: booxmedialtd/ws-action-parse-semver@v1.3.1
+        with:
+          input_string: ${{ steps.ref.outputs.version }}
+          #version_extractor_regex: '\/v(.*)$'
+
+  build-and-push:
+    name: Build and push docker Image
+    needs: setup
+
+    strategy:
+      matrix:
+        service:
+          # Assume repo slug is the service slug?
+          - ${{ github.repository }}
+        context:
+          - '.'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.3.4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1.1.0
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1.3.0
+        with:
+          version: latest
+
+      - name: Builder instance name
+        run: echo ${{ steps.buildx.outputs.name }}
+
+      - name: Available platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Cache docker layers
+        if: ${{ !env.ACT }} # Awaiting ACT version after 0.2.17 for this feature
+        uses: actions/cache@v2.1.5
+        id: cache
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}-${{ matrix.service }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ github.sha }}-
+            ${{ runner.os }}-buildx-
+
+      - name: Prepare Tags
+        id: prepare
+        # TODO: Clean up this monstrosity... one day...
+        run: |
+          # Nameo on DockerHub (Doesn't like upper case)
+          DOCKER_IMAGE=$(echo ${{ matrix.service }} | tr '[:upper:]' '[:lower:]')
+          # Name on GHCR
+          GHCR_IMAGE=ghcr.io/${DOCKER_IMAGE}
+
+          TAGS="${GHCR_IMAGE}:${{ needs.setup.outputs.version }}"
+          DH_TAGS="${DOCKER_IMAGE}:${{ needs.setup.outputs.version }}"
+          if [[ "${{ needs.setup.outputs.release }}" ]]; then
+            if [[ "${{ needs.setup.outputs.prerelease }}" ]]; then
+              TAGS="${GHCR_IMAGE}:${{ needs.setup.outputs.major }}.${{ needs.setup.outputs.minor }}.${{ needs.setup.outputs.patch }}-${{ needs.setup.outputs.prerelease }}"
+              DH_TAGS="${DOCKER_IMAGE}:${{ needs.setup.outputs.major }}.${{ needs.setup.outputs.minor }}.${{ needs.setup.outputs.patch }}-${{ needs.setup.outputs.prerelease }}"
+              # TODO: Keep old prerelease builds?
+            else
+              TAGS="$TAGS,${GHCR_IMAGE}:latest"
+              TAGS="$TAGS,${GHCR_IMAGE}:${{ needs.setup.outputs.major }}"
+              TAGS="$TAGS,${GHCR_IMAGE}:${{ needs.setup.outputs.major }}.${{ needs.setup.outputs.minor }}"
+              DH_TAGS="$DH_TAGS,${DOCKER_IMAGE}:latest"
+              DH_TAGS="$DH_TAGS,${DOCKER_IMAGE}:${{ needs.setup.outputs.major }}"
+              DH_TAGS="$DH_TAGS,${DOCKER_IMAGE}:${{ needs.setup.outputs.major }}.${{ needs.setup.outputs.minor }}"
+            fi
+          fi
+
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAGS="$TAGS,${GHCR_IMAGE}:sha-${GITHUB_SHA::8}"
+            DH_TAGS="$DH_TAGS,${DOCKER_IMAGE}:sha-${GITHUB_SHA::8}"
+          fi
+
+          if [[ "${{ env.DOCKERHUB_PUSH }}" ]]; then
+            TAGS="$TAGS,${DH_TAGS}"
+          fi
+
+          echo ::set-output name=tags::${TAGS}
+          echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+          echo ${{ github.event.repository.license }}
+
+      - name: Login to DockerHub
+        if: ${{ env.DOCKERHUB_PUSH && github.event_name != 'pull_request' }}
+        uses: docker/login-action@v1.9.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1.9.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push images
+        uses: docker/build-push-action@v2.4.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/Dockerfile
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.prepare.outputs.tags }}
+          build-args: |
+            VERSION=${{ steps.prepare.outputs.version }}
+            BUILD_DATE=${{ steps.prepare.outputs.created }}
+            GIT_REF=${{ github.sha }}
+            SERVICE=${{ matrix.service }}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.service }}
+            org.opencontainers.image.url=${{ github.event.repository.html_url }}
+            org.opencontainers.image.source=${{ github.event.repository.clone_url }}
+            org.opencontainers.image.version=${{ needs.setup.outputs.version }}
+            org.opencontainers.image.created=${{ steps.prepare.outputs.created }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.licenses=${{ github.event.repository.license.spdx_id }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache

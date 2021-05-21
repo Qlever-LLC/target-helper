@@ -1,13 +1,14 @@
 services:
   target-helper:
+    image: ghcr.io/qlever-llc/target-helper
     build:
       context: .
     restart: unless-stopped
-    volumes:
-      - .:/code/target-helper
     environment:
       NODE_TLS_REJECT_UNAUTHORIZED:
       NODE_ENV: ${NODE_ENV:-development}
       DEBUG: ${DEBUG:-target-helper:info,*warn*,*error*}
-      domain:
-      token:
+      # Connect to host if DOMAIN not set.
+      # You should really not rely on this though. Set DOMAIN.
+      DOMAIN: ${DOMAIN:-host.docker.internal}
+      TOKEN:
