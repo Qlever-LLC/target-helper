@@ -12,9 +12,9 @@ const info = debug('target-helper:info');
 const trace = debug('target-helper:trace');
 
 const tokens = config.get('oada.token');
-let domain = config.get('oada.domain') || '';
+let domain = config.get('oada.domain');
 if (domain.match(/^http/)) {
-  domain = domain.replace(/^https:\/\//, '');
+  domain = domain.replace(/^https?:\/\//, '');
 }
 
 if (domain === 'localhost' || domain === 'proxy') {

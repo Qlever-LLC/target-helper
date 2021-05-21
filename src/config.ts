@@ -35,13 +35,13 @@ const config = convict({
       doc: 'Timeout duration for PDF jobs',
       format: 'duration',
       // The types for duration suck
-      default: ('1h' as unknown) as number,
+      default: '1h' as unknown as number,
     },
     asn: {
       doc: 'Timeout duration for ASN jobs',
       format: 'duration',
       // The types for duration suck
-      default: ('1h' as unknown) as number,
+      default: '1h' as unknown as number,
     },
   },
   slack: {

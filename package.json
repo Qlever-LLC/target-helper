@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@oada/client": "^2.4.1",
-    "@oada/jobs": "^2.0.3",
+    "@oada/jobs": "^2.0.4",
     "@oada/list-lib": "^2.1.6",
     "@oada/types": "^1.5.1",
     "@overleaf/o-error": "^3.3.1",

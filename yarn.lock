@@ -51,20 +51,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/client@npm:^1.1.3":
-  version: 1.1.4
-  resolution: "@oada/client@npm:1.1.4"
-  dependencies:
-    "@oada/types": ^1.0.6
-    debug: ^4.1.1
-    isomorphic-ws: ^4.0.1
-    ksuid: ^1.2.0
-    p-queue: ^6.4.0
-    ws: ^7.2.3
-  checksum: 60806cbddd134291fd1572f39bd9e54fdeb98a0f189e286f135827ee6ad838fc45cf0e0b460ce42ba05dabb133ebce60f4365fe717d2a7139bc356b1db0bf7e7
-  languageName: node
-  linkType: hard
-
 "@oada/client@npm:^2.3.0, @oada/client@npm:^2.4.1":
   version: 2.4.1
   resolution: "@oada/client@npm:2.4.1"
@@ -82,27 +68,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/jobs@npm:^2.0.3":
-  version: 2.0.3
-  resolution: "@oada/jobs@npm:2.0.3"
+"@oada/jobs@npm:^2.0.4":
+  version: 2.0.4
+  resolution: "@oada/jobs@npm:2.0.4"
   dependencies:
-    "@oada/client": ^1.1.3
-    "@oada/types": ^1.0.10
+    "@oada/client": ^2.4.1
+    "@oada/types": ^1.5.1
     "@sindresorhus/is": ^2.1.1
-    "@types/bluebird": ^3.5.31
+    "@types/bluebird": ^3.5.35
     bluebird: ^3.7.2
-    chalk: ^4.1.0
+    chalk: ^4.1.1
     color-json: ^2.0.1
-    debug: ^4.1.1
-    ksuid: ^1.2.0
+    debug: ^4.3.2
     minimist: ^1.2.5
-    moment: ^2.25.3
-    p-queue: ^6.3.0
+    moment: ^2.29.1
     p-timeout: ^3.2.0
-    tiny-json-http: ^7.1.2
+    tiny-json-http: ^7.3.0
+    tslib: ^2.2.0
   bin:
-    oada-jobs: src/cli.mjs
-  checksum: ee9d6982c2a615c95679586aff05023d21206a049566c634b5c68bc812ad3aca2208bd6b7eae22f815234a78933818dea01c797694961045e0471d1d0a60da6c
+    oada-jobs: ./src/cli.mjs
+  checksum: d234009d08f564f4d90d0f897784289c88090b1299575c7f608e0dbdb6582e0ded4181dd549a12f74f714c71e51edfdc3ea1d31b716841b82076884132fd1c79
   languageName: node
   linkType: hard
 
@@ -144,7 +129,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/types@npm:^1.0.10, @oada/types@npm:^1.0.6, @oada/types@npm:^1.2.0, @oada/types@npm:^1.5.1":
+"@oada/types@npm:^1.2.0, @oada/types@npm:^1.5.1":
   version: 1.5.1
   resolution: "@oada/types@npm:1.5.1"
   dependencies:
@@ -215,7 +200,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/bluebird@npm:^3.5.31, @types/bluebird@npm:^3.5.35":
+"@types/bluebird@npm:^3.5.35":
   version: 3.5.35
   resolution: "@types/bluebird@npm:3.5.35"
   checksum: cfad2f2de7f3bbd0dd93f991de8d1b128778b5dc82ceb64158a83d159a5d14f5a4e592f75c7b196c714920e5063dc3d2d1bfd7e2dd1404698edad5ce2d5d7b8c
@@ -939,13 +924,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chalk@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "chalk@npm:4.1.0"
+"chalk@npm:^4.1.1":
+  version: 4.1.1
+  resolution: "chalk@npm:4.1.1"
   dependencies:
     ansi-styles: ^4.1.0
     supports-color: ^7.1.0
-  checksum: f860285b419f9e925c2db0f45ffa88aa8794c14b80cc5d01ff30930bcfc384996606362706f0829cf557f6d36152a5fb2d227ad63c4bc90e2ec9e9dbed4a3c07
+  checksum: 445c12db7aeed0046500a1e4184d31209a77d165654c885a789c41c8598a6a95bd2392180987cac572c967b93a2a730dda778bb7f87fa06ca63fd8592f8cc59f
   languageName: node
   linkType: hard
 
@@ -2598,7 +2583,7 @@ fsevents@~2.1.1:
   languageName: node
   linkType: hard
 
-"moment@npm:^2.24.0, moment@npm:^2.25.3, moment@npm:^2.29.1":
+"moment@npm:^2.24.0, moment@npm:^2.29.1":
   version: 2.29.1
   resolution: "moment@npm:2.29.1"
   checksum: 86729013febf7160de5b93da69273dd304d674b0224f9544b3abd09a87671ddd2cdd57598261ce57588910d63747ffd5590965e83c790d8bf327083c0e0a06e0
@@ -2873,7 +2858,7 @@ fsevents@~2.1.1:
   languageName: node
   linkType: hard
 
-"p-queue@npm:^6.3.0, p-queue@npm:^6.4.0, p-queue@npm:^6.6.2":
+"p-queue@npm:^6.4.0, p-queue@npm:^6.6.2":
   version: 6.6.2
   resolution: "p-queue@npm:6.6.2"
   dependencies:
@@ -3654,7 +3639,7 @@ fsevents@~2.1.1:
   resolution: "target-helper@workspace:."
   dependencies:
     "@oada/client": ^2.4.1
-    "@oada/jobs": ^2.0.3
+    "@oada/jobs": ^2.0.4
     "@oada/list-lib": ^2.1.6
     "@oada/types": ^1.5.1
     "@overleaf/o-error": ^3.3.1
@@ -3704,7 +3689,7 @@ fsevents@~2.1.1:
   languageName: node
   linkType: hard
 
-"tiny-json-http@npm:^7.1.2":
+"tiny-json-http@npm:^7.3.0":
   version: 7.3.0
   resolution: "tiny-json-http@npm:7.3.0"
   checksum: f5c7767b7bb8ccd11489d4d1a762514716c022570d1fd3050e5b6d601895d15cef60e945d4d79c9c8bb22c02896adae5075672e64f070aaa6868270fb00297b8

@@ -604,7 +604,7 @@ export async function startJobCreator({
     const con = await connect({ domain, token });
 
     const tp_exists = await con
-      .get({ path: `/bookmarks/trellisfw/trading-partners` })
+      .head({ path: `/bookmarks/trellisfw/trading-partners` })
       .catch((e) => e);
     if (tp_exists.status !== 200) {
       info(
@@ -636,14 +636,21 @@ export async function startJobCreator({
           onAddItem: documentAdded(tp),
         });
         */
+        const path = `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`;
 
-        trace(
-          'Starting listwatch on /bookmarks/trellisfw/trading-partners/%s/shared/trellisfw/documents',
-          tp
-        );
+        trace('Starting listwatch on %s', path);
+        const tp_exists = await con.head({ path }).catch((e) => e);
+        if (tp_exists.status !== 200) {
+          info('%s does not exist, creating....', path);
+          await con.put({
+            path,
+            data: {},
+            tree,
+          });
+        }
 
         new ListWatch({
-          path: `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`,
+          path,
           name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
           onNewList: ListWatch.AssumeHandled,
           conn: con,
@@ -735,7 +742,7 @@ export async function startJobCreator({
             });
           trace('Posted new PDF document to target task queue');
         } catch (err) {
-          console.log(err);
+          error(err);
         }
       };
     }
