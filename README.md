@@ -1,7 +1,9 @@
 # target-helper
 
+<!--
 [![License](https://img.shields.io/github/license/Qlever-LLC/target-helper)](LICENSE)
 [![Docker Pulls](https://img.shields.io/docker/pulls/Qlever-LLC/target-helper)][dockerhub]
+-->
 
 A microservice to simplify Target interaction with Trellis. Target will:
 
