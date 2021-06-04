@@ -113,9 +113,9 @@ jobs:
         id: cache
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}-${{ matrix.service }}
+          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-${{ github.sha }}-
+            ${{ runner.os }}-buildx-${{ matrix.service }}-
             ${{ runner.os }}-buildx-
 
       - name: Prepare Tags
