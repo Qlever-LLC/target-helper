@@ -1,10 +1,9 @@
 {
-  "name": "target-helper",
-  "private": true,
-  "version": "0.2.0",
+  "name": "@qlever-llc/target-helper",
+  "version": "1.0.0",
   "description": "A Trellis microservice to fill in around Target integration",
   "author": "Andrew Balmos <andrew@qlever.io>",
-  "license": "None",
+  "license": "Apache-2.0",
   "repository": "https://github.com/Qlever-LLC/target-helper",
   "main": "dist/index.js",
   "scripts": {

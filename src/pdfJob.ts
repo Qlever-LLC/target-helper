@@ -1,3 +1,18 @@
+/* Copyright 2021 Qlever LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the 'License');
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an 'AS IS' BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { readFileSync } from 'fs';
 
 import moment from 'moment';
@@ -164,7 +179,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             await signResourceForTarget({
               _id: obj._id,
               // Hack because jobs is on ancient client version
-              oada: oada as unknown as OADAClient,
+              oada: (oada as unknown) as OADAClient,
               log,
             });
             return;
@@ -251,9 +266,9 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               doc,
               doc._id
             );
-            const { data: lookups } = (await oada.get({
+            const { data: lookups } = ((await oada.get({
               path: `/${doc._id}/_meta/lookups`,
-            })) as unknown as {
+            })) as unknown) as {
               // TODO: WTF is a lookup??
               data: Record<string, Record<string, { _ref: string }>>;
             };
@@ -269,9 +284,9 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 pushSharesForFacility({ facilityid, doc, dockey, shares });
                 break;
               case 'cois':
-                const { data: holder } = (await oada.get({
+                const { data: holder } = ((await oada.get({
                   path: `/${lookups.coi!.holder!._ref}`,
-                })) as unknown as {
+                })) as unknown) as {
                   data: { 'trading-partners': Record<string, { _id: string }> };
                 };
                 trace('Retrieved holder %O', holder);
@@ -285,16 +300,16 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 }
                 break;
               case 'letters-of-guarantee':
-                const { data: buyer } = (await oada.get({
+                const { data: buyer } = ((await oada.get({
                   path: `/${lookups['letter-of-guarantee']!.buyer!._ref}`,
-                })) as unknown as {
+                })) as unknown) as {
                   data: { 'trading-partners': Record<string, { _id: string }> };
                 };
                 trace('Retrieved buyer %O', buyer);
                 for (const tplink of Object.values(buyer['trading-partners'])) {
-                  const { data: tp } = (await oada.get({
+                  const { data: tp } = ((await oada.get({
                     path: `/${tplink._id}`,
-                  })) as unknown as { data: { _id: string } };
+                  })) as unknown) as { data: { _id: string } };
                   shares.push({ tp, doc, dockey });
                 }
 
@@ -505,8 +520,13 @@ async function signResourceForTarget({
       if (!res.signatures) {
         return false;
       }
-      const { trusted, valid, unchanged, payload, original } =
-        await tsig.verify(res);
+      const {
+        trusted,
+        valid,
+        unchanged,
+        payload,
+        original,
+      } = await tsig.verify(res);
       trace(
         '#signResourceForTarget: Checked for signature, got back trusted %s valid %s unchanged %s payload %O',
         trusted,
