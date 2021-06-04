@@ -7,7 +7,7 @@ on:
 env:
   # Set to true to push images to DockerHub
   # NB: images are public unless you configure DockerHub repo properly
-  DOCKERHUB_PUSH:
+  DOCKERHUB_PUSH: true
 
 jobs:
   setup:
