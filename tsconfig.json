@@ -1,5 +1,5 @@
 {
-  "extends": "@tsconfig/node14",
+  "extends": "@tsconfig/node16",
   "compilerOptions": {
     "removeComments": true,
     "importHelpers": true,
@@ -10,6 +10,7 @@
     "noUnusedParameters": true,
     "noImplicitThis": true,
     "noImplicitAny": true,
+    "noImplicitOverride": true,
     "sourceMap": true,
     "rootDir": "src",
     "outDir": "dist"
