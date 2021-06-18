@@ -12,6 +12,7 @@ COPY ./package.json ./yarn.lock ./.yarnrc.yml /$SERVICE/
 RUN yarn workspaces focus --all --production
 
 FROM install AS build
+ARG SERVICE
 
 # Install dev deps too
 RUN yarn install --immutable
