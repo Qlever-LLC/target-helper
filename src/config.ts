@@ -47,12 +47,16 @@ const config = convict({
       format: 'duration',
       // The types for duration suck
       default: ('1h' as unknown) as number,
+      env: 'PDF_TIMEOUT',
+      arg: 'pdf-timeout',
     },
     asn: {
       doc: 'Timeout duration for ASN jobs',
       format: 'duration',
       // The types for duration suck
       default: ('1h' as unknown) as number,
+      env: 'ASN_TIMEOUT',
+      arg: 'asn-timeout',
     },
   },
   slack: {
@@ -60,29 +64,44 @@ const config = convict({
       format: 'url',
       // use a real slack webhook URL
       default: 'https://localhost',
+      env: 'SLACK_WEBHOOK',
+      arg: 'slack-webhook',
     },
   },
   signing: {
     signatureType: {
       format: String,
       default: 'transcription',
+      env: 'SIGNATURE_TYPE',
+      arg: 'signature-type',
     },
     privateJWK: {
       format: String,
       default: './keys/private_key.jwk',
+      env: 'SIGNATURE_JWK',
+      arg: 'signature-jwk',
     },
     signer: {
       name: {
         format: String,
         default: 'Test signer',
+        env: 'SIGNER_NAME',
+        arg: 'signer-name',
       },
       url: {
         format: 'url',
         default: 'https://oatscenter.org',
+        env: 'SIGNER_URL',
+        arg: 'signer-ul',
       },
     },
   },
-  tradingPartnersEnabled: true,
+  tradingPartnersEnabled: {
+    format: Boolean,
+    default: true,
+    env: 'ENABLE_TRADING_PARTNERS',
+    arg: 'enable-trading-partners',
+  },
 });
 
 config.validate({ allowed: 'warn' });
