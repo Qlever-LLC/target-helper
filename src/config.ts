@@ -46,7 +46,7 @@ const config = convict({
       doc: 'Timeout duration for PDF jobs',
       format: 'duration',
       // The types for duration suck
-      default: ('1h' as unknown) as number,
+      default: (3600000 as unknown) as number,
       env: 'PDF_TIMEOUT',
       arg: 'pdf-timeout',
     },
@@ -54,7 +54,7 @@ const config = convict({
       doc: 'Timeout duration for ASN jobs',
       format: 'duration',
       // The types for duration suck
-      default: ('1h' as unknown) as number,
+      default: (3600000 as unknown) as number,
       env: 'ASN_TIMEOUT',
       arg: 'asn-timeout',
     },

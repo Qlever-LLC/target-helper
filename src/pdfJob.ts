@@ -103,7 +103,11 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           'Target returned success, target-helper picking up'
         );
         // turn off watches so our own updates don't keep coming to us
-        await unwatch();
+        try {
+          await unwatch();
+        } catch(err) {
+          if (err.message !== 'Could not find watch state information.') throw err;
+        }
         // Get the latest copy of job
         const { data: job } = await oada.get({ path: `/resources/${jobId}` });
         assertJob(job);
@@ -621,7 +625,7 @@ export async function startJobCreator({
   token: string;
 }) {
   try {
-    const con = await connect({ domain, token });
+    const con = await connect({ domain, connection: 'http', token });
 
     const tp_exists = await con
       .head({ path: `/bookmarks/trellisfw/trading-partners` })

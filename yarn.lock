@@ -51,20 +51,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/client@npm:^2.3.0, @oada/client@npm:^2.4.1, @oada/client@npm:^2.4.2":
-  version: 2.4.2
-  resolution: "@oada/client@npm:2.4.2"
+"@oada/client@npm:^2.3.0, @oada/client@npm:^2.4.1, @oada/client@npm:^2.4.6":
+  version: 2.4.6
+  resolution: "@oada/client@npm:2.4.6"
   dependencies:
     "@oada/types": ^1.2.0
     cross-fetch: ^3.0.6
     debug: ^4.1.1
+    deep-clone: ^3.0.3
     fetch-h2: ^2.5.1
     isomorphic-ws: ^4.0.1
     ksuid: ^1.2.0
     p-queue: ^6.4.0
     reconnecting-websocket: ^4.4.0
     ws: ^7.2.3
-  checksum: 885a49acf8f4071e0ab7e6280380eb96ca288abe6fbfad48eaba1ec33a2e2acedd9036c216b3ece8994b3f533346e3411345936043c701e0e3e4602c4ac5061a
+  checksum: a066bd0529350c91a5321647b549086d3f2bd9878d23e501c75dad9bf705af9040bfe147f5023d8131de621245dc0fa95ba1d52fe22a7def3ea971b67445d8b8
   languageName: node
   linkType: hard
 
@@ -153,7 +154,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@qlever-llc/target-helper@workspace:."
   dependencies:
-    "@oada/client": ^2.4.2
+    "@oada/client": ^2.4.6
     "@oada/jobs": ^2.0.4
     "@oada/list-lib": ^2.1.6
     "@oada/types": ^1.5.1
@@ -167,6 +168,7 @@ __metadata:
     "@types/lodash": ^4.14.170
     "@types/node": ^14.17.3
     "@yarnpkg/pnpify": ^3.0.0-rc.6
+    axios: ^0.21.1
     bluebird: ^3.7.2
     chai: ^4.3.4
     chai-as-promised: ^7.1.1
@@ -765,6 +767,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axios@npm:^0.21.1":
+  version: 0.21.1
+  resolution: "axios@npm:0.21.1"
+  dependencies:
+    follow-redirects: ^1.10.0
+  checksum: 864fb7b5d077d236737f10adca53bf451a93f35a15271f56fba8da07265a02d26b7d881b935a6697dc6adb0549ea3e56d2eecb403edaa3bb78f6479901c10f69
+  languageName: node
+  linkType: hard
+
 "balanced-match@npm:^1.0.0":
   version: 1.0.0
   resolution: "balanced-match@npm:1.0.0"
@@ -1264,6 +1275,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"deep-clone@npm:^3.0.3":
+  version: 3.0.3
+  resolution: "deep-clone@npm:3.0.3"
+  checksum: 254e32304810373389f678402a7e2f517897e1e83a1610965557505382cc8f9efdaa642bdd2394aef52ff6a57ba8b56ba4509cd9d31fe1ae2a092e33077e9131
+  languageName: node
+  linkType: hard
+
 "deep-eql@npm:^3.0.1":
   version: 3.0.1
   resolution: "deep-eql@npm:3.0.1"
@@ -1582,6 +1600,16 @@ __metadata:
   bin:
     flat: cli.js
   checksum: 549b3012e9c8e90da9eab25c283443a39a6c5b0a35a6d382827e4bfc5e88161d1dac5faf667f6255571a42edc58e679b432a1452b9bdbd7ab16718a740bef556
+  languageName: node
+  linkType: hard
+
+"follow-redirects@npm:^1.10.0":
+  version: 1.14.1
+  resolution: "follow-redirects@npm:1.14.1"
+  peerDependenciesMeta:
+    debug:
+      optional: true
+  checksum: 761a18699688b19d66b3e9199ecaf9cd39ede953f3529299c7fca4190b27b855c17c491170977844d5db5e169ffc35ebae999bb0833e9c9c61988d19c20ae7ab
   languageName: node
   linkType: hard
 
