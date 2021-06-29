@@ -55,7 +55,11 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           'Target returned success, target-helper posting main success status'
         );
         // turn off watches so our own updates don't keep coming to us
-        await unwatch();
+        try {
+          await unwatch();
+        } catch(err) {
+          if (err.message !== 'Could not find watch state information.') throw err;
+        }
 
         log.info('done', 'Completed all helper tasks');
         return resolve(job.result as any);
