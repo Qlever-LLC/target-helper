@@ -112,42 +112,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         const { data: job } = await oada.get({ path: `/resources/${jobId}` });
         assertJob(job);
 
-        // ------------- 1: cross link vdoc for pdf <-> audits,cois,lettters,etc.
-        log.info(
-          'link-refs-pdf',
-          'helper: linking result _refs under <pdf>/_meta/vdoc'
-        );
         const pdfid = (job.config?.pdf as { _id?: string })?._id;
-        function recursiveReplaceLinksWithRefs(obj: any) {
-          if (!obj || typeof obj !== 'object') {
-            return obj;
-          }
-          if (obj._id) {
-            return { _ref: obj._id };
-          }
-          return _.reduce<any, Record<string, any>>(
-            obj,
-            (acc, _v, k) => {
-              acc[k] = recursiveReplaceLinksWithRefs(obj[k]);
-              return acc;
-            },
-            {}
-          );
-        }
-        const vdoc = recursiveReplaceLinksWithRefs(job.result);
-        info(
-          "Linking _ref's into pdf/_meta, job.result before: %O, after: %O",
-          job.result,
-          vdoc
-        );
-        await oada.put({
-          path: `/${pdfid}/_meta`,
-          data: {
-            // fsqa-audits { ...links... }, or fsqa-certificates { ...links... }, etc.
-            vdoc,
-          },
-        });
-
         // ------------- 2: Look through all the things in result recursively,
         // if any are links then go there and set _meta/vdoc/pdf
         log.info(
@@ -233,6 +198,43 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             tree,
           });
         }
+
+        // ------------- 1: cross link vdoc for pdf <-> audits,cois,lettters,etc.
+        log.info(
+          'link-refs-pdf',
+          'helper: linking result _refs under <pdf>/_meta/vdoc'
+        );
+        function recursiveReplaceLinksWithRefs(obj: any) {
+          if (!obj || typeof obj !== 'object') {
+            return obj;
+          }
+          if (obj._id) {
+            return { _ref: obj._id };
+          }
+          return _.reduce<any, Record<string, any>>(
+            obj,
+            (acc, _v, k) => {
+              acc[k] = recursiveReplaceLinksWithRefs(obj[k]);
+              return acc;
+            },
+            {}
+          );
+        }
+        const vdoc = recursiveReplaceLinksWithRefs(job.result);
+        info(
+          "Linking _ref's into pdf/_meta, job.result before: %O, after: %O",
+          job.result,
+          vdoc
+        );
+        await oada.put({
+          path: `/${pdfid}/_meta`,
+          data: {
+            // fsqa-audits { ...links... }, or fsqa-certificates { ...links... }, etc.
+            vdoc,
+          },
+        });
+
+
 
         // -------------- 5: delete link from /bookmarks/trellisfw/documents now that it is identified
         if (job.config?.documentsKey) {
