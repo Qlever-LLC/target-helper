@@ -646,22 +646,13 @@ export async function startJobCreator({
     const tradingPartnersEnabled = config.get('tradingPartnersEnabled');
     trace('Trading partners enabled %s', tradingPartnersEnabled);
     if (tradingPartnersEnabled) {
-      for (const tp of ['601af61b53b391000e4a7a3e']) {
-        //      await Promise.each(Object.keys(tp_exists.data), async (tp) => {
+//      for (const tp of ['601af61b53b391000e4a7a3e']) {
+      for (const tp in tp_exists.data) {
         if (tp.charAt(0) === '_') {
           return;
         }
 
         const func = documentAdded(tp);
-        /*
-        const tp_watch = new ListWatch({
-          path: `/bookmarks/trellisfw/trading-partners/${tp}/bookmarks/trellisfw/documents`,
-          name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
-          conn: con,
-          resume: true,
-          onAddItem: documentAdded(tp),
-        });
-        */
         const path = `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`;
 
         trace('Starting listwatch on %s', path);
