@@ -50,6 +50,7 @@ if (prvKey.kid) {
 }
 const signer = config.get('signing.signer');
 const signatureType = config.get('signing.signatureType');
+const tradingPartnersEnabled = config.get('tradingPartnersEnabled');
 
 // Will fill in expandIndex on first job to handle
 let expandIndex: {
@@ -627,10 +628,10 @@ export async function startJobCreator({
   token: string;
 }) {
   try {
-    const con = await connect({ domain, connection: 'http', token });
+    const con = await connect({ domain, connection: 'http', token, concurrency: 20 });
 
-    const tp_exists = await con
-      .head({ path: `/bookmarks/trellisfw/trading-partners` })
+    let tp_exists = await con
+      .get({ path: `/bookmarks/trellisfw/trading-partners` })
       .catch((e) => e);
     if (tp_exists.status !== 200) {
       info(
@@ -641,23 +642,28 @@ export async function startJobCreator({
         data: {},
         tree,
       });
+      tp_exists = {data: {}}
     }
 
-    const tradingPartnersEnabled = config.get('tradingPartnersEnabled');
     trace('Trading partners enabled %s', tradingPartnersEnabled);
     if (tradingPartnersEnabled) {
-//      for (const tp of ['601af61b53b391000e4a7a3e']) {
-      for (const tp in tp_exists.data) {
-        if (tp.charAt(0) === '_') {
+      new ListWatch({
+        path: `/bookmarks/trellisfw/trading-partners`,
+        name: `target-helper-trading-partners`,
+        onNewList: ListWatch.AssumeHandled,
+        conn: con,
+        resume: true,
+        onAddItem: watchTp,
+      })
+
+      await Promise.all(Object.keys(tp_exists.data).map(async key => {
+        if (key.charAt(0) === '_') {
           return;
         }
-
-        const func = documentAdded(tp);
-        const path = `/bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`;
-
+        const path = `/bookmarks/trellisfw/trading-partners/${key}/shared/trellisfw/documents`;
         trace('Starting listwatch on %s', path);
-        const tp_exists = await con.head({ path }).catch((e) => e);
-        if (tp_exists.status !== 200) {
+        const tp_exist = await con.get({ path }).catch((e) => e);
+        if (tp_exist.status !== 200) {
           info('%s does not exist, creating....', path);
           await con.put({
             path,
@@ -666,15 +672,16 @@ export async function startJobCreator({
           });
         }
 
+        const func = documentAdded(key);
         new ListWatch({
           path,
-          name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
+          name: `target-helper-tp-docs`,
           onNewList: ListWatch.AssumeHandled,
           conn: con,
           resume: true,
           onAddItem: func,
         });
-      }
+      }))
     }
 
     // ensure the documents endpoint exists because Target is an enabler of that endpoint
@@ -696,6 +703,32 @@ export async function startJobCreator({
       onNewList: ListWatch.AssumeHandled,
       onAddItem: func,
     });
+
+    async function watchTp(item: { _id: string }, key: string) {
+      key = key.replace(/^\//, '');
+      info(`watchTp item ${item}`);
+      info(`New trading partner detected at key: [${key}]`);
+      const path = `/bookmarks/trellisfw/trading-partners/${key}/shared/trellisfw/documents`;
+      trace('Starting listwatch on %s', path);
+      const tp_exist = await con.get({ path }).catch((e) => e);
+      if (tp_exist.status !== 200) {
+        info('%s does not exist, creating....', path);
+        await con.put({
+          path,
+          data: {},
+          tree,
+        });
+      }
+      const func = documentAdded(key);
+      new ListWatch({
+        path,
+        name: `target-helper-tp-docs`,
+        onNewList: ListWatch.AssumeHandled,
+        conn: con,
+        resume: true,
+        onAddItem: func,
+      });
+    }
 
     function documentAdded(tp?: string) {
       return async function (item: { _id: string }, key: string) {

@@ -1,6 +1,6 @@
 {
   "name": "@qlever-llc/target-helper",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "A Trellis microservice to fill in around Target integration",
   "author": "Andrew Balmos <andrew@qlever.io>",
   "license": "Apache-2.0",
@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@tsconfig/node16": "^1.0.1",
-    "@types/bluebird": "^3.5.35",
+    "@types/bluebird": "^3.5.36",
     "@types/convict": "^6.0.2",
     "@types/convict-format-with-validator": "^6.0.2",
     "@types/debug": "^4.1.5",
@@ -53,5 +53,8 @@
     "prettier": "^2.3.1",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.4"
+  },
+  "resolutions": {
+    "@oada/client": "portal:/home/sanoel/client"
   }
 }
