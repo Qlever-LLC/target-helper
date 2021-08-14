@@ -740,6 +740,7 @@ export async function startJobCreator({
           key = key.replace(/^\//, '');
           info('New Document posted at key = %s', key);
           // Get the _id for the actual PDF
+          /* instead of POSTing, it now just PUTs with a known _id
           const docid = await con
             .get({
               path: tp
@@ -750,6 +751,7 @@ export async function startJobCreator({
             // then get the link for this key in order to figure out the _id at the moment.
             .then((r) => (r.data as any)[key])
             .then((l) => l?._id ?? false);
+           */
 
           const jobkey = await con
             .post({
@@ -761,7 +763,7 @@ export async function startJobCreator({
                 'service': 'target',
                 'config': {
                   type: 'pdf',
-                  pdf: { _id: docid },
+                  pdf: { _id: key },
                   documentsKey: key,
                 },
               } as any,
