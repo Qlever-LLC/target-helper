@@ -40,6 +40,13 @@ const config = convict({
       env: 'TOKEN',
       arg: 'token',
     },
+    concurrency: {
+      doc: 'OADA client concurrency',
+      format: Number,
+      default: 1,
+      env: 'CONCURRENCY',
+      arg: 'concurrency'
+    },
   },
   timeouts: {
     pdf: {

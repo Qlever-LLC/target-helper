@@ -94,8 +94,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           if (c.type !== 'merge') {
             return false; // delete
           }
-          // @ts-ignore
-          const { updates } = c.body ?? {};
+          const { updates } = (c.body ?? {}) as {updates?:Record<string,Update>};
           if (!updates) {
             return false; // not an update from target
           }
@@ -141,7 +140,13 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         });
         return data;
       };
-      jobChange({ path: '', body: await watch(), type: 'merge' }); // initially just the original job is the "body" for a synthetic change
+      const w = await watch() as Change['body'];
+      if (Buffer.isBuffer(w)) throw new Error('body is a buffer, cannot call jobChange');
+      jobChange({ 
+        path: '', 
+        body: w!, 
+        type: 'merge'
+      }); // initially just the original job is the "body" for a synthetic change
     } catch (e) {
       reject(e);
     } // have to actually reject the promise

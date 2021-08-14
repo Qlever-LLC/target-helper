@@ -19,10 +19,12 @@ import moment from 'moment';
 import _ from 'lodash';
 import debug from 'debug';
 import oerror from '@overleaf/o-error';
+import {Promise as bPromise} from 'bluebird';
 
 import { Change, connect, OADAClient } from '@oada/client';
 import type { WorkerFunction, Logger } from '@oada/jobs';
 import { assert as assertJob } from '@oada/types/oada/service/job';
+import type { Jobs } from '@oada/types/oada/service/jobs';
 import type Update from '@oada/types/oada/service/job/update';
 import { ListWatch } from '@oada/list-lib';
 // @ts-ignore too lazy to figure out types
@@ -51,6 +53,7 @@ if (prvKey.kid) {
 const signer = config.get('signing.signer');
 const signatureType = config.get('signing.signatureType');
 const tradingPartnersEnabled = config.get('tradingPartnersEnabled');
+const CONCURRENCY = config.get('oada.concurrency');
 
 // Will fill in expandIndex on first job to handle
 let expandIndex: {
@@ -66,6 +69,8 @@ type Shares = Array<{
   doc: { _id: string };
   tp: { _id: string };
 }>;
+
+
 
 //------------------------------------------------------------------------------------------------------------
 // - receive the job from oada-jobs
@@ -369,7 +374,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                     },
                     doctype, // fsqa-audits, cois, fsqa-certificates, letters-of-guarantee
                     dest: `/bookmarks/trellisfw/${doctype}/${dockey}`, // this doubles-up bookmarks, but I think it's the most understandable to look at
-                    user, // { id, bookmarks }
+                    user: user as any, // { id, bookmarks }
                     chroot: `/bookmarks/trellisfw/trading-partners/${tpkey}/user/bookmarks`,
                     tree: treeForDocType(doctype),
                   },
@@ -403,8 +408,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           if (c.type !== 'merge') {
             return false; // delete
           }
-          // @ts-ignore
-          const { updates } = c.body ?? {};
+          const { updates } = (c.body ?? {}) as {updates?: Record<string,Update>};
           if (!updates) {
             return false; // not an update from target
           }
@@ -462,9 +466,11 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         return data;
       };
       // initially just the original job is the "body" for a synthetic change
+      const w = await watch() as Change['body'];
+      if (Buffer.isBuffer(w)) throw new Error('body is a buffer, cannot call jobChange')
       jobChange({
         path: '',
-        body: await watch(),
+        body: w!,
         type: 'merge',
       });
     } catch (e) {
@@ -628,7 +634,11 @@ export async function startJobCreator({
   token: string;
 }) {
   try {
-    const con = await connect({ domain, connection: 'http', token, concurrency: 20 });
+    info(`Connecting to client with concurrency ${CONCURRENCY}`);
+    const con = await connect({ domain, token, concurrency: CONCURRENCY });
+
+    await cleanupBrokenLinks();
+    setInterval(cleanupBrokenLinks, 600000);
 
     let tp_exists = await con
       .get({ path: `/bookmarks/trellisfw/trading-partners` })
@@ -650,38 +660,10 @@ export async function startJobCreator({
       new ListWatch({
         path: `/bookmarks/trellisfw/trading-partners`,
         name: `target-helper-trading-partners`,
-        onNewList: ListWatch.AssumeHandled,
         conn: con,
-        resume: true,
+        resume: false,
         onAddItem: watchTp,
       })
-
-      await Promise.all(Object.keys(tp_exists.data).map(async key => {
-        if (key.charAt(0) === '_') {
-          return;
-        }
-        const path = `/bookmarks/trellisfw/trading-partners/${key}/shared/trellisfw/documents`;
-        trace('Starting listwatch on %s', path);
-        const tp_exist = await con.get({ path }).catch((e) => e);
-        if (tp_exist.status !== 200) {
-          info('%s does not exist, creating....', path);
-          await con.put({
-            path,
-            data: {},
-            tree,
-          });
-        }
-
-        const func = documentAdded(key);
-        new ListWatch({
-          path,
-          name: `target-helper-tp-docs`,
-          onNewList: ListWatch.AssumeHandled,
-          conn: con,
-          resume: true,
-          onAddItem: func,
-        });
-      }))
     }
 
     // ensure the documents endpoint exists because Target is an enabler of that endpoint
@@ -697,20 +679,41 @@ export async function startJobCreator({
     const func = documentAdded();
     new ListWatch({
       path: `/bookmarks/trellisfw/documents`,
-      name: `TARGET-1gSjgwRCu1wqdk8sDAOltmqjL3m`,
+      name: `TARGET-SF-docs`,
       conn: con,
       resume: true,
       onNewList: ListWatch.AssumeHandled,
       onAddItem: func,
     });
 
-    async function watchTp(item: { _id: string }, key: string) {
+    async function cleanupBrokenLinks() {
+      const jobs = (await con.get({
+        path: `/bookmarks/services/target/jobs`,
+      }).then(r => r.data) || {}) as Jobs;
+      let jobids = Object.keys(jobs).filter(key => key.charAt(0) !== '_')
+      let count = 0;
+
+      await bPromise.map(jobids, async (jobid:string) => {
+        let job = jobs[jobid]!;
+
+        if (Object.keys(job).length === 1 && job._rev) {
+          count++;
+          info(`cleaning up broken job /bookmarks/services/target/jobs/${jobid}`)
+          await con.delete({
+            path: `/bookmarks/services/target/jobs/${jobid}`,
+          }).catch(console.log);
+        }
+      })
+      info(`Done cleaning up ${count} target jobs`);
+
+    }
+
+    async function watchTp(_: unknown, key: string) {
       key = key.replace(/^\//, '');
-      info(`watchTp item ${item}`);
       info(`New trading partner detected at key: [${key}]`);
       const path = `/bookmarks/trellisfw/trading-partners/${key}/shared/trellisfw/documents`;
-      trace('Starting listwatch on %s', path);
-      const tp_exist = await con.get({ path }).catch((e) => e);
+      info('Starting listwatch on %s', path);
+      const tp_exist = await con.head({ path }).catch((e) => e);
       if (tp_exist.status !== 200) {
         info('%s does not exist, creating....', path);
         await con.put({
@@ -774,7 +777,6 @@ export async function startJobCreator({
               );
             });
 
-          info('Posted job resource, jobkey = %s', jobkey);
           await con
             .put({
               path: `/bookmarks/services/target/jobs`,
@@ -790,7 +792,7 @@ export async function startJobCreator({
                 jobkey
               );
             });
-          trace('Posted new PDF document to target task queue');
+          info('Posted job resource, jobkey = %s', jobkey);
         } catch (err) {
           error(err);
         }
@@ -801,3 +803,5 @@ export async function startJobCreator({
     throw e;
   }
 }
+
+
