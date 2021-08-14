@@ -701,7 +701,7 @@ export async function startJobCreator({
           info(`cleaning up broken job /bookmarks/services/target/jobs/${jobid}`)
           await con.delete({
             path: `/bookmarks/services/target/jobs/${jobid}`,
-          }).catch(console.log);
+          })
         }
       })
       info(`Done cleaning up ${count} target jobs`);
