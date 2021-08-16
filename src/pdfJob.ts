@@ -54,6 +54,7 @@ const signer = config.get('signing.signer');
 const signatureType = config.get('signing.signatureType');
 const tradingPartnersEnabled = config.get('tradingPartnersEnabled');
 const CONCURRENCY = config.get('oada.concurrency');
+const TP_MPATH = `/bookmarks/trellisfw/trading-partners/masterid-index`;
 
 // Will fill in expandIndex on first job to handle
 let expandIndex: {
@@ -186,7 +187,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           );
         }
         const rootPath = job['trading-partner']
-          ? `/bookmarks/trellisfw/trading-partners/${job['trading-partner']}/shared/trellisfw`
+          ? `${TP_MPATH}/${job['trading-partner']}/shared/trellisfw`
           : `/bookmarks/trellisfw`;
         const versionedResult = recursiveMakeAllLinksVersioned(job.result);
         trace(`all versioned links to bookmarks = `, versionedResult);
@@ -658,7 +659,7 @@ export async function startJobCreator({
     trace('Trading partners enabled %s', tradingPartnersEnabled);
     if (tradingPartnersEnabled) {
       new ListWatch({
-        path: `/bookmarks/trellisfw/trading-partners`,
+        path: TP_MPATH,
         name: `target-helper-trading-partners`,
         conn: con,
         resume: false,
@@ -711,7 +712,7 @@ export async function startJobCreator({
     async function watchTp(_: unknown, key: string) {
       key = key.replace(/^\//, '');
       info(`New trading partner detected at key: [${key}]`);
-      const path = `/bookmarks/trellisfw/trading-partners/${key}/shared/trellisfw/documents`;
+      const path = `${TP_MPATH}/${key}/shared/trellisfw/documents`;
       info('Starting listwatch on %s', path);
       const tp_exist = await con.head({ path }).catch((e) => e);
       if (tp_exist.status !== 200) {
@@ -739,12 +740,13 @@ export async function startJobCreator({
           // bugfix leading slash that sometimes appears in key
           key = key.replace(/^\//, '');
           info('New Document posted at key = %s', key);
+          if (tp) info('New Document posted for tp = %s', tp);
           // Get the _id for the actual PDF
           /* instead of POSTing, it now just PUTs with a known _id
           const docid = await con
             .get({
               path: tp
-                ? `bookmarks/trellisfw/trading-partners/${tp}/shared/trellisfw/documents`
+                ? `${TP_MPATH}/${tp}/shared/trellisfw/documents`
                 : `/bookmarks/trellisfw/documents`,
             })
             // Hack: have to get the whole list,
@@ -752,6 +754,7 @@ export async function startJobCreator({
             .then((r) => (r.data as any)[key])
             .then((l) => l?._id ?? false);
            */
+          const docid = "resources/"+key;
 
           const jobkey = await con
             .post({
@@ -763,7 +766,7 @@ export async function startJobCreator({
                 'service': 'target',
                 'config': {
                   type: 'pdf',
-                  pdf: { _id: key },
+                  pdf: { _id: docid },
                   documentsKey: key,
                 },
               } as any,

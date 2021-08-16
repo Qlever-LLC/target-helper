@@ -53,6 +53,42 @@ export default {
             },
           },
         },
+        "masterid-index": {
+          '_type': 'application/vnd.trellisfw.trading-partners.1+json',
+          '*': {
+            _type: 'application/vnd.trellisfw.trading-partner.1+json',
+            bookmarks: {
+              _type: 'application/vnd.oada.bookmarks.1+json',
+              trellisfw: {
+                '_type': 'application/vnd.trellisfw.1+json',
+                'documents': {
+                  _type: 'application/vnd.trellisfw.documents.1+json',
+                },
+                'fsqa-audits': {
+                  _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
+                },
+                'cois': {
+                  _type: 'application/vnd.trellisfw.cois.1+json',
+                },
+              },
+            },
+            shared: {
+              _type: 'application/vnd.oada.bookmarks.1+json',
+              trellisfw: {
+                '_type': 'application/vnd.trellisfw.1+json',
+                'documents': {
+                  _type: 'application/vnd.trellisfw.documents.1+json',
+                },
+                'fsqa-audits': {
+                  _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
+                },
+                'cois': {
+                  _type: 'application/vnd.trellisfw.cois.1+json',
+                },
+              },
+            },
+          },
+        }
       },
       'documents': {
         _type: 'application/vnd.trellisfw.documents.1+json',
