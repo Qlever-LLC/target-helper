@@ -72,6 +72,7 @@ for (const token of tokens) {
     process.exit(1);
   });
 
+  info("Initializing target-helper service. v1.1.9");
   info('Started pdf and asn job creator processes');
   info('Ready');
 }
