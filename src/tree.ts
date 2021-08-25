@@ -17,7 +17,13 @@ export default {
   bookmarks: {
     _type: 'application/vnd.oada.bookmarks.1+json',
     trellisfw: {
-      '_type': 'application/vnd.trellisfw.1+json',
+      _type: 'application/vnd.trellisfw.1+json',
+      'coi-holders': {
+        _type: 'application/vnd.trellisfw.trading-partners.1+json',
+        'expand-index': {
+          _type: 'application/vnd.trellisfw.trading-partners.1+json',
+        }
+      },
       'trading-partners': {
         '_type': 'application/vnd.trellisfw.trading-partners.1+json',
         '*': {
