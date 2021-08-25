@@ -51,7 +51,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/client@npm:^2.3.0, @oada/client@npm:^2.4.1, @oada/client@npm:^2.6.1":
+"@oada/client@npm:^2.3.0, @oada/client@npm:^2.6.1":
   version: 2.6.1
   resolution: "@oada/client@npm:2.6.1"
   dependencies:
@@ -71,11 +71,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/jobs@npm:^2.0.4":
-  version: 2.0.4
-  resolution: "@oada/jobs@npm:2.0.4"
+"@oada/jobs@npm:^2.0.6":
+  version: 2.0.6
+  resolution: "@oada/jobs@npm:2.0.6"
   dependencies:
-    "@oada/client": ^2.4.1
+    "@oada/client": ^2.6.1
     "@oada/types": ^1.5.1
     "@sindresorhus/is": ^2.1.1
     "@types/bluebird": ^3.5.35
@@ -90,11 +90,11 @@ __metadata:
     tslib: ^2.2.0
   bin:
     oada-jobs: ./src/cli.mjs
-  checksum: d234009d08f564f4d90d0f897784289c88090b1299575c7f608e0dbdb6582e0ded4181dd549a12f74f714c71e51edfdc3ea1d31b716841b82076884132fd1c79
+  checksum: 648678bc71d89d417523f7e47fbcbf22c9c85d6b02f54a5d5d939afd175e5deda451130da8603166b4708e294bc8a1b3dab1f8ff851f92c7b0aadcadb6a9de1c
   languageName: node
   linkType: hard
 
-"@oada/list-lib@npm:^2.1.6":
+"@oada/list-lib@npm:^2.1.9":
   version: 2.1.9
   resolution: "@oada/list-lib@npm:2.1.9"
   dependencies:
@@ -157,8 +157,8 @@ __metadata:
   resolution: "@qlever-llc/target-helper@workspace:."
   dependencies:
     "@oada/client": ^2.6.1
-    "@oada/jobs": ^2.0.4
-    "@oada/list-lib": ^2.1.6
+    "@oada/jobs": ^2.0.6
+    "@oada/list-lib": ^2.1.9
     "@oada/types": ^1.5.1
     "@overleaf/o-error": ^3.3.1
     "@trellisfw/signatures": ^2.1.3

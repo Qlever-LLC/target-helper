@@ -641,20 +641,38 @@ export async function startJobCreator({
     await cleanupBrokenLinks();
     setInterval(cleanupBrokenLinks, 600000);
 
-    let tp_exists = await con
-      .get({ path: `/bookmarks/trellisfw/trading-partners` })
-      .catch((e) => e);
-    if (tp_exists.status !== 200) {
-      info(
-        `/bookmarks/trellisfw/trading-partners does not exist, creating....`
-      );
-      await con.put({
-        path: '/bookmarks/trellisfw/trading-partners',
-        data: {},
-        tree,
+    await con
+      .head({ path: `/bookmarks/trellisfw/trading-partners` })
+      .catch(async (e) => {
+        if (e.status !== 200) {
+          info(`/bookmarks/trellisfw/trading-partners does not exist, creating....`);
+          await con.put({
+            path: '/bookmarks/trellisfw/trading-partners',
+            data: {},
+            tree,
+          })
+        }
       });
-      tp_exists = {data: {}}
-    }
+    
+    await con
+      .head({ path: `/bookmarks/trellisfw/coi-holders` })
+      .catch(async (e) => {
+        if (e.status === 404) {
+          info(`/bookmarks/trellisfw/coi-holders does not exist, creating....`);
+          await con.put({
+            path: '/bookmarks/trellisfw/coi-holders',
+            data: {},
+            tree,
+          })
+
+          await con.put({
+            path: '/bookmarks/trellisfw/coi-holders/expand-index',
+            data: {},
+            tree,
+          })
+        }
+      });
+
 
     trace('Trading partners enabled %s', tradingPartnersEnabled);
     if (tradingPartnersEnabled) {
