@@ -397,7 +397,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         }
 
         log.info('done', 'Completed all helper tasks');
-        return resolve(job.result as any);
+        return resolve(null as any);
       };
       const jobChange = async (c: Omit<Change, 'resource_id'>) => {
         try {
