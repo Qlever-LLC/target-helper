@@ -1,4 +1,6 @@
-/* Copyright 2021 Qlever LLC
+/**
+ * @license
+ *  Copyright 2021 Qlever LLC
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -13,15 +15,14 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
 import debug from 'debug';
-import oerror from '@overleaf/o-error';
+import oError from '@overleaf/o-error';
 
-import { connect, Change } from '@oada/client';
-import { ListWatch } from '@oada/list-lib';
+import { Change, connect } from '@oada/client';
 import { Job, assert as assertJob } from '@oada/types/oada/service/job';
+import type { Json, WorkerFunction } from '@oada/jobs';
+import { ListWatch } from '@oada/list-lib';
 import type Update from '@oada/types/oada/service/job/update';
-import type { WorkerFunction } from '@oada/jobs';
 
 import tree from './tree.js';
 
@@ -30,9 +31,8 @@ const warn = debug('target-helper#asn:warn');
 const info = debug('target-helper#asn:info');
 const trace = debug('target-helper#asn:trace');
 
-//------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------
 // - receive the job from oada-jobs
-
 export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
   assertJob(job);
 
@@ -45,24 +45,26 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
     },
   });
 
-  return await new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       // There is not much for target-helper to do for an ASN job.  It just needs to
       // set the main job status to "success" or "failure" when done.
-      const targetSuccess = async (_args?: {}) => {
-        log.info(
+      const targetSuccess = async (_arguments?: Record<string, unknown>) => {
+        void log.info(
           'helper-started',
           'Target returned success, target-helper posting main success status'
         );
-        // turn off watches so our own updates don't keep coming to us
+        // Turn off watches so our own updates don't keep coming to us
         try {
           await unwatch();
-        } catch(err) {
-          if (err.message !== 'Could not find watch state information.') throw err;
+        } catch (cError: unknown) {
+          // @ts-expect-error stupid errors
+          if (cError.message !== 'Could not find watch state information.')
+            throw cError;
         }
 
-        log.info('done', 'Completed all helper tasks');
-        return resolve(job.result as any);
+        void log.info('done', 'Completed all helper tasks');
+        resolve(job.result as Json);
       };
 
       const targetError = ({
@@ -72,65 +74,81 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         key: string;
         change: Omit<Change, 'resource_id'>;
       }) => {
-        // notify oada-jobs of error
+        // Notify oada-jobs of error
         // post to slack if oada-jobs doesn't do that yet
-        log.info(
+        void log.info(
           'helper-error',
           'Target returned error, target-helper throwing to oada/jobs'
         );
-        return reject({
-          message:
-            'Target returned error: ' + JSON.stringify(update, null, '  '),
+        // eslint-disable-next-line prefer-promise-reject-errors
+        reject({
+          message: `Target returned error: ${JSON.stringify(
+            update,
+            undefined,
+            '  '
+          )}`,
         });
       };
 
       const jobChange = async (c: Omit<Change, 'resource_id'>) => {
         try {
           trace('#jobChange: received change, c = ', c);
-          // look through all the changes, only do things if it sends a "success" or "error" update status
+          // Look through all the changes, only do things if it sends a "success" or "error" update status
           if (c.path !== '') {
-            return false; // child
+            return; // Child
           }
+
           if (c.type !== 'merge') {
-            return false; // delete
+            return; // Delete
           }
-          const { updates } = (c.body ?? {}) as {updates?:Record<string,Update>};
-          if (!updates) {
-            return false; // not an update from target
+
+          const { updates } = (c.body ?? {}) as {
+            updates?: Record<string, Update>;
+          };
+          if (!updates || typeof updates !== 'object') {
+            return; // Not an update from target
           }
+
           trace('#jobChange: it is a change we want (has an update)');
-          for (const [k, v] of Object.entries<Update>(updates)) {
+          for (const [k, v] of Object.entries(updates)) {
             trace('#jobChange: change update is: ', v);
             if (v.status === 'success') {
               trace(
                 '#jobChange: unwatching job and moving on with success tasks'
               );
+              // eslint-disable-next-line no-await-in-loop
               await unwatch();
               // TODO: Why pass stuff to this function with no arguments?
+              // eslint-disable-next-line no-await-in-loop
               await targetSuccess({ update: v, key: k, change: c });
             }
+
             if (v.status === 'error') {
               trace(
                 '#jobChange: unwatching job and moving on with error tasks'
               );
+              // eslint-disable-next-line no-await-in-loop
               await unwatch();
               targetError({ update: v, key: k, change: c });
             }
           }
-        } catch (e) {
-          reject(e);
+        } catch (cError: unknown) {
+          reject(cError);
         }
       };
+
       let watchhandle: string;
       const unwatch = async () => {
         await oada.unwatch(watchhandle);
       };
+
       const watch = async () => {
         if (watchhandle) {
           warn(
             `WARNING: watchhandle already exists, but watch() was called again`
           );
         }
+
         watchhandle = await oada.watch({
           path: `/bookmarks/services/target/jobs/${jobId}`,
           watchCallback: jobChange,
@@ -140,21 +158,23 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         });
         return data;
       };
-      const w = await watch() as Change['body'];
-      if (Buffer.isBuffer(w)) throw new Error('body is a buffer, cannot call jobChange');
-      jobChange({ 
-        path: '', 
-        body: w!, 
-        type: 'merge'
-      }); // initially just the original job is the "body" for a synthetic change
-    } catch (e) {
-      reject(e);
-    } // have to actually reject the promise
+
+      const w = (await watch()) as Change['body'];
+      if (Buffer.isBuffer(w))
+        throw new Error('body is a buffer, cannot call jobChange');
+      await jobChange({
+        path: '',
+        body: w,
+        type: 'merge',
+      }); // Initially just the original job is the "body" for a synthetic change
+    } catch (cError: unknown) {
+      reject(cError);
+    } // Have to actually reject the promise
   });
 };
 
-//-------------------------------------------------------------------------------------------------------
-// Start watching /bookmarks/trellisfw/asns and create target jobs for each new one
+// ----------------------------------------------------------------------------
+// Watch /bookmarks/trellisfw/asns and create target jobs for each new one
 export async function startJobCreator({
   domain,
   token,
@@ -164,83 +184,74 @@ export async function startJobCreator({
 }) {
   try {
     const con = await connect({ domain, token });
-    // ensure the thing exists because we are in charge of this endpoint
-    const exists = await con
-      .get({ path: `/bookmarks/trellisfw/asns` })
-      .then((r) => r.status)
-      .catch((e) => e.status);
-    if (exists !== 200) {
-      info(`/bookmarks/trellisfw/asns does not exist, creating....`);
+    // Ensure the thing exists because we are in charge of this endpoint
+    try {
+      const { status } = await con.get({ path: `/bookmarks/trellisfw/asns` });
+      if (status !== 200) {
+        throw new Error('Not Found');
+      }
+    } catch {
+      info(`/bookmarks/trellisfw/asns does not exist, creating...`);
       await con.put({ path: '/bookmarks/trellisfw/asns', data: {}, tree });
     }
 
-    new ListWatch({
-      path: `/bookmarks/trellisfw/asns`,
-      // Need tree and itemsPath for this to work
-      tree,
-      itemsPath: `$.day-index.*.*`,
-      name: 'TARGET-1gdQycxI4C1QLq5QfHbF99R3wpD',
-      conn: con,
-      resume: true,
-      onAddItem: asnAdded,
-      // TODO: actually check if each thing has a target job in its _meta?
-      onNewList: ListWatch.AssumeHandled,
-      // TODO: onDeleteList
-    });
-
+    // eslint-disable-next-line no-inner-declarations
     async function asnAdded(item: { _id: string }, key: string): Promise<void> {
       info(`New ASN posted at key = %s`, key);
+      try {
+        // If this ASN's most recent job has been successfully handled by target, do not re-post it unless _meta/services/target says force
+        const { data: asnmeta } = (await con.get({
+          path: `/${item._id}/_meta`,
+        })) as { data: any };
 
-      // If this ASN's most recent job has been successfully handled by target, do not re-post it unless _meta/services/target says force
-      const asnmeta = (await con
-        .get({ path: `/${item._id}/_meta` })
-        .then((r) => r.data)
-        .catch((e) => {
-          throw oerror.tag(
-            e,
-            'ERROR: failed to retrieve _meta for new ASN ${item._id} at key ${key}'
-          );
-        })) as any;
-
-      if (asnmeta?.services?.target?.force) {
-        info(
-          'ASN at key %s has _meta/services/target/force as truthy, so we will send job to target regardless of whether last job was success.',
-          key
-        );
-      } else if (asnmeta?.services?.target?.jobs) {
-        const refslist = asnmeta.services.target.jobs;
-        const jobkeys = Object.keys(refslist);
-        trace(
-          'ASN at key %s has %d previous target jobs, checking if the last one was success. To force, put true at /%s/_meta/services/target/force',
-          key,
-          jobkeys.length,
-          item._id
-        );
-        // keys are ksuids, so they sort naturally with latest on bottom
-        const lastjobkey = _.last(jobkeys.sort())!;
-        const lastjobid = refslist[lastjobkey]._ref;
-
-        trace('Retrieving last job %s at key %s', lastjobid, lastjobkey);
-        const lastjob = (await con
-          .get({ path: `/${lastjobid}` })
-          .then((r) => r.data)
-          .catch((e) => {
-            throw oerror.tag(
-              e,
-              'ERROR: failed to retrieve last job ${lastjobid} at key ${lastjobkey} for ASN at key ${key}'
-            );
-          })) as Job;
-
-        const lastjobsuccess = lastjob?.status?.toLowerCase() === 'success';
-        if (lastjobsuccess) {
+        if (asnmeta?.services?.target?.force) {
           info(
-            'Last job for ASN %s at key %s has status "success" and _meta/services/target/force is not set on ASN, so we are NOT posting this to target job queue.',
-            item._id,
+            'ASN at key %s has _meta/services/target/force as truthy, so we will send job to target regardless of whether last job was success.',
             key
           );
-          //return true;
-          return;
+        } else if (asnmeta?.services?.target?.jobs) {
+          const refslist = asnmeta.services.target.jobs;
+          const jobkeys = Object.keys(refslist);
+          trace(
+            'ASN at key %s has %d previous target jobs, checking if the last one was success. To force, put true at /%s/_meta/services/target/force',
+            key,
+            jobkeys.length,
+            item._id
+          );
+          // Keys are ksuids, so they sort naturally with latest on bottom
+          const lastJobKey = jobkeys.sort().pop()!;
+          const lastJobID = refslist[lastJobKey]._ref;
+
+          trace('Retrieving last job %s at key %s', lastJobID, lastJobKey);
+          try {
+            const { data: lastjob } = (await con.get({
+              path: `/${lastJobID}`,
+            })) as {
+              data: Job | undefined;
+            };
+
+            const lastjobsuccess = lastjob?.status?.toLowerCase() === 'success';
+            if (lastjobsuccess) {
+              info(
+                'Last job for ASN %s at key %s has status "success" and _meta/services/target/force is not set on ASN, so we are NOT posting this to target job queue.',
+                item._id,
+                key
+              );
+              // Return true;
+              return;
+            }
+          } catch (cError: unknown) {
+            throw oError.tag(
+              cError as Error,
+              `ERROR: failed to retrieve last job ${lastJobID} at key ${lastJobKey} for ASN at key ${key}`
+            );
+          }
         }
+      } catch (cError: unknown) {
+        throw oError.tag(
+          cError as Error,
+          `ERROR: failed to retrieve _meta for new ASN ${item._id} at key ${key}`
+        );
       }
 
       const jobkey = await con
@@ -260,27 +271,28 @@ export async function startJobCreator({
         .then((r) =>
           r.headers['content-location']!.replace(/^\/resources\//, '')
         )
-        .catch((e) => {
-          throw oerror.tag(
-            e,
-            'ERROR: failed to get a valid jobkey from content-location when posting ASN job resource, e = '
+        .catch((error_) => {
+          throw oError.tag(
+            error_,
+            'ERROR: failed to get a valid jobkey from content-location when posting ASN job resource'
           );
         });
       trace('Posted ASN job resource, jobkey = %s', jobkey);
-      await con
-        .put({
+      try {
+        await con.put({
           path: `/bookmarks/services/target/jobs`,
           tree,
           data: {
             [jobkey]: { _id: `resources/${jobkey}` },
           },
-        })
-        .catch((e) => {
-          throw oerror.tag(
-            e,
-            'ERROR: failed to PUT link in jobs queue for new job resources/${jobkey}'
-          );
         });
+      } catch (cError: unknown) {
+        throw oError.tag(
+          cError as Error,
+          `ERROR: failed to PUT link in jobs queue for new job resources/${jobkey}`
+        );
+      }
+
       info(
         'Posted new ASN %s at key %s to target job queue as job id resources/%s at key %s in jobs queue',
         item._id,
@@ -289,7 +301,23 @@ export async function startJobCreator({
         jobkey
       );
     }
-  } catch (e) {
-    error('uncaught exception in watching /bookmarks/trellisfw/asns: %O', e);
+
+    // eslint-disable-next-line no-new
+    new ListWatch({
+      path: `/bookmarks/trellisfw/asns`,
+      // Need tree and itemsPath for this to work
+      tree,
+      itemsPath: `$.day-index.*.*`,
+      // eslint-disable-next-line no-secrets/no-secrets
+      name: 'TARGET-1gdQycxI4C1QLq5QfHbF99R3wpD',
+      conn: con,
+      resume: true,
+      onAddItem: asnAdded,
+      // TODO: actually check if each thing has a target job in its _meta?
+      onNewList: ListWatch.AssumeHandled,
+      // TODO: onDeleteList
+    });
+  } catch (cError: unknown) {
+    error(cError, 'uncaught exception in watching /bookmarks/trellisfw/asns');
   }
 }

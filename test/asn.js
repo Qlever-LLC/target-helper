@@ -1,5 +1,21 @@
+/**
+ * @license
+ * Copyright 2021 Qlever LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 const _ = require('lodash');
-const expect = require('chai').expect;
+const { expect } = require('chai');
 const Promise = require('bluebird');
 const debug = require('debug');
 const moment = require('moment');
@@ -12,7 +28,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const oada = require('@oada/client');
 
-let jobkey = 'TARGETHELPER_ASNTEST_JOB1'; // replaced in first test with actual job key
+let jobkey = 'TARGETHELPER_ASNTEST_JOB1'; // Replaced in first test with actual job key
 const asnkey = 'TARGETHELPER_ASNTEST_ASN1';
 const jobid = `resources/${jobkey}`;
 const asnid = `resources/${asnkey}`;
@@ -37,32 +53,32 @@ describe('External ASN tests of target-helper, run from admin', () => {
   it('Should create a job to handle the test ASN when posted to /bookmarks/trellisfw/asns', async function () {
     this.timeout(5000);
 
-    // get the initial job queue so we can figure out which job was created as a result of our posted test doc
+    // Get the initial job queue so we can figure out which job was created as a result of our posted test doc
     const oldJobs = await con
       .get({ path: `/bookmarks/services/target/jobs` })
       .then((r) => r.data);
 
-    // post the test doc
+    // Post the test doc
     await con.put({ path: `/${asnid}`, data: testasn, headers });
     await con.put({
       path: `/bookmarks/trellisfw/asns/${asnkey}`,
       data: { _id: asnid, _rev: 0 },
       headers: listheaders,
     });
-    await Promise.delay(500); // give it a second to make the job
+    await Promise.delay(500); // Give it a second to make the job
 
     // get the new job list, find the new key
     const newJobs = await con
       .get({ path: `/bookmarks/services/target/jobs` })
       .then((r) => r.data);
-    jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]; // assume first difference is new one
+    jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]; // Assume first difference is new one
     expect(jobkey).to.be.a('string');
     expect(jobkey).to.have.length.above(0);
-    if (!jobkey || jobkey.length < 1) {
+    if (!jobkey || jobkey.length === 0) {
       throw new Error('TEST ERROR: job never showed up for ASN');
     }
 
-    // get the job info, validate it
+    // Get the job info, validate it
     const job = await con
       .get({ path: `/bookmarks/services/target/jobs/${jobkey}` })
       .then((r) => r.data);
@@ -76,44 +92,44 @@ describe('External ASN tests of target-helper, run from admin', () => {
       data: { status: 'success', info: 'test was a success' },
       headers: jobsheaders,
     });
-    await Promise.delay(1500); // wait for oada-jobs to move it to jobs-success
+    await Promise.delay(1500); // Wait for oada-jobs to move it to jobs-success
     const doesnotexist = await con
       .get({ path: `/bookmarks/services/target/jobs/${jobkey}` })
       .then((r) => r.data)
-      .catch((e) => e.status === 404);
+      .catch((error) => error.status === 404);
     expect(doesnotexist).to.equal(true);
   });
 
   it('Should error on an ASN job which posts an invalid update (i.e. update is a string)', async function () {
     this.timeout(5000);
 
-    // get the initial job queue so we can figure out which job was created as a result of our posted test doc
+    // Get the initial job queue so we can figure out which job was created as a result of our posted test doc
     const oldJobs = await con
       .get({ path: `/bookmarks/services/target/jobs` })
       .then((r) => r.data);
 
-    // post the test doc
+    // Post the test doc
     await con.put({ path: `/${asnid}`, data: testasn, headers });
     await con.put({
       path: `/bookmarks/trellisfw/asns/${asnkey}`,
       data: { _id: asnid, _rev: 0 },
       headers: listheaders,
     });
-    await Promise.delay(500); // give it a second to make the job
-    const day = moment().format('YYYY-MM-DD'); // keep this for the day-index below
+    await Promise.delay(500); // Give it a second to make the job
+    const day = moment().format('YYYY-MM-DD'); // Keep this for the day-index below
 
     // get the new job list, find the new key
     const newJobs = await con
       .get({ path: `/bookmarks/services/target/jobs` })
       .then((r) => r.data);
-    jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]; // assume first difference is new one
+    jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]; // Assume first difference is new one
     expect(jobkey).to.be.a('string');
     expect(jobkey).to.have.length.above(0);
-    if (!jobkey || jobkey.length < 1) {
+    if (!jobkey || jobkey.length === 0) {
       throw new Error('TEST ERROR: job never showed up for ASN');
     }
 
-    // get the job info, validate it
+    // Get the job info, validate it
     const job = await con
       .get({ path: `/bookmarks/services/target/jobs/${jobkey}` })
       .then((r) => r.data);
@@ -127,17 +143,17 @@ describe('External ASN tests of target-helper, run from admin', () => {
       data: { status: 'error_bad_update' },
       headers: jobsheaders,
     });
-    await Promise.delay(1500); // wait for oada-jobs to move it to jobs-error
+    await Promise.delay(1500); // Wait for oada-jobs to move it to jobs-error
     const doesnotexist = await con
       .get({ path: `/bookmarks/services/target/jobs/${jobkey}` })
       .then((r) => r.data)
-      .catch((e) => e.status === 404);
+      .catch((error) => error.status === 404);
     const errorexists = await con
       .get({
         path: `/bookmarks/services/target/jobs-failure/day-index/${day}/${jobkey}`,
       })
-      .then((r) => !!r.data)
-      .catch((e) => false);
+      .then((r) => Boolean(r.data))
+      .catch((error) => false);
     expect(doesnotexist).to.equal(true);
     expect(errorexists).to.equal(true);
   });
@@ -160,6 +176,6 @@ async function cleanup() {
 async function deleteIfExists(path) {
   await con
     .get({ path })
-    .then(async () => con.delete({ path })) // delete it
-    .catch((e) => {}); // do nothing, didn't exist
+    .then(async () => con.delete({ path })) // Delete it
+    .catch((error) => {}); // Do nothing, didn't exist
 }

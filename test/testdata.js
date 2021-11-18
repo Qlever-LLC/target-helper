@@ -1,3 +1,19 @@
+/**
+ * @license
+ * Copyright 2021 Qlever LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 const _ = require('lodash');
 const jp = require('jsonpointer');
 const Promise = require('bluebird');
@@ -8,7 +24,7 @@ const trace = debug('target-helper#test:trace');
 const info = debug('target-helper#test:info');
 const error = debug('target-helper#test:error');
 
-let con = false; // set with setConnection function
+let con = false; // Set with setConnection function
 
 const tree = {
   bookmarks: {
@@ -51,7 +67,7 @@ const jobtemplate = {
   source: 'oada',
   name: { singular: 'job' },
   list: '/bookmarks/services/target/jobs',
-  notversioned: true, // do not make this a versioned link in it's list
+  notversioned: true, // Do not make this a versioned link in it's list
   cleanup: {
     lists: [
       `/bookmarks/services/target/jobs-success/day-index/${day}`,
@@ -65,7 +81,7 @@ const items = {
   certjob: _.cloneDeep(jobtemplate),
   logjob: _.cloneDeep(jobtemplate),
 
-  //-------------------------------------
+  // -------------------------------------
   // Documents:
   pdf: {
     name: { singular: 'document' },
@@ -103,12 +119,12 @@ const items = {
     },
   },
 
-  //-------------------------------------
+  // -------------------------------------
   // Master Data:
   tp: {
     name: { singular: 'trading-partner' },
     data: {
-      masterid: 'test-master-tp-1', // triggers an expand-index and masterid-index
+      masterid: 'test-master-tp-1', // Triggers an expand-index and masterid-index
       name: 'a test trading partner',
       // Note: this user doesn't actually exist
       user: {
@@ -120,14 +136,14 @@ const items = {
   fac: {
     name: { singular: 'facility', plural: 'facilities' },
     data: {
-      masterid: 'test-master-fac-1', // triggers an expand-index and masterid-index
+      masterid: 'test-master-fac-1', // Triggers an expand-index and masterid-index
       name: 'a test facility',
     },
   },
   coiholder: {
     name: { singular: 'coi-holder' },
     data: {
-      masterid: 'test-master-coiholder-1', // triggers an expand-index and masterid-index
+      masterid: 'test-master-coiholder-1', // Triggers an expand-index and masterid-index
       name: 'a test coi holder',
     },
   },
@@ -136,40 +152,44 @@ const items = {
       singular: 'letter-of-guarantee-buyer',
     },
     data: {
-      masterid: 'test-master-logbuyer-1', // triggers an expand-index and masterid-index
+      masterid: 'test-master-logbuyer-1', // Triggers an expand-index and masterid-index
       name: 'a test logbuyer',
     },
   },
 };
 // Fill out all missing things with defaults:
-_.each(items, (i, k) => {
-  i.key = `TEST-TARGETHELPER-${k.toUpperCase()}`; // default key
-  if (!i.name.plural) i.name.plural = i.name.singular + 's'; // default plural
-  if (!i.source) i.source = 'trellisfw'; // default source
-  if (!i.list) i.list = `/bookmarks/${i.source}/${i.name.plural}`; // default list
-  if (!i.data) i.data = { iam: k }; // default data
-  if (!i._type)
-    i._type = `application/vnd.${i.source}.${i.name.singular}.1+json`;
-  if (!i.list_type)
-    i.list_type = `application/vnd.${i.source}.${i.name.plural}.1+json`;
+_.each(items, (index, k) => {
+  index.key = `TEST-TARGETHELPER-${k.toUpperCase()}`; // Default key
+  if (!index.name.plural) index.name.plural = `${index.name.singular}s`; // Default plural
+  if (!index.source) index.source = 'trellisfw'; // Default source
+  if (!index.list)
+    index.list = `/bookmarks/${index.source}/${index.name.plural}`; // Default list
+  if (!index.data) index.data = { iam: k }; // Default data
+  if (!index._type)
+    index._type = `application/vnd.${index.source}.${index.name.singular}.1+json`;
+  if (!index.list_type)
+    index.list_type = `application/vnd.${index.source}.${index.name.plural}.1+json`;
   // Also, fill out the tree for this list:
-  if (!jp.get(tree, i.list)) {
-    jp.set(tree, i.list, { _type: i.list_type });
+  if (!jp.get(tree, index.list)) {
+    jp.set(tree, index.list, { _type: index.list_type });
   }
+
   // Add the '*' entry to the list in the tree:
-  let path = `${i.list}/*`;
+  let path = `${index.list}/*`;
   if (!jp.get(tree, path)) {
-    jp.set(tree, path, { _type: i._type });
+    jp.set(tree, path, { _type: index._type });
   }
-  if (i.data.masterid) {
+
+  if (index.data.masterid) {
     // This is masterdata, add the expand-index and masterid-index to the tree
-    path = `${i.list}/expand-index`;
+    path = `${index.list}/expand-index`;
     if (!jp.get(tree, path)) {
-      jp.set(tree, path, { _type: i.list_type });
+      jp.set(tree, path, { _type: index.list_type });
     }
-    path = `${i.list}/masterid-index`;
+
+    path = `${index.list}/masterid-index`;
     if (!jp.get(tree, path)) {
-      jp.set(tree, path, { _type: i.list_type });
+      jp.set(tree, path, { _type: index.list_type });
     }
   }
 });
@@ -192,41 +212,42 @@ async function cleanup(key_or_keys) {
 
   await Promise.each(keys, async (k) => {
     trace('cleanup: removing resources+links if they exist for key ', k);
-    const i = items[k];
+    const index = items[k];
     let path;
     // Delete the link path from the list:
-    path = `${i.list}/${i.key}`;
+    path = `${index.list}/${index.key}`;
     await con
       .get({ path })
       .then(() => con.delete({ path }))
-      .catch((e) => {});
+      .catch((error_) => {});
     // Delete the actual resource for this thing too:
-    path = `/resources/${i.key}`;
+    path = `/resources/${index.key}`;
     await con
       .get({ path })
       .then(() => con.delete({ path }))
-      .catch((e) => {});
-    if (i.data.masterid) {
+      .catch((error_) => {});
+    if (index.data.masterid) {
       // This is master data, so remove from masterid-index and expand-index
-      path = `${i.list}/expand-index/${i.key}`;
+      path = `${index.list}/expand-index/${index.key}`;
       await con
         .get({ path })
         .then(() => con.delete({ path }))
-        .catch((e) => {});
-      path = `${i.list}/masterid-index/${i.data.masterid}`;
+        .catch((error_) => {});
+      path = `${index.list}/masterid-index/${index.data.masterid}`;
       await con
         .get({ path })
         .then(() => con.delete({ path }))
-        .catch((e) => {});
+        .catch((error_) => {});
     }
+
     // If there are extra lists to cleanup (like for jobs-success), do those too:
-    if (i.cleanup && i.cleanup.lists) {
-      await Promise.each(i.cleanup.lists, async (l) => {
-        path = `${l}/${i.key}`;
+    if (index.cleanup && index.cleanup.lists) {
+      await Promise.each(index.cleanup.lists, async (l) => {
+        path = `${l}/${index.key}`;
         await con
           .get({ path })
           .then(() => con.delete({ path }))
-          .catch((e) => {});
+          .catch((error_) => {});
       });
     }
   });
@@ -245,45 +266,46 @@ async function putData(key_or_keys, merges) {
 
   await Promise.each(keys, async (k, ki) => {
     trace('putData: adding test data for key: ', k);
-    const i = items[k];
-    let path, data;
+    const index = items[k];
+    let path;
+    let data;
 
     // Make the resource:
-    path = `/resources/${i.key}`;
+    path = `/resources/${index.key}`;
     // Merge in any data overrides:
-    data = i.data;
+    data = index.data;
     if (data_merges[ki]) data = _.merge(data, data_merges[ki]);
     // Do the put:
     trace('putData: path: ', path, ', data = ', data);
-    await con.put({ path, data, _type: i._type }).catch((e) => {
+    await con.put({ path, data, _type: index._type }).catch((error_) => {
       error(
         'Failed to make the resource. path = ',
         path,
         ', data = ',
-        i.data,
+        index.data,
         ', _type = ',
-        i._type,
+        index._type,
         ', error = ',
-        e
+        error_
       );
-      throw e;
+      throw error_;
     });
     // If this has a user, go ahead and make their dummy bookmarks resource (i.e. a trading-partner)
-    if (i.data.user && i.data.user.bookmarks) {
+    if (index.data.user && index.data.user.bookmarks) {
       await con
         .put({
-          path: `/${i.data.user.bookmarks._id}`,
+          path: `/${index.data.user.bookmarks._id}`,
           _type: tree.bookmarks,
           data: { iam: 'userbookmarks' },
         })
-        .catch((e) => {
+        .catch((error_) => {
           error(
             'Failed to make bookmarks for i.data.user. path = /',
-            i.data.user.bookmarks._id,
+            index.data.user.bookmarks._id,
             ', error = ',
-            e
+            error_
           );
-          throw e;
+          throw error_;
         });
     }
   });
@@ -295,46 +317,53 @@ async function putLink(key_or_keys) {
   else if (key_or_keys) keys = [key_or_keys];
 
   await Promise.each(keys, async (k) => {
-    const i = items[k];
-    trace('putLink: linking test data for key: ', k, ', under list ', i.list);
+    const index = items[k];
+    trace(
+      'putLink: linking test data for key: ',
+      k,
+      ', under list ',
+      index.list
+    );
     let path;
 
     // Link under the list:
-    path = `${i.list}`;
+    path = `${index.list}`;
     // NOTE: since we are doing a tree put, do NOT put the i.key on the end of the URL
     // because tree put will create a new resource instead of linking the existing one.
-    let data = { [i.key]: { _id: `resources/${i.key}` } };
-    if (!i.notversioned) data._rev = 0;
-    await con.put({ path, data, tree }).catch((e) => {
+    const data = { [index.key]: { _id: `resources/${index.key}` } };
+    if (!index.notversioned) data._rev = 0;
+    await con.put({ path, data, tree }).catch((error_) => {
       error(
         'Failed to link the resource. path = ',
         path,
         ', data = ',
         data,
         ', error = ',
-        e
+        error_
       );
-      throw e;
+      throw error_;
     });
 
-    if (i.data.masterid) {
+    if (index.data.masterid) {
       // This is master data, so put it into the expand-index and masterid-index
-      const data = _.cloneDeep(i.data);
-      data.id = `resources/${i.key}`;
+      const data = _.cloneDeep(index.data);
+      data.id = `resources/${index.key}`;
       // Put the expand-index:
-      path = `${i.list}/expand-index`;
-      await con.put({ path, data: { [i.key]: data }, tree }).catch((e) => {
-        error('Failed to put the expand-index.  e = ', e);
-        throw e;
-      });
+      path = `${index.list}/expand-index`;
+      await con
+        .put({ path, data: { [index.key]: data }, tree })
+        .catch((error_) => {
+          error('Failed to put the expand-index.  e = ', error_);
+          throw error_;
+        });
 
       // Put the masterid-index:
-      path = `${i.list}/masterid-index`;
+      path = `${index.list}/masterid-index`;
       await con
-        .put({ path, data: { [i.data.masterid]: data }, tree })
-        .catch((e) => {
-          error('Failed to put the masterid-index.  e = ', e);
-          throw e;
+        .put({ path, data: { [index.data.masterid]: data }, tree })
+        .catch((error_) => {
+          error('Failed to put the masterid-index.  e = ', error_);
+          throw error_;
         });
     }
   });

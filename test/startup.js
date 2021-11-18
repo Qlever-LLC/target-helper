@@ -1,3 +1,19 @@
+/**
+ * @license
+ * Copyright 2021 Qlever LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import _ from 'lodash';
 import chai from 'chai';
 import Promise from 'bluebird';
@@ -7,14 +23,14 @@ import oada from '@oada/client';
 import testasn from './testasn.js';
 import config from '../config.mjs';
 
-const expect = chai.expect;
+const { expect } = chai;
 const trace = debug('target-helper#test:trace');
 
 // DO NOT include ../ because we are testing externally.
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-let jobkey = 'TARGETHELPER_ASNTEST_JOB1'; // replaced in first test with actual job key
+const jobkey = 'TARGETHELPER_ASNTEST_JOB1'; // Replaced in first test with actual job key
 const asnkey = 'TARGETHELPER_ASNTEST_ASN1';
 const jobid = `resources/${jobkey}`;
 const asnid = `resources/${asnkey}`;
@@ -71,7 +87,7 @@ describe('External ASN tests of target-helper, run from admin', () => {
       headers: listheaders,
     });
 
-    //create day 1
+    // Create day 1
     await con.put({
       path: `/resources/test-day1`,
       data: {
@@ -92,7 +108,7 @@ describe('External ASN tests of target-helper, run from admin', () => {
       headers: listheaders,
     });
 
-    //create the list
+    // Create the list
     await con.put({
       path: `/resources/test-list1`,
       data: {
@@ -123,6 +139,6 @@ async function cleanup() {
 async function deleteIfExists(path) {
   await con
     .get({ path })
-    .then(async () => con.delete({ path })) // delete it
-    .catch((e) => {}); // do nothing, didn't exist
+    .then(async () => con.delete({ path })) // Delete it
+    .catch((error) => {}); // Do nothing, didn't exist
 }

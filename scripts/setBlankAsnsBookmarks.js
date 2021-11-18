@@ -1,3 +1,19 @@
+/**
+ * @license
+ * Copyright 2021 Qlever LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import _ from 'lodash';
 import chai from 'chai';
 import Promise from 'bluebird';
@@ -7,7 +23,7 @@ import oada from '@oada/client';
 import config from '../config.mjs';
 import minimist from 'minimist';
 import ksuid from 'ksuid';
-import readline from 'readline'; // node.js built-in
+import readline from 'node:readline'; // Node.js built-in
 
 const trace = debug('target-helper#test:trace');
 const argv = minimist(process.argv.slice(2));
@@ -16,7 +32,7 @@ const argv = minimist(process.argv.slice(2));
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-let jobkey = 'TARGETHELPER_ASNTEST_JOB1'; // replaced in first test with actual job key
+const jobkey = 'TARGETHELPER_ASNTEST_JOB1'; // Replaced in first test with actual job key
 const asnkey = 'TARGETHELPER_ASNTEST_ASN1';
 const jobid = `resources/${jobkey}`;
 const asnid = `resources/${asnkey}`;
@@ -43,7 +59,7 @@ const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
   const oldid = await con
     .get({ path: `/bookmarks/trellisfw/asns/_id` })
     .then((r) => r.data);
-  console.log('The original ASN ID (KEEP THIS JUST IN CASE!) was: ', oldid);
+  console.log('The original ASN ID (KEEP THIS JUST IN CASE!) was:', oldid);
 
   const listid = ksuid.randomSync().string;
   const data = {
@@ -65,7 +81,7 @@ const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
   let count = 0;
   await Promise.each(Object.keys(data), async (day) => {
     const d = data[day];
-    console.log('Creating ', day);
+    console.log('Creating', day);
     await Promise.each(d.asnids, async (a, ai) => {
       console.log(`      Creating ${day}/${a}`);
       return con.put({
@@ -77,22 +93,22 @@ const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
     console.log(`        Creating resource for ${day}`);
     await con.put({
       path: `/resources/${d.id}`,
-      data: d.asnids.reduce((acc, a, ai) => {
-        acc['test' + ai] = { _id: `resources/${a}`, _rev: 0 };
-        return acc;
+      data: d.asnids.reduce((accumulator, a, ai) => {
+        accumulator[`test${ai}`] = { _id: `resources/${a}`, _rev: 0 };
+        return accumulator;
       }, {}),
       headers: listheaders,
     });
   });
 
-  //create the list
+  // Create the list
   console.log('Creating top asns list at resources/', listid);
   await con.put({
     path: `/resources/${listid}`,
     data: {
-      'day-index': Object.keys(data).reduce((acc, day) => {
-        acc[day] = { _id: `resources/${data[day].id}`, _rev: 0 };
-        return acc;
+      'day-index': Object.keys(data).reduce((accumulator, day) => {
+        accumulator[day] = { _id: `resources/${data[day].id}`, _rev: 0 };
+        return accumulator;
       }, {}),
     },
     headers: listheaders,
@@ -110,7 +126,7 @@ const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
     output: process.stdout,
   });
 
-  //---------------------------------------------------
+  // ---------------------------------------------------
   // Wait until ready, then keeping post new ASNs and waiting until they say stop:
   const newasnday = Object.keys(data)[0];
   const newasnids = [];
@@ -135,24 +151,18 @@ const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
       data: { [newasnid]: { _id: `resources/${newasnid}`, _rev: 0 } },
       listheaders,
     });
-    console.log(
-      'New asn created at ',
-      newasnid,
-      ' and linked under ',
-      newasnday
-    );
+    console.log('New asn created at', newasnid, 'and linked under', newasnday);
   } while (response !== 'stop');
 
-  //---------------------------------------------------
+  // ---------------------------------------------------
   // Wait until ready, then reset bookmarks and cleanup resources
   await new Promise((resolve, reject) => {
     rl.question(
-      'Sitting here until you press enter, then I will put back original /bookmarks/trellisfw/asns from old id.  ' +
-        oldid,
+      `Sitting here until you press enter, then I will put back original /bookmarks/trellisfw/asns from old id.  ${oldid}`,
       resolve
     );
   });
-  console.log('Putting back original bookmarks/trellisfw/asns from id ', oldid);
+  console.log('Putting back original bookmarks/trellisfw/asns from id', oldid);
   await con.put({
     path: `/bookmarks/trellisfw`,
     data: { asns: { _id: oldid } },
@@ -163,13 +173,15 @@ const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
   const ids = [
     ...newasnids,
     listid,
-    ...Object.keys(data).reduce((acc, day) => {
-      acc.push(data[day].id);
-      return [...acc, ...data[day].asnids];
+    ...Object.keys(data).reduce((accumulator, day) => {
+      accumulator.push(data[day].id);
+      return [...accumulator, ...data[day].asnids];
     }, []),
   ];
-  console.log('    Deleting ids: ', ids);
-  await Promise.each(ids, (i) => con.delete({ path: `/resources/${i}` }));
+  console.log('    Deleting ids:', ids);
+  await Promise.each(ids, (index) =>
+    con.delete({ path: `/resources/${index}` })
+  );
 
   console.log(
     '\n\nDO NOT FORGET TO RESTART TARGET-HELPER SO IT PICKS THE OLD BOOKMARKS WATCH UP AGAIn\n\n'
@@ -180,6 +192,6 @@ const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
 async function deleteIfExists(path) {
   await con
     .get({ path })
-    .then(async () => con.delete({ path })) // delete it
-    .catch((e) => {}); // do nothing, didn't exist
+    .then(async () => con.delete({ path })) // Delete it
+    .catch((error) => {}); // Do nothing, didn't exist
 }

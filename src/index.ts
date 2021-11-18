@@ -1,4 +1,6 @@
-/* Copyright 2021 Qlever LLC
+/**
+ * @license
+ *  Copyright 2021 Qlever LLC
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -14,13 +16,18 @@
  */
 
 import debug from 'debug';
-import 'make-promises-safe';
 
 import { Service } from '@oada/jobs';
 
-import * as pdf from './pdfJob';
-import * as asn from './asnJob';
-import config from './config';
+import {
+  jobHandler as asnJobHandler,
+  startJobCreator as asnStartJobCreator,
+} from './asnJob.js';
+import {
+  jobHandler as pdfJobHandler,
+  startJobCreator as pdfStartJobCreator,
+} from './pdfJob.js';
+import config from './config.js';
 
 const error = debug('target-helper:error');
 const info = debug('target-helper:info');
@@ -28,20 +35,19 @@ const trace = debug('target-helper:trace');
 
 const tokens = config.get('oada.token');
 let domain = config.get('oada.domain');
-if (domain.match(/^http/)) {
+if (domain.startsWith('http')) {
   domain = domain.replace(/^https?:\/\//, '');
 }
 
 if (domain === 'localhost' || domain === 'proxy') {
-  // @ts-ignore
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 }
 
 trace('Using token(s) = %s', tokens);
 info('Using domain = %s', domain);
 
 for (const token of tokens) {
-  //--------------------------------------------------
+  // --------------------------------------------------
   // Create the service
   const service = new Service('target', domain, token, 1, {
     finishReporters: [
@@ -53,26 +59,28 @@ for (const token of tokens) {
     ],
   }); // 1 concurrent job
 
-  //--------------------------------------------------
+  // --------------------------------------------------
   // Set the job type handlers
-  service.on('transcription', config.get('timeouts.pdf'), pdf.jobHandler);
-  service.on('asn', config.get('timeouts.asn'), asn.jobHandler);
+  service.on('transcription', config.get('timeouts.pdf'), pdfJobHandler);
+  service.on('asn', config.get('timeouts.asn'), asnJobHandler);
 
-  //--------------------------------------------------
+  // --------------------------------------------------
   // Start the jobs watching service
-  const servicep = service.start();
+  const serviceP = service.start();
 
   // Start the things watching to create jobs
-  const pdfp = pdf.startJobCreator({ domain, token });
-  const asnp = asn.startJobCreator({ domain, token });
+  const pdfP = pdfStartJobCreator({ domain, token });
+  const asnP = asnStartJobCreator({ domain, token });
 
   // Catch errors
-  Promise.all([servicep, pdfp, asnp]).catch((err) => {
-    error(err);
+  // eslint-disable-next-line github/no-then
+  Promise.all([serviceP, pdfP, asnP]).catch((cError) => {
+    error(cError);
+    // eslint-disable-next-line no-process-exit, unicorn/no-process-exit
     process.exit(1);
   });
 
-  info("Initializing target-helper service. v1.1.9");
+  info('Initializing target-helper service. v1.1.9');
   info('Started pdf and asn job creator processes');
   info('Ready');
 }

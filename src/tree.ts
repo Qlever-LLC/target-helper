@@ -1,4 +1,6 @@
-/* Copyright 2021 Qlever LLC
+/**
+ * @license
+ *  Copyright 2021 Qlever LLC
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -33,6 +35,7 @@ export default {
             trellisfw: {
               '_type': 'application/vnd.trellisfw.1+json',
               'documents': {
+                // eslint-disable-next-line no-secrets/no-secrets
                 _type: 'application/vnd.trellisfw.documents.1+json',
               },
               'fsqa-audits': {
@@ -48,6 +51,7 @@ export default {
             trellisfw: {
               '_type': 'application/vnd.trellisfw.1+json',
               'documents': {
+                // eslint-disable-next-line no-secrets/no-secrets
                 _type: 'application/vnd.trellisfw.documents.1+json',
               },
               'fsqa-audits': {
@@ -97,6 +101,7 @@ export default {
         }
       },
       'documents': {
+        // eslint-disable-next-line no-secrets/no-secrets
         _type: 'application/vnd.trellisfw.documents.1+json',
       },
       'asns': {
@@ -114,7 +119,7 @@ export default {
     services: {
       '_type': 'application/vnd.oada.services.1+json',
       '*': {
-        // we will post to shares/jobs
+        // We will post to shares/jobs
         _type: 'application/vnd.oada.service.1+json',
         jobs: {
           '_type': 'application/vnd.oada.service.jobs.1+json',

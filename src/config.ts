@@ -1,4 +1,6 @@
-/* Copyright 2021 Qlever LLC
+/**
+ * @license
+ *  Copyright 2021 Qlever LLC
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -14,7 +16,7 @@
  */
 
 import convict from 'convict';
-// @ts-ignore
+// @ts-expect-error has no types
 import convictMoment from 'convict-format-with-moment';
 import convictValidator from 'convict-format-with-validator';
 import { config as load } from 'dotenv';
@@ -53,7 +55,7 @@ const config = convict({
       doc: 'Timeout duration for PDF jobs',
       format: 'duration',
       // The types for duration suck
-      default: (3600000 as unknown) as number,
+      default: 3_600_000 as unknown as number,
       env: 'PDF_TIMEOUT',
       arg: 'pdf-timeout',
     },
@@ -61,7 +63,7 @@ const config = convict({
       doc: 'Timeout duration for ASN jobs',
       format: 'duration',
       // The types for duration suck
-      default: (3600000 as unknown) as number,
+      default: 3_600_000 as unknown as number,
       env: 'ASN_TIMEOUT',
       arg: 'asn-timeout',
     },
@@ -69,7 +71,7 @@ const config = convict({
   slack: {
     posturl: {
       format: 'url',
-      // use a real slack webhook URL
+      // Use a real slack webhook URL
       default: 'https://localhost',
       env: 'SLACK_WEBHOOK',
       arg: 'slack-webhook',

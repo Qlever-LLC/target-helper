@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.0
 
       - name: Parse Ref
         id: ref
@@ -68,7 +68,7 @@ jobs:
       - name: Parse Semver
         id: semver
         if: ${{ steps.ref.outputs.release }}
-        uses: booxmedialtd/ws-action-parse-semver@v1.3.1
+        uses: booxmedialtd/ws-action-parse-semver@v1.4.0
         with:
           input_string: ${{ steps.ref.outputs.version }}
           #version_extractor_regex: '\/v(.*)$'
@@ -90,14 +90,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.0
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1.2.0
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v1.5.1
+        uses: docker/setup-buildx-action@v1.6.0
         with:
           version: latest
 
@@ -156,8 +156,7 @@ jobs:
             ${{ steps.images.outputs.dockerhub }}
             ${{ steps.images.outputs.ghcr}}
           # Don't update latest on prereleases?
-          flavor:
-            latest=${{ !!(needs.setup.outputs.release && !needs.setup.outputs.prerelease) }}
+          flavor: latest=${{ !!(needs.setup.outputs.release && !needs.setup.outputs.prerelease) }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -168,7 +167,7 @@ jobs:
             type=sha
 
       - name: Build and push images
-        uses: docker/build-push-action@v2.6.1
+        uses: docker/build-push-action@v2.7.0
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.context }}/Dockerfile
@@ -182,8 +181,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
-      -
-        # Temp fix
+      - # Temp fix
         # https://github.com/docker/build-push-action/issues/252
         # https://github.com/moby/buildkit/issues/1896
         name: Move cache
@@ -217,14 +215,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.0
 
       - name: Find Docker tag for Snyk
         id: tag
         run: |
           # Doesn't like upper case
           OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
-          # Nameo on DockerHub (Doesn't like upper case)
+          # Name on DockerHub (Doesn't like upper case)
           DOCKER_IMAGE=$(echo ${{ matrix.service }} | tr '[:upper:]' '[:lower:]')
           # Name on GHCR
           GHCR_IMAGE=ghcr.io/${DOCKER_IMAGE}
@@ -253,7 +251,7 @@ jobs:
 
       - name: Monitor Service image with Snyk
         uses: snyk/actions/docker@master
-        # Don't break workflow on errros?
+        # Don't break workflow on errors?
         continue-on-error: true
         with:
           command: container monitor
@@ -262,7 +260,7 @@ jobs:
 
       - name: Test current Service image with Snyk
         uses: snyk/actions/docker@master
-        # Don't break workflow on errros?
+        # Don't break workflow on errors?
         continue-on-error: true
         with:
           image: ${{ steps.tag.outputs.tag }}

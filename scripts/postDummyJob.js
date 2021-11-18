@@ -1,3 +1,19 @@
+/**
+ * @license
+ * Copyright 2021 Qlever LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import _ from 'lodash';
 import oada from '@oada/client';
 import Promise from 'bluebird';
@@ -41,10 +57,10 @@ import config from '../config.js';
 
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
   let domain = config.get('domain');
-  if (domain.match(/^http/)) domain = domain.replace(/^https:\/\//, '');
+  if (domain.startsWith('http')) domain = domain.replace(/^https:\/\//, '');
   const con = await oada.connect({ domain, token: config.get('token') });
-  await con.get({ path: `/resources/${pdfkey}` }).catch(async (e) => {
-    if (e && e.status === 404) {
+  await con.get({ path: `/resources/${pdfkey}` }).catch(async (error) => {
+    if (error && error.status === 404) {
       console.log('resources/TEST-PDF1 does not exist, creating a dummy one');
       await con.put({
         path: `/resources/${pdfkey}`,
@@ -54,7 +70,7 @@ import config from '../config.js';
     }
   });
 
-  //--------------------------------------------------------
+  // --------------------------------------------------------
   // Example of a successful normal job: go ahead and put that up, tests will check results later
   const jobkey = await con
     .post({
@@ -70,7 +86,7 @@ import config from '../config.js';
     .then((r) => r.headers['content-location'].replace(/^\/resources\//, ''));
 
   // Link job under queue to start things off:
-  console.log('Creating job key: ', jobkey);
+  console.log('Creating job key:', jobkey);
   await con.put({
     path: `${jobpath}`,
     headers: { 'content-type': 'application/vnd.oada.jobs.1+json' },

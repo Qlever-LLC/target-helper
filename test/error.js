@@ -1,3 +1,19 @@
+/**
+ * @license
+ * Copyright 2021 Qlever LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 const _ = require('lodash');
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
@@ -20,11 +36,11 @@ const info = debug('target-helper#test:info');
 const error = debug('target-helper#test:error');
 
 chai.use(chaiAsPromised);
-const expect = chai.expect;
+const { expect } = chai;
 
 const domain = 'proxy';
 const token = 'god-proxy';
-let con = false;
+const con = false;
 
 const doctypes = ['audit', 'cert', 'coi', 'log'];
 const REALISTIC_TIMING = true;
@@ -34,7 +50,7 @@ describe('error job', () => {
   let con = false;
 
   before(async function () {
-    this.timeout(20000);
+    this.timeout(20_000);
     con = await oada.connect({ domain, token });
     setConnection(con);
 
@@ -45,14 +61,14 @@ describe('error job', () => {
     trace('before: putData');
     // Build the tree with all the initial data:
     await putAndLinkData(['tp', 'fac', 'logbuyer', 'coiholder']);
-    await putData(['pdf']); // don't link into job tree since that would trigger target-helper to make a job for it
+    await putData(['pdf']); // Don't link into job tree since that would trigger target-helper to make a job for it
 
     // All 4 kinds of jobs: coi, audit, cert, log
-    //--------------------------------------------------------
+    // --------------------------------------------------------
     await Promise.each(doctypes, async (doctype) => {
       trace('before: create job for doctype: ', doctype);
-      const jobtype = doctype + 'job'; // coijob, auditjob, etc...
-      const j = items[jobtype];
+      const jobtype = `${doctype}job`; // Coijob, auditjob, etc...
+      const index = items[jobtype];
       // Example of a successful normal job: go ahead and put that up, tests will check results later
       await putAndLinkData(jobtype, {
         service: 'target',
@@ -68,8 +84,8 @@ describe('error job', () => {
 
       // Now pretend to be target: do NOT use tree because target wouldn't use it
       await con.post({
-        path: `${j.list}/${j.key}/updates`,
-        _type: j._type,
+        path: `${index.list}/${index.key}/updates`,
+        _type: index._type,
         data: {
           status: 'identifying',
           time: moment().format(),
@@ -78,7 +94,7 @@ describe('error job', () => {
       if (REALISTIC_TIMING) await Promise.delay(50);
 
       await con.post({
-        path: `${j.list}/${j.key}/updates`,
+        path: `${index.list}/${index.key}/updates`,
         data: {
           status: 'error',
           information: 'Could not identify document',
@@ -99,84 +115,66 @@ describe('error job', () => {
   // 7: oada-jobs should move the job to jobs-success under today's index
 
   _.each(doctypes, (doctype) => {
-    describe('#' + doctype, () => {
-      const jobtype = doctype + 'job';
-      const i = items[doctype];
-      const j = items[jobtype];
+    describe(`#${doctype}`, () => {
+      const jobtype = `${doctype}job`;
+      const index = items[doctype];
+      const index_ = items[jobtype];
 
-      it(
-        'should NOT _ref the PDF at _meta/vdoc/pdf in the ' +
-          doctype +
-          ' resource',
-        async () => {
-          const result = await con
-            .get({ path: `/resources/${i.key}/_meta/vdoc/pdf` })
-            .catch((e) => e.status);
-          expect(result).to.equal(403); // unauthorized on /resources that don't exist
-        }
-      );
-
-      it(
-        'should NOT _ref the ' +
-          doctype +
-          ' from _meta/vdoc/' +
-          i.name.plural +
-          '/<id> in PDF resource',
-        async () => {
-          const result = await con
-            .get({
-              path: `/resources/${items.pdf.key}/_meta/vdoc/${i.name.plural}/${i.key}`,
-            })
-            .catch((e) => e.status);
-          expect(result).to.equal(404);
-        }
-      );
-
-      it(
-        'should NOT put ' + doctype + '  up at ' + i.list + '/<key>',
-        async () => {
-          const result = await con
-            .get({ path: `${i.list}/${i.key}` })
-            .catch((e) => e.status);
-          expect(result).to.equal(404);
-        }
-      );
-
-      it('should NOT have a signature on the ' + doctype, async () => {
+      it(`should NOT _ref the PDF at _meta/vdoc/pdf in the ${doctype} resource`, async () => {
         const result = await con
-          .get({ path: `/resources/${i.key}/signatures` })
-          .catch((e) => e.status);
-        expect(result).to.equal(403); // unauthorized on /resources that don't exist
+          .get({ path: `/resources/${index.key}/_meta/vdoc/pdf` })
+          .catch((error_) => error_.status);
+        expect(result).to.equal(403); // Unauthorized on /resources that don't exist
+      });
+
+      it(`should NOT _ref the ${doctype} from _meta/vdoc/${index.name.plural}/<id> in PDF resource`, async () => {
+        const result = await con
+          .get({
+            path: `/resources/${items.pdf.key}/_meta/vdoc/${index.name.plural}/${index.key}`,
+          })
+          .catch((error_) => error_.status);
+        expect(result).to.equal(404);
+      });
+
+      it(`should NOT put ${doctype}  up at ${index.list}/<key>`, async () => {
+        const result = await con
+          .get({ path: `${index.list}/${index.key}` })
+          .catch((error_) => error_.status);
+        expect(result).to.equal(404);
+      });
+
+      it(`should NOT have a signature on the ${doctype}`, async () => {
+        const result = await con
+          .get({ path: `/resources/${index.key}/signatures` })
+          .catch((error_) => error_.status);
+        expect(result).to.equal(403); // Unauthorized on /resources that don't exist
       });
 
       it('should have status of failure on the job when completed', async () => {
         const result = await con
-          .get({ path: `resources/${j.key}/status` })
+          .get({ path: `resources/${index_.key}/status` })
           .then((r) => r.data);
         expect(result).to.equal('failure');
       });
 
       it('should delete the job from jobs', async () => {
         const result = await con
-          .get({ path: `${j.list}/${j.key}` })
-          .catch((e) => e); // returns the error
+          .get({ path: `${index_.list}/${index_.key}` })
+          .catch((error_) => error_); // Returns the error
         expect(result.status).to.equal(404);
       });
 
-      it(
-        "should put the job under today's day-index " +
-          moment().format('YYYY-MM-DD') +
-          ' within jobs-failure',
-        async () => {
-          const day = moment().format('YYYY-MM-DD');
-          const result = await con
-            .get({
-              path: `/bookmarks/services/target/jobs-failure/day-index/${day}/${j.key}`,
-            })
-            .then((r) => r.data);
-          expect(result._id).to.equal(`resources/${j.key}`);
-        }
-      );
+      it(`should put the job under today's day-index ${moment().format(
+        'YYYY-MM-DD'
+      )} within jobs-failure`, async () => {
+        const day = moment().format('YYYY-MM-DD');
+        const result = await con
+          .get({
+            path: `/bookmarks/services/target/jobs-failure/day-index/${day}/${index_.key}`,
+          })
+          .then((r) => r.data);
+        expect(result._id).to.equal(`resources/${index_.key}`);
+      });
     });
   });
 });
