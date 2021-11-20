@@ -15,16 +15,52 @@
  * limitations under the License.
  */
 
-export default {
+/* eslint-disable sonarjs/no-duplicate-string */
+
+type Letter =
+  | 'a'
+  | 'b'
+  | 'c'
+  | 'd'
+  | 'e'
+  | 'f'
+  | 'g'
+  | 'h'
+  | 'i'
+  | 'j'
+  | 'k'
+  | 'l'
+  | 'm'
+  | 'p'
+  | 'q'
+  | 'r'
+  | 's'
+  | 't'
+  | 'u'
+  | 'v'
+  | 'w'
+  | 'x'
+  | 'y'
+  | 'z';
+
+export type TreeKey = `${Letter | '*' | Uppercase<Letter>}${string}`;
+
+export type Tree = {
+  [key: TreeKey]: Tree;
+  _type?: string;
+  _rev?: number;
+};
+
+const tree: Tree = {
   bookmarks: {
     _type: 'application/vnd.oada.bookmarks.1+json',
     trellisfw: {
-      _type: 'application/vnd.trellisfw.1+json',
+      '_type': 'application/vnd.trellisfw.1+json',
       'coi-holders': {
-        _type: 'application/vnd.trellisfw.trading-partners.1+json',
+        '_type': 'application/vnd.trellisfw.trading-partners.1+json',
         'expand-index': {
           _type: 'application/vnd.trellisfw.trading-partners.1+json',
-        }
+        },
       },
       'trading-partners': {
         '_type': 'application/vnd.trellisfw.trading-partners.1+json',
@@ -63,7 +99,7 @@ export default {
             },
           },
         },
-        "masterid-index": {
+        'masterid-index': {
           '_type': 'application/vnd.trellisfw.trading-partners.1+json',
           '*': {
             _type: 'application/vnd.trellisfw.trading-partner.1+json',
@@ -72,6 +108,7 @@ export default {
               trellisfw: {
                 '_type': 'application/vnd.trellisfw.1+json',
                 'documents': {
+                  // eslint-disable-next-line no-secrets/no-secrets
                   _type: 'application/vnd.trellisfw.documents.1+json',
                 },
                 'fsqa-audits': {
@@ -87,6 +124,7 @@ export default {
               trellisfw: {
                 '_type': 'application/vnd.trellisfw.1+json',
                 'documents': {
+                  // eslint-disable-next-line no-secrets/no-secrets
                   _type: 'application/vnd.trellisfw.documents.1+json',
                 },
                 'fsqa-audits': {
@@ -98,7 +136,7 @@ export default {
               },
             },
           },
-        }
+        },
       },
       'documents': {
         // eslint-disable-next-line no-secrets/no-secrets
@@ -132,3 +170,5 @@ export default {
     },
   },
 };
+
+export default tree;

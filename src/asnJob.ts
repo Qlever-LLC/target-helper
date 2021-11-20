@@ -149,6 +149,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           );
         }
 
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         watchhandle = await oada.watch({
           path: `/bookmarks/services/target/jobs/${jobId}`,
           watchCallback: jobChange,
@@ -200,27 +201,37 @@ export async function startJobCreator({
       info(`New ASN posted at key = %s`, key);
       try {
         // If this ASN's most recent job has been successfully handled by target, do not re-post it unless _meta/services/target says force
-        const { data: asnmeta } = (await con.get({
+        const { data: asnmeta } = await con.get({
           path: `/${item._id}/_meta`,
-        })) as { data: any };
+        });
 
-        if (asnmeta?.services?.target?.force) {
+        const { services = {} } = asnmeta as {
+          services?: {
+            target?: {
+              force?: boolean;
+              jobs?: Record<string, { _ref?: string }>;
+            };
+          };
+        };
+        if (services?.target?.force) {
           info(
             'ASN at key %s has _meta/services/target/force as truthy, so we will send job to target regardless of whether last job was success.',
             key
           );
-        } else if (asnmeta?.services?.target?.jobs) {
-          const refslist = asnmeta.services.target.jobs;
-          const jobkeys = Object.keys(refslist);
+        } else if (services?.target?.jobs) {
+          const refslist = services.target.jobs;
+          const jobEntries = Object.entries(refslist);
           trace(
             'ASN at key %s has %d previous target jobs, checking if the last one was success. To force, put true at /%s/_meta/services/target/force',
             key,
-            jobkeys.length,
+            jobEntries.length,
             item._id
           );
           // Keys are ksuids, so they sort naturally with latest on bottom
-          const lastJobKey = jobkeys.sort().pop()!;
-          const lastJobID = refslist[lastJobKey]._ref;
+          const [lastJobKey, lastReference] = jobEntries
+            .sort(([a], [b]) => (a < b ? -1 : 1))
+            .pop()!;
+          const lastJobID = lastReference?._ref;
 
           trace('Retrieving last job %s at key %s', lastJobID, lastJobKey);
           try {
@@ -254,8 +265,11 @@ export async function startJobCreator({
         );
       }
 
-      const jobkey = await con
-        .post({
+      let jobkey;
+      try {
+        const {
+          headers: { 'content-location': location },
+        } = await con.post({
           path: '/resources',
           contentType: 'application/vnd.oada.job.1+json',
           data: {
@@ -267,16 +281,15 @@ export async function startJobCreator({
               documentsKey: key,
             },
           },
-        })
-        .then((r) =>
-          r.headers['content-location']!.replace(/^\/resources\//, '')
-        )
-        .catch((error_) => {
-          throw oError.tag(
-            error_,
-            'ERROR: failed to get a valid jobkey from content-location when posting ASN job resource'
-          );
         });
+        jobkey = location!.replace(/^\/resources\//, '');
+      } catch (cError: unknown) {
+        throw oError.tag(
+          cError as Error,
+          'ERROR: failed to get a valid jobkey from content-location when posting ASN job resource'
+        );
+      }
+
       trace('Posted ASN job resource, jobkey = %s', jobkey);
       try {
         await con.put({

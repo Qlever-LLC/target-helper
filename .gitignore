@@ -4,6 +4,7 @@ package.lock
 *.log
 .DS_Store
 .dccache
+.history
 
 # TypeScript
 dist

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 
 import _ from 'lodash';
 import debug from 'debug';
@@ -24,28 +24,36 @@ import oError from '@overleaf/o-error';
 
 import { Change, OADAClient, connect } from '@oada/client';
 import type { Json, Logger, WorkerFunction } from '@oada/jobs';
+import tSignatures, { JWK } from '@trellisfw/signatures';
 import type Jobs from '@oada/types/oada/service/jobs';
 import { ListWatch } from '@oada/list-lib';
 import type Update from '@oada/types/oada/service/job/update';
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
-// @ts-expect-error too lazy to figure out types
-import tSignatures from '@trellisfw/signatures';
 
+import tree, { TreeKey } from './tree.js';
 import config from './config.js';
-import tree from './tree.js';
 
 const error = debug('target-helper:error');
 const warn = debug('target-helper:warn');
 const info = debug('target-helper:info');
 const trace = debug('target-helper:trace');
 
+/**
+ * Helper because TS is dumb and doesn't realize `in` means the key definitely exists.
+ */
+function has<T, K extends string>(
+  value: T,
+  key: K
+): value is T & { [P in K]: unknown } {
+  return value && key in value;
+}
+
 // You can generate a signing key pair by running `oada-certs --create-keys`
 const prvKey = JSON.parse(
-  readFileSync(config.get('signing.privateJWK')).toString()
-) as { jku?: string; kid?: string; kty?: string; n?: string; e?: string };
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-const pubKey = tSignatures.keys.pubFromPriv(prvKey) as Record<string, unknown>;
-const header: { jwk: Record<string, unknown>; jku?: string; kid?: string } = {
+  (await readFile(config.get('signing.privateJWK'))).toString()
+) as JWK;
+const pubKey = await tSignatures.keys.pubFromPriv(prvKey);
+const header: { jwk: JWK; jku?: string; kid?: string } = {
   jwk: pubKey,
 };
 if (prvKey.jku) {
@@ -60,7 +68,7 @@ const signer = config.get('signing.signer');
 const signatureType = config.get('signing.signatureType');
 const tradingPartnersEnabled = config.get('tradingPartnersEnabled');
 const CONCURRENCY = config.get('oada.concurrency');
-const TP_MPATH = `/bookmarks/trellisfw/trading-partners/masterid-index`;
+const TP_MASTER_PATH = `/bookmarks/trellisfw/trading-partners/masterid-index`;
 
 // Will fill in expandIndex on first job to handle
 let expandIndex: {
@@ -78,12 +86,49 @@ type Shares = Array<{
   tp: { _id: string };
 }>;
 
-// ------------------------------------------------------------------------------------------------------------
+function recursiveMakeAllLinksVersioned(object: unknown): unknown {
+  if (typeof object !== 'object' || !object) {
+    return object;
+  }
+
+  if (has(object, '_id')) {
+    return {
+      _id: object._id as string,
+      _rev: 0,
+    };
+  }
+
+  return Object.fromEntries(
+    Object.entries(object).map(([key, value]) => [
+      key,
+      recursiveMakeAllLinksVersioned(value),
+    ])
+  );
+}
+
+function recursiveReplaceLinksWithReferences(object: unknown): unknown {
+  if (typeof object !== 'object' || !object) {
+    return object;
+  }
+
+  if (has(object, '_id')) {
+    return { _ref: object._id as string };
+  }
+
+  return Object.fromEntries(
+    Object.entries(object).map(([key, value]) => [
+      key,
+      recursiveReplaceLinksWithReferences(value),
+    ])
+  );
+}
+
+// ----------------------------------------------------------------------------
 // - receive the job from oada-jobs
 
 export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
   trace('Received job: ', job);
-  // Until oada-jobs adds cross-linking, make sure we are linked under pdf's jobs
+  // Until oada-jobs adds cross-linking, make sure we are linked under the PDF's jobs
   trace('Linking job under pdf/_meta until oada-jobs can do that natively');
   await oada.put({
     path: `/bookmarks/services/target/jobs/${jobId}/config/pdf/_meta/services/target/jobs`,
@@ -116,7 +161,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
     try {
       // - once it sees "success" in the updates,
       // it will post a job to trellis-signer and notify oada-jobs of success
-      const targetSuccess = async (_arguments?: Record<string, unknown>) => {
+      const targetSuccess = async (_arguments?: unknown) => {
         void log.info(
           'helper-started',
           'Target returned success, target-helper picking up'
@@ -128,11 +173,13 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           if (
             (cError as Error).message !==
             'Could not find watch state information.'
-          )
+          ) {
             throw cError;
+          }
         }
 
         // Get the latest copy of job
+        // eslint-disable-next-line @typescript-eslint/no-shadow
         const { data: job } = await oada.get({ path: `/resources/${jobId}` });
         assertJob(job);
 
@@ -148,9 +195,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             return;
           }
 
-          if ('_id' in object) {
+          if (has(object, '_id')) {
             await oada.put({
-              // @ts-expect-error --- we know it has _id
               path: `/${object._id}/_meta`,
               data: {
                 vdoc: { pdf: { _id: `${pdfID}` } },
@@ -174,9 +220,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             return;
           }
 
-          if ('_id' in object) {
+          if (has(object, '_id')) {
             await signResourceForTarget({
-              // @ts-expect-error --- we know it has _id
               _id: object._id as string,
               // Hack because jobs is on ancient client version
               oada: oada as unknown as OADAClient,
@@ -194,50 +239,25 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         await recursiveSignLinks(job.result);
 
         // ------------- 4: put audits/cois/etc. to proper home
-        function recursiveMakeAllLinksVersioned(object: unknown) {
-          if (typeof object !== 'object' || !object) {
-            return object;
-          }
-
-          if ('_id' in object) {
-            return {
-              // @ts-expect-error --- we know it has _id
-              _id: object._id as string,
-              _rev: 0,
-            };
-          }
-
-          return _.reduce<any, Record<string, any>>(
-            object,
-            (accumulator, _v, k) => {
-              accumulator[k] = recursiveMakeAllLinksVersioned(
-                (object as Record<string, unknown>)[k]
-              );
-              return accumulator;
-            },
-            {}
-          );
-        }
 
         const rootPath = job['trading-partner']
-          ? `${TP_MPATH}/${job['trading-partner']}/shared/trellisfw`
+          ? `${TP_MASTER_PATH}/${job['trading-partner']}/shared/trellisfw`
           : `/bookmarks/trellisfw`;
         const versionedResult = recursiveMakeAllLinksVersioned(
           job.result
-        ) as Record<string, unknown>;
-        trace(`all versioned links to bookmarks = `, versionedResult);
-        for (const doctype of Object.keys(versionedResult)) {
+        ) as Record<TreeKey, unknown>;
+        trace(versionedResult, 'all versioned links to bookmarks');
+        for (const [doctype, data] of Object.entries(versionedResult)) {
           // Top-level keys are doc types
           void log.info('linking', `Linking doctype ${doctype} from result`);
           // Automatically augment the base tree with the right content-type
-          // @ts-expect-error
-          tree.bookmarks.trellisfw[doctype] = {
+          tree.bookmarks!.trellisfw![doctype as TreeKey] = {
             _type: `application/vnd.trellis.${doctype}.1+json`,
           };
           // eslint-disable-next-line no-await-in-loop
           await oada.put({
             path: `${rootPath}/${doctype}`,
-            data: versionedResult[doctype] as Json,
+            data: data as Json,
             tree,
           });
         }
@@ -247,27 +267,6 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           'link-refs-pdf',
           'helper: linking result _refs under <pdf>/_meta/vdoc'
         );
-        function recursiveReplaceLinksWithReferences(object: unknown) {
-          if (typeof object !== 'object' || !object) {
-            return object;
-          }
-
-          if ('_id' in object) {
-            // @ts-expect-error --- we know it has _id
-            return { _ref: object._id as string };
-          }
-
-          return _.reduce<any, Record<string, any>>(
-            object,
-            (accumulator, _v, k) => {
-              accumulator[k] = recursiveReplaceLinksWithReferences(
-                (object as Record<string, unknown>)[k]
-              );
-              return accumulator;
-            },
-            {}
-          );
-        }
 
         const vdoc = recursiveReplaceLinksWithReferences(job.result);
         info(
@@ -325,7 +324,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               // TODO: WTF is a lookup??
               data: Record<string, Record<string, { _ref: string }>>;
             };
-            trace('lookups = %O', lookups);
+            trace(lookups, 'lookups');
             let facilityID;
             switch (doctype) {
               case 'fsqa-audits':
@@ -338,6 +337,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                   shares,
                 });
                 break;
+
               case 'fsqa-certificates':
                 facilityID = lookups['fsqa-certificate']!.organization!._ref;
                 // eslint-disable-next-line no-await-in-loop
@@ -348,7 +348,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                   shares,
                 });
                 break;
-              case 'cois':
+
+              case 'cois': {
                 // eslint-disable-next-line no-await-in-loop
                 const { data: holder } = (await oada.get({
                   path: `/${lookups.coi!.holder!._ref}`,
@@ -360,14 +361,26 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                   holder['trading-partners']
                 )) {
                   // eslint-disable-next-line no-await-in-loop
-                  const { data: tp } = (await oada.get({
+                  const { data: tp } = await oada.get({
                     path: `/${tpLink._id}`,
-                  })) as any;
-                  shares.push({ tp, doc: document, dockey });
+                  });
+                  if (!has(tp, '_id')) {
+                    throw new Error(
+                      `Expected _id on trading partner ${tpLink._id}`
+                    );
+                  }
+
+                  shares.push({
+                    tp: { _id: `${tp._id}` },
+                    doc: document,
+                    dockey,
+                  });
                 }
 
                 break;
-              case 'letters-of-guarantee':
+              }
+
+              case 'letters-of-guarantee': {
                 // eslint-disable-next-line no-await-in-loop
                 const { data: buyer } = (await oada.get({
                   path: `/${lookups['letter-of-guarantee']!.buyer!._ref}`,
@@ -384,6 +397,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 }
 
                 break;
+              }
+
               default:
                 throw new Error(
                   `Unknown document type (${doctype}) when attempting to do lookups`
@@ -396,7 +411,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             `Posting ${shares.length} shares jobs for doctype ${doctype} resulting from this transcription`
           );
           for (const { dockey, doc, tp } of shares) {
-            const tpkey = tp._id.replace(/^resources\//, '');
+            const tpKey = tp._id.replace(/^resources\//, '');
             // eslint-disable-next-line no-await-in-loop
             const { data: user } = await oada.get({ path: `/${tp._id}/user` });
             if (Buffer.isBuffer(user)) {
@@ -407,7 +422,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             let mask:
               | { keys_to_mask: string[]; generate_pdf: boolean }
               | boolean = false;
-            if (tpkey.includes('REDDYRAW')) {
+            if (tpKey.includes('REDDYRAW')) {
               info('COPY WILL MASK LOCATIONS FOR REDDYRAW');
               trace(
                 'pdf is only generated for fsqa-audits or cois, doctype is %s',
@@ -420,50 +435,51 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             }
 
             // END HACK FOR DEMO
-            // eslint-disable-next-line no-await-in-loop
-            const resourceID = await oada
-              .post({
-                path: `/resources`,
-                contentType: tree.bookmarks.services['*'].jobs['*']._type,
-                data: {
-                  type: 'share-user-link',
-                  service: 'trellis-shares',
-                  config: {
-                    src: `/${doc._id}`,
-                    copy: {
-                      // If "copy" key is not present it will link to original rather than copy
-                      // copy full original as-is (rather than some subset of keys/paths).
-                      // Note that this will screw up the signature if set to anything other than true.  Also, ignored if mask is truthy since original must exist unmasked.
-                      original: true,
-                      meta: { vdoc: true }, // Copy only the vdoc path from _meta for the copy
-                      mask,
-                    },
-                    doctype, // Fsqa-audits, cois, fsqa-certificates, letters-of-guarantee
-                    dest: `/bookmarks/trellisfw/${doctype}/${dockey}`, // This doubles-up bookmarks, but I think it's the most understandable to look at
-                    user, // { id, bookmarks }
-                    chroot: `/bookmarks/trellisfw/trading-partners/${tpkey}/user/bookmarks`,
-                    tree: treeForDocumentType(doctype),
+            const {
+              headers: { 'content-location': location },
+              // eslint-disable-next-line no-await-in-loop
+            } = await oada.post({
+              path: `/resources`,
+              contentType: tree.bookmarks?.services?.['*']?.jobs?.['*']?._type,
+              data: {
+                type: 'share-user-link',
+                service: 'trellis-shares',
+                config: {
+                  src: `/${doc._id}`,
+                  copy: {
+                    // If "copy" key is not present it will link to original rather than copy
+                    // copy full original as-is (rather than some subset of keys/paths).
+                    // Note that this will screw up the signature if set to anything other than true.  Also, ignored if mask is truthy since original must exist unmasked.
+                    original: true,
+                    meta: { vdoc: true }, // Copy only the vdoc path from _meta for the copy
+                    mask,
                   },
+                  doctype, // Fsqa-audits, cois, fsqa-certificates, letters-of-guarantee
+                  dest: `/bookmarks/trellisfw/${doctype}/${dockey}`, // This doubles-up bookmarks, but I think it's the most understandable to look at
+                  user, // { id, bookmarks }
+                  chroot: `/bookmarks/trellisfw/trading-partners/${tpKey}/user/bookmarks`,
+                  tree: treeForDocumentType(doctype),
                 },
-              })
-              .then((r) => r.headers['content-location']!.replace(/^\//, ''));
+              },
+            });
+            const resourceID = location?.replace(/^\//, '');
             const reskey = resourceID?.replace(/^resources\//, '');
             trace('Shares job posted as resid = %s', resourceID);
-            // eslint-disable-next-line no-await-in-loop
-            const jobpath = await oada
-              .put({
-                path: `/bookmarks/services/trellis-shares/jobs`,
-                data: { [reskey]: { _id: resourceID, _rev: 0 } },
-                tree,
-              })
-              .then((r) => r.headers['content-location']);
+            const {
+              headers: { 'content-location': jobpath },
+              // eslint-disable-next-line no-await-in-loop
+            } = await oada.put({
+              path: `/bookmarks/services/trellis-shares/jobs`,
+              data: { [reskey!]: { _id: resourceID, _rev: 0 } },
+              tree,
+            });
             const jobkey = jobpath?.replace(/^\/resources\/[^/]+\//, '');
             trace('Posted jobkey %s for shares', jobkey);
           }
         }
 
         void log.info('done', 'Completed all helper tasks');
-        resolve(job.result as any);
+        resolve(job.result as never);
       };
 
       const jobChange = async (c: Omit<Change, 'resource_id'>) => {
@@ -578,12 +594,13 @@ async function pushSharesForFacility({
   shares: Shares;
 }) {
   const ei = expandIndex['trading-partners'];
+  const values = Object.values(ei);
   trace(
-    `Looking for facility `,
+    'Looking for facility %s in %d trading partners',
     facilityid,
-    ` in ${_.keys(ei).length} trading partners`
+    values.length
   );
-  for (const tpv of Object.values(ei)) {
+  for (const tpv of values) {
     if (!tpv.facilities) {
       return; // Tp has no facilities
     }
@@ -609,7 +626,9 @@ async function signResourceForTarget({
   oada: OADAClient;
   log: Logger;
 }) {
-  let { data: a } = (await oada.get({ path: `/${_id}` })) as { data: any };
+  const { data } = (await oada.get({ path: `/${_id}` })) as {
+    data: Record<string, unknown>;
+  };
   // Const { data: r } = await oada.get({ path: `/${_id}` });
   // const a = _.cloneDeep(r); // the actual audit or coi json
 
@@ -618,7 +637,7 @@ async function signResourceForTarget({
     trace('#signResourceForTarget: Checking for existing signature...');
     // eslint-disable-next-line no-inner-declarations
     async function hasTranscriptionSignature(resource: {
-      signatures?: Record<string, unknown>;
+      signatures?: string[];
     }): Promise<boolean> {
       if (!resource.signatures) {
         return false;
@@ -644,7 +663,7 @@ async function signResourceForTarget({
       return false; // Shouldn't ever get here.
     }
 
-    if (await hasTranscriptionSignature(a)) {
+    if (await hasTranscriptionSignature(data)) {
       void log.error(
         `#signResourceForTarget: Item ${_id} already has a transcription signature on it, choose to skip it and not apply a new one`,
         {}
@@ -658,22 +677,22 @@ async function signResourceForTarget({
     );
 
     // Otherwise, go ahead and apply the signature
-    a = await tSignatures.sign(a, prvKey, {
+    const { signatures } = await tSignatures.sign(data, prvKey, {
       header,
       signer,
       type: signatureType,
     });
+
+    info('PUTing signed signatures key only to /%s/signatures', _id);
+    try {
+      await oada.put({ path: `/${_id}/signatures`, data: signatures });
+    } catch (cError: unknown) {
+      error(cError, `Failed to apply signature to /${_id}/signatures`);
+      throw new Error(`Failed to apply signature to /${_id}/signatures`);
+    }
   } catch (cError: unknown) {
     error(cError, `Could not apply signature to resource ${_id}`);
     throw new Error(`Could not apply signature to resource ${_id}`);
-  }
-
-  info('PUTing signed signatures key only to /%s/signatures', _id);
-  try {
-    await oada.put({ path: `/${_id}/signatures`, data: a.signatures });
-  } catch (cError: unknown) {
-    error(cError, `Failed to apply signature to /${_id}/signatures`);
-    throw new Error(`Failed to apply signature to /${_id}/signatures`);
   }
 
   void log.info('signed', `Signed resource ${_id} successfully`);
@@ -737,45 +756,45 @@ export async function startJobCreator({
     await cleanupBrokenLinks();
     setInterval(cleanupBrokenLinks, 600_000);
 
-    await con
-      .head({ path: `/bookmarks/trellisfw/trading-partners` })
-      .catch(async (cError) => {
-        if (cError.status !== 200) {
-          info(
-            `/bookmarks/trellisfw/trading-partners does not exist, creating....`
-          );
-          await con.put({
-            path: '/bookmarks/trellisfw/trading-partners',
-            data: {},
-            tree,
-          });
-        }
-      });
+    try {
+      await con.head({ path: `/bookmarks/trellisfw/trading-partners` });
+    } catch (cError: unknown) {
+      if (!(has(cError, 'status') && cError.status === 200)) {
+        info(
+          `/bookmarks/trellisfw/trading-partners does not exist, creating....`
+        );
+        await con.put({
+          path: '/bookmarks/trellisfw/trading-partners',
+          data: {},
+          tree,
+        });
+      }
+    }
 
-    await con
-      .head({ path: `/bookmarks/trellisfw/coi-holders` })
-      .catch(async (cError) => {
-        if (cError.status === 404) {
-          info(`/bookmarks/trellisfw/coi-holders does not exist, creating....`);
-          await con.put({
-            path: '/bookmarks/trellisfw/coi-holders',
-            data: {},
-            tree,
-          });
+    try {
+      await con.head({ path: `/bookmarks/trellisfw/coi-holders` });
+    } catch (cError: unknown) {
+      if (has(cError, 'status') && cError.status === 404) {
+        info(`/bookmarks/trellisfw/coi-holders does not exist, creating....`);
+        await con.put({
+          path: '/bookmarks/trellisfw/coi-holders',
+          data: {},
+          tree,
+        });
 
-          await con.put({
-            path: '/bookmarks/trellisfw/coi-holders/expand-index',
-            data: {},
-            tree,
-          });
-        }
-      });
+        await con.put({
+          path: '/bookmarks/trellisfw/coi-holders/expand-index',
+          data: {},
+          tree,
+        });
+      }
+    }
 
     trace('Trading partners enabled %s', tradingPartnersEnabled);
     if (tradingPartnersEnabled) {
       // eslint-disable-next-line no-new
       new ListWatch({
-        path: TP_MPATH,
+        path: TP_MASTER_PATH,
         name: `target-helper-trading-partners`,
         conn: con,
         resume: false,
@@ -784,16 +803,18 @@ export async function startJobCreator({
     }
 
     // Ensure the documents endpoint exists because Target is an enabler of that endpoint
-    const exists = await con
-      .get({ path: `/bookmarks/trellisfw/documents` })
-      .then((r) => r.status)
-      .catch((cError) => cError.status);
-    if (exists !== 200) {
+    try {
+      const { status } = await con.get({
+        path: `/bookmarks/trellisfw/documents`,
+      });
+      if (status !== 200) {
+        throw new Error(`/bookmarks/trellisfw/documents does not exist`);
+      }
+    } catch {
       info('/bookmarks/trellisfw/documents does not exist, creating...');
       await con.put({ path: '/bookmarks/trellisfw/documents', data: {}, tree });
     }
 
-    const function_ = documentAdded();
     // eslint-disable-next-line no-new
     new ListWatch({
       path: `/bookmarks/trellisfw/documents`,
@@ -801,30 +822,29 @@ export async function startJobCreator({
       conn: con,
       resume: true,
       onNewList: ListWatch.AssumeHandled,
-      onAddItem: function_,
+      onAddItem: documentAdded(),
     });
 
     // eslint-disable-next-line no-inner-declarations
     async function cleanupBrokenLinks() {
-      const jobs = ((await con
-        .get({
-          path: `/bookmarks/services/target/jobs`,
-        })
-        .then((r) => r.data)) ?? {}) as Jobs;
-      const jobids = Object.keys(jobs).filter((key) => !key.startsWith('_'));
-      let count = 0;
+      const { data: jobs = {} } = (await con.get({
+        path: `/bookmarks/services/target/jobs`,
+      })) as unknown as { data: Jobs };
 
+      let count = 0;
       await Promise.all(
-        jobids.map(async (jodi: string) => {
-          const job = jobs[jodi]!;
+        Object.entries(jobs).map(async ([key, job]) => {
+          if (key.startsWith('_')) {
+            return;
+          }
 
           if (Object.keys(job).length === 1 && job._rev) {
             count++;
             info(
-              `cleaning up broken job /bookmarks/services/target/jobs/${jodi}`
+              `cleaning up broken job /bookmarks/services/target/jobs/${key}`
             );
             await con.delete({
-              path: `/bookmarks/services/target/jobs/${jodi}`,
+              path: `/bookmarks/services/target/jobs/${key}`,
             });
           }
         })
@@ -833,13 +853,17 @@ export async function startJobCreator({
     }
 
     // eslint-disable-next-line no-inner-declarations
-    async function watchTp(_: unknown, key: string) {
+    async function watchTp(_tp: unknown, key: string) {
       key = key.replace(/^\//, '');
       info(`New trading partner detected at key: [${key}]`);
-      const path = `${TP_MPATH}/${key}/shared/trellisfw/documents`;
+      const path = `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`;
       info('Starting listwatch on %s', path);
-      const tp_exist = await con.head({ path }).catch((cError) => cError);
-      if (tp_exist.status !== 200) {
+      try {
+        const { status } = await con.head({ path });
+        if (status !== 200) {
+          throw new Error(`${path} does not exist`);
+        }
+      } catch {
         info('%s does not exist, creating....', path);
         await con.put({
           path,
@@ -848,7 +872,6 @@ export async function startJobCreator({
         });
       }
 
-      const function_ = documentAdded(key);
       // eslint-disable-next-line no-new
       new ListWatch({
         path,
@@ -856,7 +879,7 @@ export async function startJobCreator({
         onNewList: ListWatch.AssumeHandled,
         conn: con,
         resume: true,
-        onAddItem: function_,
+        onAddItem: documentAdded(key),
       });
     }
 
@@ -869,11 +892,12 @@ export async function startJobCreator({
           info('New Document posted at key = %s', key);
           if (tp) info('New Document posted for tp = %s', tp);
           // Get the _id for the actual PDF
+          // eslint-disable-next-line no-secrets/no-secrets
           /* instead of POSTing, it now just PUTs with a known _id
           const docid = await con
             .get({
               path: tp
-                ? `${TP_MPATH}/${tp}/shared/trellisfw/documents`
+                ? `${TP_MASTER_PATH}/${tp}/shared/trellisfw/documents`
                 : `/bookmarks/trellisfw/documents`,
             })
             // Hack: have to get the whole list,
