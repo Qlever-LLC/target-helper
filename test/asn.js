@@ -14,31 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const _ = require('lodash');
-const { expect } = require('chai');
-const Promise = require('bluebird');
-const debug = require('debug');
-const moment = require('moment');
 
-const trace = debug('target-helper#test:trace');
+import Promise from 'bluebird';
+import _ from 'lodash';
+import debug from 'debug';
+import { expect } from 'chai';
+import moment from 'moment';
+
+import oada from '@oada/client';
+
+import testasn from './testasn.js';
 
 // DO NOT include ../ because we are testing externally.
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const oada = require('@oada/client');
+const trace = debug('target-helper#test:trace');
 
 let jobkey = 'TARGETHELPER_ASNTEST_JOB1'; // Replaced in first test with actual job key
 const asnkey = 'TARGETHELPER_ASNTEST_ASN1';
-const jobid = `resources/${jobkey}`;
-const asnid = `resources/${asnkey}`;
+const jobID = `resources/${jobkey}`;
+const asnID = `resources/${asnkey}`;
 const dayIndex = moment().format('YYYY-MM-DD');
-const testasn = require('./testasn');
 const headers = { 'content-type': 'application/vnd.trellisfw.asn.sf.1+json' };
-const listheaders = { 'content-type': 'application/vnd.trellisfw.asns.1+json' };
-const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
 
-let con = false;
+let con;
 describe('External ASN tests of target-helper, run from admin', () => {
   before(async () => {
     con = await oada.connect({ domain: 'proxy', token: 'god-proxy' });
@@ -59,11 +59,11 @@ describe('External ASN tests of target-helper, run from admin', () => {
       .then((r) => r.data);
 
     // Post the test doc
-    await con.put({ path: `/${asnid}`, data: testasn, headers });
+    await con.put({ path: `/${asnID}`, data: testasn, headers });
     await con.put({
       path: `/bookmarks/trellisfw/asns/${asnkey}`,
-      data: { _id: asnid, _rev: 0 },
-      headers: listheaders,
+      data: { _id: asnID, _rev: 0 },
+      contentType: 'application/vnd.trellisfw.asns.1+json',
     });
     await Promise.delay(500); // Give it a second to make the job
 
@@ -79,18 +79,18 @@ describe('External ASN tests of target-helper, run from admin', () => {
     }
 
     // Get the job info, validate it
-    const job = await con
-      .get({ path: `/bookmarks/services/target/jobs/${jobkey}` })
-      .then((r) => r.data);
+    const { data: job } = await con.get({
+      path: `/bookmarks/services/target/jobs/${jobkey}`,
+    });
     expect(job.type).to.equal('asn');
     expect(job.config.type).to.equal('asn');
-    expect(job.config.asn).to.deep.equal({ _id: asnid });
+    expect(job.config.asn).to.deep.equal({ _id: asnID });
 
     // Mark the job as "success"
     await con.post({
       path: `/bookmarks/services/target/jobs/${jobkey}/updates`,
       data: { status: 'success', info: 'test was a success' },
-      headers: jobsheaders,
+      contentType: 'application/vnd.oada.job.1+json',
     });
     await Promise.delay(1500); // Wait for oada-jobs to move it to jobs-success
     const doesnotexist = await con
@@ -104,24 +104,24 @@ describe('External ASN tests of target-helper, run from admin', () => {
     this.timeout(5000);
 
     // Get the initial job queue so we can figure out which job was created as a result of our posted test doc
-    const oldJobs = await con
-      .get({ path: `/bookmarks/services/target/jobs` })
-      .then((r) => r.data);
+    const { data: oldJobs } = await con.get({
+      path: `/bookmarks/services/target/jobs`,
+    });
 
     // Post the test doc
-    await con.put({ path: `/${asnid}`, data: testasn, headers });
+    await con.put({ path: `/${asnID}`, data: testasn, headers });
     await con.put({
       path: `/bookmarks/trellisfw/asns/${asnkey}`,
-      data: { _id: asnid, _rev: 0 },
-      headers: listheaders,
+      data: { _id: asnID, _rev: 0 },
+      contentType: 'application/vnd.trellisfw.asns.1+json',
     });
     await Promise.delay(500); // Give it a second to make the job
     const day = moment().format('YYYY-MM-DD'); // Keep this for the day-index below
 
     // get the new job list, find the new key
-    const newJobs = await con
-      .get({ path: `/bookmarks/services/target/jobs` })
-      .then((r) => r.data);
+    const { data: newJobs } = await con.get({
+      path: `/bookmarks/services/target/jobs`,
+    });
     jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]; // Assume first difference is new one
     expect(jobkey).to.be.a('string');
     expect(jobkey).to.have.length.above(0);
@@ -130,18 +130,18 @@ describe('External ASN tests of target-helper, run from admin', () => {
     }
 
     // Get the job info, validate it
-    const job = await con
-      .get({ path: `/bookmarks/services/target/jobs/${jobkey}` })
-      .then((r) => r.data);
+    const { data: job } = await con.get({
+      path: `/bookmarks/services/target/jobs/${jobkey}`,
+    });
     expect(job.type).to.equal('asn');
     expect(job.config.type).to.equal('asn');
-    expect(job.config.asn).to.deep.equal({ _id: asnid });
+    expect(job.config.asn).to.deep.equal({ _id: asnID });
 
     // Put the "bad" status update
     await con.put({
       path: `/bookmarks/services/target/jobs/${jobkey}/updates`,
       data: { status: 'error_bad_update' },
-      headers: jobsheaders,
+      contentType: 'application/vnd.oada.job.1+json',
     });
     await Promise.delay(1500); // Wait for oada-jobs to move it to jobs-error
     const doesnotexist = await con
@@ -163,11 +163,11 @@ async function cleanup() {
   return Promise.map(
     [
       `/bookmarks/trellisfw/asns/${asnkey}`,
-      `/${asnid}`,
+      `/${asnID}`,
       `/bookmarks/trellisfw/jobs/${jobkey}`,
       `/bookmarks/trellisfw/jobs-success/day-index/${dayIndex}/${jobkey}`,
       `/bookmarks/trellisfw/jobs-failure/day-index/${dayIndex}/${jobkey}`,
-      `/${jobid}`,
+      `/${jobID}`,
     ],
     deleteIfExists
   );
