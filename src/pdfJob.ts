@@ -17,7 +17,7 @@
 
 import { readFile } from 'node:fs/promises';
 
-import _ from 'lodash';
+import clone from 'clone-deep';
 import debug from 'debug';
 import moment from 'moment';
 import oError from '@overleaf/o-error';
@@ -25,9 +25,9 @@ import oError from '@overleaf/o-error';
 import { Change, OADAClient, connect } from '@oada/client';
 import type { Json, Logger, WorkerFunction } from '@oada/jobs';
 import tSignatures, { JWK } from '@trellisfw/signatures';
-import type Jobs from '@oada/types/oada/service/jobs';
+import type Jobs from '@oada/types/oada/service/jobs.js';
 import { ListWatch } from '@oada/list-lib';
-import type Update from '@oada/types/oada/service/job/update';
+import type Update from '@oada/types/oada/service/job/update.js';
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
 
 import tree, { TreeKey } from './tree.js';
@@ -49,9 +49,8 @@ function has<T, K extends string>(
 }
 
 // You can generate a signing key pair by running `oada-certs --create-keys`
-const prvKey = JSON.parse(
-  (await readFile(config.get('signing.privateJWK'))).toString()
-) as JWK;
+const keyFile = await readFile(config.get('signing.privateJWK'));
+const prvKey = JSON.parse(keyFile.toString()) as JWK;
 const pubKey = await tSignatures.keys.pubFromPriv(prvKey);
 const header: { jwk: JWK; jku?: string; kid?: string } = {
   jwk: pubKey,
@@ -503,7 +502,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
           trace('#jobChange: it is a change we want (has an update)');
           for (const [k, v] of Object.entries(updates)) {
-            const t = _.clone(v.time);
+            const t = clone(v.time);
             v.time = moment(v.time).toISOString();
             if (v.time === null) {
               // @ts-expect-error --- ?
@@ -605,12 +604,14 @@ async function pushSharesForFacility({
       return; // Tp has no facilities
     }
 
-    if (!_.some(tpv.facilities, (fLink) => fLink._id === facilityid)) {
+    if (
+      !Object.values(tpv.facilities).some((fLink) => fLink._id === facilityid)
+    ) {
       return; // Have facilities, just not this one
     }
 
     // Do we need this cloneDeep?
-    const { id, ...tp } = _.cloneDeep(tpv);
+    const { id, ...tp } = clone(tpv);
     const s = { tp: { _id: id, ...tp }, doc, dockey };
     shares.push(s);
     trace('Added share to running list: %O', s);
@@ -630,7 +631,7 @@ async function signResourceForTarget({
     data: Record<string, unknown>;
   };
   // Const { data: r } = await oada.get({ path: `/${_id}` });
-  // const a = _.cloneDeep(r); // the actual audit or coi json
+  // const a = clone(r); // the actual audit or coi json
 
   try {
     // Test first if this thing already has a transcription signature.  If so, skip it.

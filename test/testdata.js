@@ -14,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const _ = require('lodash');
-const jp = require('jsonpointer');
-const Promise = require('bluebird');
-const debug = require('debug');
-const moment = require('moment');
+
+import _ from 'lodash';
+import debug from 'debug';
+import jp from 'jsonpointer';
+import moment from 'moment';
 
 const trace = debug('target-helper#test:trace');
 const info = debug('target-helper#test:info');
@@ -204,80 +204,84 @@ items.logbuyer.data['trading-partners'] = {
   [items.tp.key]: { _id: `resources/${items.tp.key}` },
 };
 
-async function cleanup(key_or_keys) {
+async function cleanup(keyOrKeys) {
   let keys = _.keys(items);
-  if (_.isArray(key_or_keys)) keys = key_or_keys;
-  else if (key_or_keys) keys = [key_or_keys];
+  if (_.isArray(keyOrKeys)) keys = keyOrKeys;
+  else if (keyOrKeys) keys = [keyOrKeys];
   info('cleanup: removing any lingering test resources');
 
-  await Promise.each(keys, async (k) => {
+  for await (const k of keys) {
     trace('cleanup: removing resources+links if they exist for key ', k);
     const index = items[k];
     let path;
     // Delete the link path from the list:
     path = `${index.list}/${index.key}`;
-    await con
-      .get({ path })
-      .then(() => con.delete({ path }))
-      .catch((error_) => {});
+    try {
+      await con.get({ path });
+      await con.delete({ path });
+    } catch {}
+
     // Delete the actual resource for this thing too:
     path = `/resources/${index.key}`;
-    await con
-      .get({ path })
-      .then(() => con.delete({ path }))
-      .catch((error_) => {});
+    try {
+      await con.get({ path });
+      await con.delete({ path });
+    } catch {}
+
     if (index.data.masterid) {
       // This is master data, so remove from masterid-index and expand-index
       path = `${index.list}/expand-index/${index.key}`;
-      await con
-        .get({ path })
-        .then(() => con.delete({ path }))
-        .catch((error_) => {});
+      try {
+        await con.get({ path });
+        await con.delete({ path });
+      } catch {}
+
       path = `${index.list}/masterid-index/${index.data.masterid}`;
-      await con
-        .get({ path })
-        .then(() => con.delete({ path }))
-        .catch((error_) => {});
+      try {
+        await con.get({ path });
+        await con.delete({ path });
+      } catch {}
     }
 
     // If there are extra lists to cleanup (like for jobs-success), do those too:
     if (index.cleanup && index.cleanup.lists) {
-      await Promise.each(index.cleanup.lists, async (l) => {
+      for await (const l of index.cleanup.lists) {
         path = `${l}/${index.key}`;
-        await con
-          .get({ path })
-          .then(() => con.delete({ path }))
-          .catch((error_) => {});
-      });
+        try {
+          await con.get({ path });
+          await con.delete({ path });
+        } catch {}
+      }
     }
-  });
+  }
 }
 
-async function putData(key_or_keys, merges) {
+async function putData(keyOrKeys, merges) {
   let keys = _.keys(items);
-  let data_merges = [];
-  if (_.isArray(key_or_keys)) {
-    keys = key_or_keys;
-    data_merges = merges || [];
-  } else if (key_or_keys) {
-    keys = [key_or_keys];
-    data_merges = [merges];
+  let dataMerges = [];
+  if (_.isArray(keyOrKeys)) {
+    keys = keyOrKeys;
+    dataMerges = merges || [];
+  } else if (keyOrKeys) {
+    keys = [keyOrKeys];
+    dataMerges = [merges];
   }
 
-  await Promise.each(keys, async (k, ki) => {
+  for await (const [ki, k] of Object.entries(keys)) {
     trace('putData: adding test data for key: ', k);
     const index = items[k];
-    let path;
     let data;
 
     // Make the resource:
-    path = `/resources/${index.key}`;
+    const path = `/resources/${index.key}`;
     // Merge in any data overrides:
     data = index.data;
-    if (data_merges[ki]) data = _.merge(data, data_merges[ki]);
+    if (dataMerges[ki]) data = _.merge(data, dataMerges[ki]);
     // Do the put:
     trace('putData: path: ', path, ', data = ', data);
-    await con.put({ path, data, _type: index._type }).catch((error_) => {
+    try {
+      await con.put({ path, data, _type: index._type });
+    } catch (error_) {
       error(
         'Failed to make the resource. path = ',
         path,
@@ -289,32 +293,33 @@ async function putData(key_or_keys, merges) {
         error_
       );
       throw error_;
-    });
+    }
+
     // If this has a user, go ahead and make their dummy bookmarks resource (i.e. a trading-partner)
     if (index.data.user && index.data.user.bookmarks) {
-      await con
-        .put({
+      try {
+        await con.put({
           path: `/${index.data.user.bookmarks._id}`,
           _type: tree.bookmarks,
           data: { iam: 'userbookmarks' },
-        })
-        .catch((error_) => {
-          error(
-            'Failed to make bookmarks for i.data.user. path = /',
-            index.data.user.bookmarks._id,
-            ', error = ',
-            error_
-          );
-          throw error_;
         });
+      } catch (error_) {
+        error(
+          'Failed to make bookmarks for i.data.user. path = /',
+          index.data.user.bookmarks._id,
+          ', error = ',
+          error_
+        );
+        throw error_;
+      }
     }
-  });
+  }
 }
 
-async function putLink(key_or_keys) {
+async function putLink(keyOrKeys) {
   let keys = _.keys(items);
-  if (_.isArray(key_or_keys)) keys = key_or_keys;
-  else if (key_or_keys) keys = [key_or_keys];
+  if (_.isArray(keyOrKeys)) keys = keyOrKeys;
+  else if (keyOrKeys) keys = [keyOrKeys];
 
   await Promise.each(keys, async (k) => {
     const index = items[k];
@@ -331,8 +336,13 @@ async function putLink(key_or_keys) {
     // NOTE: since we are doing a tree put, do NOT put the i.key on the end of the URL
     // because tree put will create a new resource instead of linking the existing one.
     const data = { [index.key]: { _id: `resources/${index.key}` } };
-    if (!index.notversioned) data._rev = 0;
-    await con.put({ path, data, tree }).catch((error_) => {
+    if (!index.notversioned) {
+      data._rev = 0;
+    }
+
+    try {
+      await con.put({ path, data, tree });
+    } catch (error_) {
       error(
         'Failed to link the resource. path = ',
         path,
@@ -342,43 +352,47 @@ async function putLink(key_or_keys) {
         error_
       );
       throw error_;
-    });
+    }
 
     if (index.data.masterid) {
       // This is master data, so put it into the expand-index and masterid-index
-      const data = _.cloneDeep(index.data);
-      data.id = `resources/${index.key}`;
+      const masterMada = _.cloneDeep(index.data);
+      masterMada.id = `resources/${index.key}`;
       // Put the expand-index:
       path = `${index.list}/expand-index`;
-      await con
-        .put({ path, data: { [index.key]: data }, tree })
-        .catch((error_) => {
-          error('Failed to put the expand-index.  e = ', error_);
-          throw error_;
-        });
+      try {
+        await con.put({ path, data: { [index.key]: masterMada }, tree });
+      } catch (error_) {
+        error('Failed to put the expand-index.  e = ', error_);
+        throw error_;
+      }
 
       // Put the masterid-index:
       path = `${index.list}/masterid-index`;
-      await con
-        .put({ path, data: { [index.data.masterid]: data }, tree })
-        .catch((error_) => {
-          error('Failed to put the masterid-index.  e = ', error_);
-          throw error_;
+      try {
+        await con.put({
+          path,
+          data: { [index.data.masterid]: masterMada },
+          tree,
         });
+      } catch (error_) {
+        error('Failed to put the masterid-index.  e = ', error_);
+        throw error_;
+      }
     }
   });
 }
 
-async function putAndLinkData(key_or_keys, merges) {
-  await putData(key_or_keys, merges);
-  await putLink(key_or_keys);
+async function putAndLinkData(keyOrKeys, merges) {
+  await putData(keyOrKeys, merges);
+  await putLink(keyOrKeys);
 }
 
 function setConnection(theconnection) {
   con = theconnection;
 }
 
-module.exports = {
+export {
   tree,
   items,
   cleanup,

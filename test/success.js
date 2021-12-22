@@ -14,26 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const _ = require('lodash');
-const chai = require('chai');
-const chaiAsPromised = require('chai-as-promised');
-const oada = require('@oada/client');
-const Promise = require('bluebird');
-const moment = require('moment');
-const debug = require('debug');
-const {
-  tree,
-  items,
+
+import { setTimeout } from 'node:timers/promises';
+
+import _ from 'lodash';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import debug from 'debug';
+import moment from 'moment';
+import oada from '@oada/client';
+
+import {
   cleanup,
+  items,
+  putAndLinkData,
   putData,
   putLink,
-  putAndLinkData,
   setConnection,
-} = require('./testdata.js');
+} from './testdata.js';
 
 const trace = debug('target-helper#test:trace');
-const info = debug('target-helper#test:info');
-const error = debug('target-helper#test:error');
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -49,6 +49,7 @@ const doctypes = ['audit', 'cert', 'coi', 'log'];
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 describe('success job', () => {
   before(async function () {
+    // eslint-disable-next-line no-invalid-this
     this.timeout(20_000);
     con = await oada.connect({ domain, token });
     setConnection(con);
@@ -64,7 +65,7 @@ describe('success job', () => {
 
     // All 4 kinds of jobs: coi, audit, cert, log
     // --------------------------------------------------------
-    await Promise.each(doctypes, async (doctype) => {
+    for await (const doctype of doctypes) {
       trace('before: create job for doctype: ', doctype);
       const jobtype = `${doctype}job`; // Coijob, auditjob, etc...
       const index = items[jobtype];
@@ -79,7 +80,7 @@ describe('success job', () => {
       });
 
       // Wait a bit after posting job since that's what target would do:
-      if (REALISTIC_TIMING) await Promise.delay(500);
+      if (REALISTIC_TIMING) await setTimeout(500);
 
       // Now pretend to be target: do NOT use tree because target wouldn't use it
       await con.post({
@@ -90,7 +91,7 @@ describe('success job', () => {
           time: moment().format(),
         },
       });
-      if (REALISTIC_TIMING) await Promise.delay(50);
+      if (REALISTIC_TIMING) await setTimeout(50);
       await con.post({
         path: `${index.list}/${index.key}/updates`,
         _type: index._type,
@@ -100,7 +101,7 @@ describe('success job', () => {
           time: moment().format(),
         },
       });
-      if (REALISTIC_TIMING) await Promise.delay(50);
+      if (REALISTIC_TIMING) await setTimeout(50);
 
       // Create the JSON resource
       const index_ = items[doctype];
@@ -121,6 +122,8 @@ describe('success job', () => {
         case 'log':
           meta = { buyer: { _ref: `resources/${items.logbuyer.key}` } };
           break;
+        default:
+          throw new Error(`Unknown doctype: ${doctype}`);
       }
 
       await con.put({
@@ -150,9 +153,12 @@ describe('success job', () => {
           time: moment().format(),
         },
       });
-    });
+    }
+
     // Wait a bit for processing all the jobs
-    if (REALISTIC_TIMING) await Promise.delay(2000);
+    if (REALISTIC_TIMING) {
+      await setTimeout(2000);
+    }
   });
 
   // Now the real checks begin.  Did target helper:
@@ -171,47 +177,45 @@ describe('success job', () => {
 
       it(`should _ref the ${jobtype} under pdf/_meta/services/target/jobs`, async () => {
         const path = `/resources/${items.pdf.key}/_meta/services/target/jobs/${index_.key}`;
-        const result = await con.get({ path }).then((r) => r.data);
+        const { data: result } = await con.get({ path });
         expect(result._ref).to.equal(`resources/${index_.key}`);
       });
 
       it(`should link to the PDF at _meta/vdoc/pdf in the ${doctype} resource`, async () => {
-        const result = await con
-          .get({ path: `/resources/${index.key}/_meta/vdoc` })
-          .then((r) => r.data);
+        const { data: result } = await con.get({
+          path: `/resources/${index.key}/_meta/vdoc`,
+        });
         expect(result).to.deep.equal({
           pdf: { _id: `resources/${items.pdf.key}` },
         });
       });
 
       it(`should _ref the ${doctype} from _meta/vdoc/${index.name.plural}/<id> in PDF resource`, async () => {
-        const result = await con
-          .get({
-            path: `/resources/${items.pdf.key}/_meta/vdoc/${index.name.plural}/${index.key}`,
-          })
-          .then((r) => r.data);
+        const { data: result } = await con.get({
+          path: `/resources/${items.pdf.key}/_meta/vdoc/${index.name.plural}/${index.key}`,
+        });
         expect(result).to.deep.equal({ _ref: `resources/${index.key}` });
       });
 
       it(`should put ${doctype} up at ${index.list}/<key>`, async () => {
-        const result = await con
-          .get({ path: `${index.list}/${index.key}` })
-          .then((r) => r.data);
+        const { data: result } = await con.get({
+          path: `${index.list}/${index.key}`,
+        });
         expect(result._id).to.equal(`resources/${index.key}`); // It exists
       });
 
       it(`should have a signature on the ${doctype}`, async () => {
-        const result = await con
-          .get({ path: `/resources/${index.key}/signatures` })
-          .then((r) => r.data);
+        const { data: result } = await con.get({
+          path: `/resources/${index.key}/signatures`,
+        });
         expect(result).to.be.an('array');
         expect(result.length).to.equal(1);
       });
 
       it(`should have status of success on the ${jobtype} when completed`, async () => {
-        const result = await con
-          .get({ path: `/resources/${index_.key}/status` })
-          .then((r) => r.data);
+        const { data: result } = await con.get({
+          path: `/resources/${index_.key}/status`,
+        });
         expect(result).to.equal('success');
       });
 
@@ -226,11 +230,9 @@ describe('success job', () => {
         'YYYY-MM-DD'
       )} within jobs-success`, async () => {
         const day = moment().format('YYYY-MM-DD');
-        const result = await con
-          .get({
-            path: `/bookmarks/services/target/jobs-success/day-index/${day}/${index_.key}`,
-          })
-          .then((r) => r.data);
+        const { data: result } = await con.get({
+          path: `/bookmarks/services/target/jobs-success/day-index/${day}/${index_.key}`,
+        });
         expect(result._id).to.equal(`resources/${index_.key}`);
       });
     });

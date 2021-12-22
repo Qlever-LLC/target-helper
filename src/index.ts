@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+// Load config first so it can set up env
+import config from './config.js';
+
 import debug from 'debug';
 
 import { Service } from '@oada/jobs';
@@ -27,7 +30,6 @@ import {
   jobHandler as pdfJobHandler,
   startJobCreator as pdfStartJobCreator,
 } from './pdfJob.js';
-import config from './config.js';
 
 const error = debug('target-helper:error');
 const info = debug('target-helper:info');
@@ -39,48 +41,47 @@ if (domain.startsWith('http')) {
   domain = domain.replace(/^https?:\/\//, '');
 }
 
-if (domain === 'localhost' || domain === 'proxy') {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-}
-
 trace('Using token(s) = %s', tokens);
 info('Using domain = %s', domain);
 
-for (const token of tokens) {
-  // --------------------------------------------------
-  // Create the service
-  const service = new Service('target', domain, token, 1, {
-    finishReporters: [
-      {
-        type: 'slack',
-        status: 'failure',
-        posturl: config.get('slack.posturl'),
-      },
-    ],
-  }); // 1 concurrent job
+// Handle each token concurrently
+await Promise.all(
+  tokens.map(async (token) => {
+    // --------------------------------------------------
+    // Create the service
+    const service = new Service('target', domain, token, 1, {
+      finishReporters: [
+        {
+          type: 'slack',
+          status: 'failure',
+          posturl: config.get('slack.posturl'),
+        },
+      ],
+    }); // 1 concurrent job
 
-  // --------------------------------------------------
-  // Set the job type handlers
-  service.on('transcription', config.get('timeouts.pdf'), pdfJobHandler);
-  service.on('asn', config.get('timeouts.asn'), asnJobHandler);
+    // --------------------------------------------------
+    // Set the job type handlers
+    service.on('transcription', config.get('timeouts.pdf'), pdfJobHandler);
+    service.on('asn', config.get('timeouts.asn'), asnJobHandler);
 
-  // --------------------------------------------------
-  // Start the jobs watching service
-  const serviceP = service.start();
+    // --------------------------------------------------
+    // Start the jobs watching service
+    const serviceP = service.start();
 
-  // Start the things watching to create jobs
-  const pdfP = pdfStartJobCreator({ domain, token });
-  const asnP = asnStartJobCreator({ domain, token });
+    // Start the things watching to create jobs
+    const pdfP = pdfStartJobCreator({ domain, token });
+    const asnP = asnStartJobCreator({ domain, token });
 
-  // Catch errors
-  // eslint-disable-next-line github/no-then
-  Promise.all([serviceP, pdfP, asnP]).catch((cError) => {
-    error(cError);
-    // eslint-disable-next-line no-process-exit, unicorn/no-process-exit
-    process.exit(1);
-  });
+    info('Initializing target-helper service. v1.1.9');
+    info('Started pdf and asn job creator processes');
+    info('Ready');
 
-  info('Initializing target-helper service. v1.1.9');
-  info('Started pdf and asn job creator processes');
-  info('Ready');
-}
+    // Catch errors
+    // eslint-disable-next-line github/no-then
+    await Promise.all([serviceP, pdfP, asnP]).catch((cError) => {
+      error(cError);
+      // eslint-disable-next-line no-process-exit, unicorn/no-process-exit
+      process.exit(1);
+    });
+  })
+);

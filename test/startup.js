@@ -14,17 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import _ from 'lodash';
-import chai from 'chai';
-import Promise from 'bluebird';
-import debug from 'debug';
-import moment from 'moment';
-import oada from '@oada/client';
-import testasn from './testasn.js';
+
 import config from '../config.mjs';
 
-const { expect } = chai;
-const trace = debug('target-helper#test:trace');
+import Promise from 'bluebird';
+import moment from 'moment';
+import oada from '@oada/client';
 
 // DO NOT include ../ because we are testing externally.
 
@@ -32,12 +27,10 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const jobkey = 'TARGETHELPER_ASNTEST_JOB1'; // Replaced in first test with actual job key
 const asnkey = 'TARGETHELPER_ASNTEST_ASN1';
-const jobid = `resources/${jobkey}`;
-const asnid = `resources/${asnkey}`;
+const jobID = `resources/${jobkey}`;
+const asnID = `resources/${asnkey}`;
 const dayIndex = moment().format('YYYY-MM-DD');
-const headers = { 'content-type': 'application/vnd.trellisfw.asn.sf.1+json' };
 const listheaders = { 'content-type': 'application/vnd.trellisfw.asns.1+json' };
-const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
 
 let con = false;
 describe('External ASN tests of target-helper, run from admin', () => {
@@ -53,6 +46,7 @@ describe('External ASN tests of target-helper, run from admin', () => {
   });
 
   it(`Shouldn't reprocess existing queue items if resume is set to true`, async function () {
+    // eslint-disable-next-line no-invalid-this
     this.timeout(5000);
 
     await con.put({
@@ -123,22 +117,23 @@ describe('External ASN tests of target-helper, run from admin', () => {
 });
 
 async function cleanup() {
-  return Promise.map(
+  return Promise.all(
     [
       `/bookmarks/trellisfw/asns/${asnkey}`,
-      `/${asnid}`,
+      `/${asnID}`,
       `/bookmarks/trellisfw/jobs/${jobkey}`,
       `/bookmarks/trellisfw/jobs-success/day-index/${dayIndex}/${jobkey}`,
       `/bookmarks/trellisfw/jobs-failure/day-index/${dayIndex}/${jobkey}`,
-      `/${jobid}`,
-    ],
-    deleteIfExists
+      `/${jobID}`,
+    ].map((path) => deleteIfExists(path))
   );
 }
 
 async function deleteIfExists(path) {
-  await con
-    .get({ path })
-    .then(async () => con.delete({ path })) // Delete it
-    .catch((error) => {}); // Do nothing, didn't exist
+  try {
+    await con.get({ path });
+    await con.delete({ path }); // Delete it
+  } catch {
+    // Do nothing, didn't exist
+  }
 }

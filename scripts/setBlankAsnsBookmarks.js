@@ -14,16 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import _ from 'lodash';
-import chai from 'chai';
-import Promise from 'bluebird';
+
+/* eslint-disable no-console */
+/* eslint-disable no-process-exit */
+/* eslint-disable unicorn/no-process-exit */
+
+import config from '../config.js';
+
+import readline from 'node:readline'; // Node.js built-in
+
 import debug from 'debug';
+import ksuid from 'ksuid';
+import minimist from 'minimist';
 import moment from 'moment';
 import oada from '@oada/client';
-import config from '../config.mjs';
-import minimist from 'minimist';
-import ksuid from 'ksuid';
-import readline from 'node:readline'; // Node.js built-in
 
 const trace = debug('target-helper#test:trace');
 const argv = minimist(process.argv.slice(2));
@@ -41,157 +45,160 @@ const headers = { 'content-type': 'application/vnd.trellisfw.asn.sf.1+json' };
 const listheaders = { 'content-type': 'application/vnd.trellisfw.asns.1+json' };
 const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
 
-(async () => {
-  if (!argv.force) {
-    console.log(
-      'ERROR: you must pass --force because this WILL REPLACE THE BOOKMARKS/TRELLISFW/ASNS LINK WITH A BLANK TEST ONE.  It SHOULD restore that one when you hit enter after the script pauses.'
-    );
-    process.exit(1);
-  }
+if (!argv.force) {
+  console.log(
+    'ERROR: you must pass --force because this WILL REPLACE THE BOOKMARKS/TRELLISFW/ASNS LINK WITH A BLANK TEST ONE.  It SHOULD restore that one when you hit enter after the script pauses.'
+  );
+  process.exit(1);
+}
 
-  console.log('Replacing /bookmarks/trellisfw/asns with a new blank test tree');
+console.log('Replacing /bookmarks/trellisfw/asns with a new blank test tree');
 
-  const con = await oada.connect({
-    domain: config.get('domain'),
-    token: config.get('token'),
-  });
+const con = await oada.connect({
+  domain: config.get('domain'),
+  token: config.get('token'),
+});
 
-  const oldid = await con
-    .get({ path: `/bookmarks/trellisfw/asns/_id` })
-    .then((r) => r.data);
-  console.log('The original ASN ID (KEEP THIS JUST IN CASE!) was:', oldid);
+const { data: oldID } = await con.get({
+  path: `/bookmarks/trellisfw/asns/_id`,
+});
+console.log('The original ASN ID (KEEP THIS JUST IN CASE!) was:', oldID);
 
-  const listid = ksuid.randomSync().string;
-  const data = {
-    '2021-01-15': {
-      id: ksuid.randomSync().string,
-      asnids: [
-        ksuid.randomSync().string,
-        ksuid.randomSync().string,
-        ksuid.randomSync().string,
-        ksuid.randomSync().string,
-      ],
-    },
-    '2021-01-16': {
-      id: ksuid.randomSync().string,
-      asnids: [ksuid.randomSync().string, ksuid.randomSync().string],
-    },
-  };
+const { string: listID } = await ksuid.random();
+const data = {
+  '2021-01-15': {
+    id: ksuid.randomSync().string,
+    asnids: [
+      ksuid.randomSync().string,
+      ksuid.randomSync().string,
+      ksuid.randomSync().string,
+      ksuid.randomSync().string,
+    ],
+  },
+  '2021-01-16': {
+    id: ksuid.randomSync().string,
+    asnids: [ksuid.randomSync().string, ksuid.randomSync().string],
+  },
+};
 
-  let count = 0;
-  await Promise.each(Object.keys(data), async (day) => {
-    const d = data[day];
-    console.log('Creating', day);
-    await Promise.each(d.asnids, async (a, ai) => {
-      console.log(`      Creating ${day}/${a}`);
-      return con.put({
-        path: `/resources/${a}`,
-        data: { test: `hello${count++}` },
-        headers,
-      });
-    });
-    console.log(`        Creating resource for ${day}`);
+let count = 0;
+for await (const [day, d] of Object.entries(data)) {
+  console.log('Creating', day);
+  for await (const a of d.asnids) {
+    console.log(`      Creating ${day}/${a}`);
     await con.put({
-      path: `/resources/${d.id}`,
-      data: d.asnids.reduce((accumulator, a, ai) => {
-        accumulator[`test${ai}`] = { _id: `resources/${a}`, _rev: 0 };
-        return accumulator;
-      }, {}),
-      headers: listheaders,
-    });
-  });
-
-  // Create the list
-  console.log('Creating top asns list at resources/', listid);
-  await con.put({
-    path: `/resources/${listid}`,
-    data: {
-      'day-index': Object.keys(data).reduce((accumulator, day) => {
-        accumulator[day] = { _id: `resources/${data[day].id}`, _rev: 0 };
-        return accumulator;
-      }, {}),
-    },
-    headers: listheaders,
-  });
-
-  console.log('Linking new asns list under bookmarks/trellisfw', listid);
-  await con.put({
-    path: `/bookmarks/trellisfw`,
-    data: { asns: { _id: `resources/${listid}` } },
-    headers: { 'content-type': 'application/vnd.trellisfw.1+json' },
-  });
-
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  // ---------------------------------------------------
-  // Wait until ready, then keeping post new ASNs and waiting until they say stop:
-  const newasnday = Object.keys(data)[0];
-  const newasnids = [];
-  let response = '';
-  do {
-    const newasnid = ksuid.randomSync().string;
-    newasnids.push(newasnid);
-    response = await new Promise((resolve, reject) => {
-      rl.question(
-        `When you press enter, I will put a new dummy ASN to /bookmarks/trellisfw/asns/day-index/${newasnday}/${newasnid}.  To stop, type stop and then hit enter`,
-        resolve
-      );
-    });
-    if (response === 'stop') break;
-    await con.put({
-      path: `/resources/${newasnid}`,
-      data: { hello: 'testnewasn' },
+      path: `/resources/${a}`,
+      data: { test: `hello${count++}` },
       headers,
     });
-    await con.put({
-      path: `/bookmarks/trellisfw/asns/day-index/${newasnday}`,
-      data: { [newasnid]: { _id: `resources/${newasnid}`, _rev: 0 } },
-      listheaders,
-    });
-    console.log('New asn created at', newasnid, 'and linked under', newasnday);
-  } while (response !== 'stop');
+  }
 
-  // ---------------------------------------------------
-  // Wait until ready, then reset bookmarks and cleanup resources
-  await new Promise((resolve, reject) => {
+  console.log(`        Creating resource for ${day}`);
+  await con.put({
+    path: `/resources/${d.id}`,
+    data: d.asnids.reduce((accumulator, a, ai) => {
+      accumulator[`test${ai}`] = { _id: `resources/${a}`, _rev: 0 };
+      return accumulator;
+    }, {}),
+    headers: listheaders,
+  });
+}
+
+// Create the list
+console.log('Creating top asns list at resources/', listID);
+await con.put({
+  path: `/resources/${listID}`,
+  data: {
+    'day-index': Object.keys(data).reduce((accumulator, day) => {
+      accumulator[day] = { _id: `resources/${data[day].id}`, _rev: 0 };
+      return accumulator;
+    }, {}),
+  },
+  headers: listheaders,
+});
+
+console.log('Linking new asns list under bookmarks/trellisfw', listID);
+await con.put({
+  path: `/bookmarks/trellisfw`,
+  data: { asns: { _id: `resources/${listID}` } },
+  headers: { 'content-type': 'application/vnd.trellisfw.1+json' },
+});
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+// ---------------------------------------------------
+// Wait until ready, then keeping post new ASNs and waiting until they say stop:
+const newASNDay = Object.keys(data)[0];
+const newasnids = [];
+let response = '';
+do {
+  const newASNid = ksuid.randomSync().string;
+  newasnids.push(newASNid);
+  // eslint-disable-next-line no-await-in-loop
+  response = await new Promise((resolve, reject) => {
     rl.question(
-      `Sitting here until you press enter, then I will put back original /bookmarks/trellisfw/asns from old id.  ${oldid}`,
+      `When you press enter, I will put a new dummy ASN to /bookmarks/trellisfw/asns/day-index/${newASNDay}/${newASNid}.  To stop, type stop and then hit enter`,
       resolve
     );
   });
-  console.log('Putting back original bookmarks/trellisfw/asns from id', oldid);
+  if (response === 'stop') break;
+  // eslint-disable-next-line no-await-in-loop
   await con.put({
-    path: `/bookmarks/trellisfw`,
-    data: { asns: { _id: oldid } },
-    headers: { 'content-type': 'application/vnd.trellisfw.1+json' },
+    path: `/resources/${newASNid}`,
+    data: { hello: 'testnewasn' },
+    headers,
   });
-  console.log('Deleting all those resources to cleanup');
+  // eslint-disable-next-line no-await-in-loop
+  await con.put({
+    path: `/bookmarks/trellisfw/asns/day-index/${newASNDay}`,
+    data: { [newASNid]: { _id: `resources/${newASNid}`, _rev: 0 } },
+    listheaders,
+  });
+  console.log('New asn created at', newASNid, 'and linked under', newASNDay);
+} while (response !== 'stop');
 
-  const ids = [
-    ...newasnids,
-    listid,
-    ...Object.keys(data).reduce((accumulator, day) => {
-      accumulator.push(data[day].id);
-      return [...accumulator, ...data[day].asnids];
-    }, []),
-  ];
-  console.log('    Deleting ids:', ids);
-  await Promise.each(ids, (index) =>
-    con.delete({ path: `/resources/${index}` })
+// ---------------------------------------------------
+// Wait until ready, then reset bookmarks and cleanup resources
+await new Promise((resolve, reject) => {
+  rl.question(
+    `Sitting here until you press enter, then I will put back original /bookmarks/trellisfw/asns from old id.  ${oldID}`,
+    resolve
   );
+});
+console.log('Putting back original bookmarks/trellisfw/asns from id', oldID);
+await con.put({
+  path: `/bookmarks/trellisfw`,
+  data: { asns: { _id: oldID } },
+  headers: { 'content-type': 'application/vnd.trellisfw.1+json' },
+});
+console.log('Deleting all those resources to cleanup');
 
-  console.log(
-    '\n\nDO NOT FORGET TO RESTART TARGET-HELPER SO IT PICKS THE OLD BOOKMARKS WATCH UP AGAIn\n\n'
-  );
-  process.exit(0);
-})();
+const ids = [
+  ...newasnids,
+  listID,
+  ...Object.keys(data).reduce((accumulator, day) => {
+    accumulator.push(data[day].id);
+    return [...accumulator, ...data[day].asnids];
+  }, []),
+];
+console.log('    Deleting ids:', ids);
+for await (const index of ids) {
+  con.delete({ path: `/resources/${index}` });
+}
+
+console.log(
+  '\n\nDO NOT FORGET TO RESTART TARGET-HELPER SO IT PICKS THE OLD BOOKMARKS WATCH UP AGAIn\n\n'
+);
+process.exit(0);
 
 async function deleteIfExists(path) {
-  await con
-    .get({ path })
-    .then(async () => con.delete({ path })) // Delete it
-    .catch((error) => {}); // Do nothing, didn't exist
+  try {
+    await con.get({ path });
+    await con.delete({ path }); // Delete it
+  } catch {
+    // Do nothing, didn't exist
+  }
 }

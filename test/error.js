@@ -14,33 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const _ = require('lodash');
-const chai = require('chai');
-const chaiAsPromised = require('chai-as-promised');
-const oada = require('@oada/client');
-const Promise = require('bluebird');
-const moment = require('moment');
-const debug = require('debug');
-const {
-  tree,
-  items,
+
+import { setTimeout } from 'node:timers/promises';
+
+import _ from 'lodash';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import debug from 'debug';
+import moment from 'moment';
+import oada from '@oada/client';
+
+import {
   cleanup,
-  putData,
-  putLink,
+  items,
   putAndLinkData,
+  putData,
   setConnection,
-} = require('./testdata.js');
+} from './testdata.js';
 
 const trace = debug('target-helper#test:trace');
-const info = debug('target-helper#test:info');
-const error = debug('target-helper#test:error');
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
 const domain = 'proxy';
 const token = 'god-proxy';
-const con = false;
 
 const doctypes = ['audit', 'cert', 'coi', 'log'];
 const REALISTIC_TIMING = true;
@@ -50,6 +48,7 @@ describe('error job', () => {
   let con = false;
 
   before(async function () {
+    // eslint-disable-next-line no-invalid-this
     this.timeout(20_000);
     con = await oada.connect({ domain, token });
     setConnection(con);
@@ -65,7 +64,7 @@ describe('error job', () => {
 
     // All 4 kinds of jobs: coi, audit, cert, log
     // --------------------------------------------------------
-    await Promise.each(doctypes, async (doctype) => {
+    for await (const doctype of doctypes) {
       trace('before: create job for doctype: ', doctype);
       const jobtype = `${doctype}job`; // Coijob, auditjob, etc...
       const index = items[jobtype];
@@ -80,7 +79,7 @@ describe('error job', () => {
       });
 
       // Wait a bit after posting job since that's what target would do:
-      if (REALISTIC_TIMING) await Promise.delay(500);
+      if (REALISTIC_TIMING) await setTimeout(500);
 
       // Now pretend to be target: do NOT use tree because target wouldn't use it
       await con.post({
@@ -91,7 +90,7 @@ describe('error job', () => {
           time: moment().format(),
         },
       });
-      if (REALISTIC_TIMING) await Promise.delay(50);
+      if (REALISTIC_TIMING) await setTimeout(50);
 
       await con.post({
         path: `${index.list}/${index.key}/updates`,
@@ -101,9 +100,10 @@ describe('error job', () => {
           time: moment().format(),
         },
       });
-    });
+    }
+
     // Wait a bit for processing
-    await Promise.delay(2000);
+    await setTimeout(2000);
   });
 
   // Now the real checks begin.  Did target helper:
@@ -151,9 +151,9 @@ describe('error job', () => {
       });
 
       it('should have status of failure on the job when completed', async () => {
-        const result = await con
-          .get({ path: `resources/${index_.key}/status` })
-          .then((r) => r.data);
+        const { data: result } = await con.get({
+          path: `resources/${index_.key}/status`,
+        });
         expect(result).to.equal('failure');
       });
 
@@ -168,11 +168,9 @@ describe('error job', () => {
         'YYYY-MM-DD'
       )} within jobs-failure`, async () => {
         const day = moment().format('YYYY-MM-DD');
-        const result = await con
-          .get({
-            path: `/bookmarks/services/target/jobs-failure/day-index/${day}/${index_.key}`,
-          })
-          .then((r) => r.data);
+        const { data: result } = await con.get({
+          path: `/bookmarks/services/target/jobs-failure/day-index/${day}/${index_.key}`,
+        });
         expect(result._id).to.equal(`resources/${index_.key}`);
       });
     });

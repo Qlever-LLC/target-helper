@@ -19,10 +19,10 @@ import debug from 'debug';
 import oError from '@overleaf/o-error';
 
 import { Change, connect } from '@oada/client';
-import { Job, assert as assertJob } from '@oada/types/oada/service/job';
+import { Job, assert as assertJob } from '@oada/types/oada/service/job.js';
 import type { Json, WorkerFunction } from '@oada/jobs';
 import { ListWatch } from '@oada/list-lib';
-import type Update from '@oada/types/oada/service/job/update';
+import type Update from '@oada/types/oada/service/job/update.js';
 
 import tree from './tree.js';
 

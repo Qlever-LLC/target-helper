@@ -47,7 +47,7 @@ const config = convict({
       format: Number,
       default: 1,
       env: 'CONCURRENCY',
-      arg: 'concurrency'
+      arg: 'concurrency',
     },
   },
   timeouts: {
