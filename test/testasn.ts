@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+/* eslint-disable sonarjs/no-duplicate-string */
+
 export default {
   _type: 'application/vnd.trellisfw.asn.sf.1+json',
   ZSHPMNT05: {

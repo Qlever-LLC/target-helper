@@ -37,6 +37,9 @@ parserOptions:
 
 overrides:
   - files: '*.ts'
+    parserOptions:
+      ecmaVersion: 2020
+      project: './tsconfig.eslint.json'
     extends:
       - plugin:github/typescript
       - plugin:import/typescript

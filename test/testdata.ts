@@ -20,11 +20,13 @@ import debug from 'debug';
 import jp from 'jsonpointer';
 import moment from 'moment';
 
+import type { OADAClient } from '@oada/client';
+
 const trace = debug('target-helper#test:trace');
 const info = debug('target-helper#test:info');
 const error = debug('target-helper#test:error');
 
-let con = false; // Set with setConnection function
+let con: OADAClient; // Set with setConnection function
 
 const tree = {
   bookmarks: {
@@ -204,7 +206,7 @@ items.logbuyer.data['trading-partners'] = {
   [items.tp.key]: { _id: `resources/${items.tp.key}` },
 };
 
-async function cleanup(keyOrKeys) {
+async function cleanup(keyOrKeys?: string | readonly string[]) {
   let keys = _.keys(items);
   if (_.isArray(keyOrKeys)) keys = keyOrKeys;
   else if (keyOrKeys) keys = [keyOrKeys];
@@ -244,7 +246,7 @@ async function cleanup(keyOrKeys) {
     }
 
     // If there are extra lists to cleanup (like for jobs-success), do those too:
-    if (index.cleanup && index.cleanup.lists) {
+    if (index.cleanup?.lists) {
       for await (const l of index.cleanup.lists) {
         path = `${l}/${index.key}`;
         try {
@@ -281,7 +283,7 @@ async function putData(keyOrKeys, merges) {
     trace('putData: path: ', path, ', data = ', data);
     try {
       await con.put({ path, data, _type: index._type });
-    } catch (error_) {
+    } catch (error_: unknown) {
       error(
         'Failed to make the resource. path = ',
         path,
@@ -303,7 +305,7 @@ async function putData(keyOrKeys, merges) {
           _type: tree.bookmarks,
           data: { iam: 'userbookmarks' },
         });
-      } catch (error_) {
+      } catch (error_: unknown) {
         error(
           'Failed to make bookmarks for i.data.user. path = /',
           index.data.user.bookmarks._id,
@@ -388,7 +390,7 @@ async function putAndLinkData(keyOrKeys, merges) {
   await putLink(keyOrKeys);
 }
 
-function setConnection(theconnection) {
+function setConnection(theconnection: OADAClient) {
   con = theconnection;
 }
 

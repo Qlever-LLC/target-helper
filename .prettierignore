@@ -1,4 +1,5 @@
 dist
+.test
 node_modules
 yarn-cache
 services-available
@@ -6,6 +7,8 @@ services-available
 LICENSE
 
 tags*
+.history
+.dccache
 
 **/yarn.lock
 **/yarn-error.log
