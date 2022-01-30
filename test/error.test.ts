@@ -15,13 +15,16 @@
  * limitations under the License.
  */
 
+import config from '../dist/config.js';
+
 import { setTimeout } from 'isomorphic-timers-promises';
 
 import test from 'ava';
 
 import debug from 'debug';
 import moment from 'moment';
-import oada from '@oada/client';
+
+import oada, { JsonObject } from '@oada/client';
 
 import {
   cleanup,
@@ -33,13 +36,13 @@ import {
 
 const trace = debug('target-helper#test:trace');
 
-const domain = 'proxy';
-const token = 'god-proxy';
-
 const doctypes = <const>['audit', 'cert', 'coi', 'log'];
 const REALISTIC_TIMING = true;
 
-const con = await oada.connect({ domain, token });
+const con = await oada.connect({
+  domain: config.get('oada.domain'),
+  token: config.get('oada.token')[0]!,
+});
 
 test.before(async (t) => {
   t.timeout(20_000);
@@ -59,14 +62,14 @@ test.before(async (t) => {
   for await (const doctype of doctypes) {
     trace('before: create job for doctype: ', doctype);
     const jobtype: `${typeof doctype}job` = `${doctype}job`; // Coijob, auditjob, etc...
-    const index = items[jobtype];
+    const index = items[jobtype]!;
     // Example of a successful normal job: go ahead and put that up, tests will check results later
     await putAndLinkData(jobtype, {
       service: 'target',
       type: 'transcription',
       config: {
         type: 'pdf',
-        pdf: { _id: `resources/${items.pdf.key}` },
+        pdf: { _id: `resources/${items.pdf?.key}` },
       },
     });
 
@@ -76,7 +79,7 @@ test.before(async (t) => {
     // Now pretend to be target: do NOT use tree because target wouldn't use it
     await con.post({
       path: `${index.list}/${index.key}/updates`,
-      contentType: index._type as string,
+      contentType: index._type,
       data: {
         status: 'identifying',
         time: moment().format(),
@@ -109,23 +112,25 @@ test.before(async (t) => {
 for (const doctype of doctypes) {
   test(`#${doctype}`, async (t) => {
     const jobtype: `${typeof doctype}job` = `${doctype}job`;
-    const index = items[doctype];
-    const index_ = items[jobtype];
+    const index = items[doctype]!;
+    const jobIndex = items[jobtype]!;
 
     const error1 = await t.throwsAsync(
       con.get({ path: `/resources/${index.key}/_meta/vdoc/pdf` }),
       {},
       `should NOT _ref the PDF at _meta/vdoc/pdf in the ${doctype} resource`
     );
+    // @ts-expect-error dumb errors
     t.is(error1?.status, 403);
 
     const error2 = await t.throwsAsync(
       con.get({
-        path: `/resources/${items.pdf.key}/_meta/vdoc/${index.name.plural}/${index.key}`,
+        path: `/resources/${items.pdf?.key}/_meta/vdoc/${index.name.plural}/${index.key}`,
       }),
       {},
       `should NOT _ref the PDF at _meta/vdoc/${index.name.plural}/<id> in the PDF resource`
     );
+    // @ts-expect-error dumb errors
     t.is(error2?.status, 404);
 
     const error3 = await t.throwsAsync(
@@ -133,6 +138,7 @@ for (const doctype of doctypes) {
       {},
       `should NOT put ${doctype} up at ${index.list}/<key>`
     );
+    // @ts-expect-error dumb errors
     t.is(error3?.status, 404);
 
     const error4 = await t.throwsAsync(
@@ -140,31 +146,33 @@ for (const doctype of doctypes) {
       {},
       `should NOT have a signature on the ${doctype}`
     );
+    // @ts-expect-error dumb errors
     t.is(error4?.status, 403); // Unauthorized on /resources that don't exist
 
-    const { data: result } = await con.get({
-      path: `resources/${index_.key}/status`,
+    const { data: result1 } = await con.get({
+      path: `resources/${jobIndex.key}/status`,
     });
     t.is(
-      result,
+      result1,
       'failure',
       'should have status of failure on the job when completed'
     );
 
     const error5 = await t.throwsAsync(
-      con.get({ path: `${index_.list}/${index_.key}` }),
+      con.get({ path: `${jobIndex.list}/${jobIndex.key}` }),
       {},
       `should delete the job from jobs`
     );
+    // @ts-expect-error dumb errors
     t.is(error5?.status, 404);
 
     const day = moment().format('YYYY-MM-DD');
-    const { data: result } = await con.get({
-      path: `/bookmarks/services/target/jobs-failure/day-index/${day}/${index_.key}`,
+    const { data: result2 } = await con.get({
+      path: `/bookmarks/services/target/jobs-failure/day-index/${day}/${jobIndex.key}`,
     });
     t.is(
-      result._id,
-      `resources/${index_.key}`,
+      (result2 as JsonObject)?._id,
+      `resources/${jobIndex.key}`,
       `should put the job under today's day-index ${moment().format(
         'YYYY-MM-DD'
       )} within jobs-failure`

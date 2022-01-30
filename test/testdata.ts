@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
+import assign from 'assign-deep';
+import cloneDeep from 'clone-deep';
 import debug from 'debug';
 import jp from 'jsonpointer';
 import moment from 'moment';
@@ -61,11 +62,33 @@ const tree = {
   },
 };
 
+interface Item {
+  key?: string;
+  name: { singular: string; plural?: string };
+  source?: string;
+  list?: string;
+  notversioned?: boolean;
+  _type?: string;
+  list_type?: string;
+  data?: {
+    [k: string]: unknown;
+    'iam'?: string;
+    'masterid'?: string;
+    'name'?: string;
+    'user'?: { id: string; bookmarks: { _id: string } };
+    'holder'?: { name: string };
+    'organization'?: { location: { name: string } };
+    'facilities'?: Record<string, { _id: string }>;
+    'trading-partners'?: Record<string, { _id: string }>;
+  };
+  cleanup?: { lists?: readonly string[] };
+}
+
 // Fill out tree, and let code fill in any "defaults" later.
 // One "item" will have:
 // name.singular, name.plural, data, source (oada|trellisfw), list, _type, list_type, and key.
 const day = moment().format('YYYY-MM-DD');
-const jobtemplate = {
+const jobtemplate: Item = {
   source: 'oada',
   name: { singular: 'job' },
   list: '/bookmarks/services/target/jobs',
@@ -77,11 +100,12 @@ const jobtemplate = {
     ],
   },
 };
-const items = {
-  coijob: _.cloneDeep(jobtemplate),
-  auditjob: _.cloneDeep(jobtemplate),
-  certjob: _.cloneDeep(jobtemplate),
-  logjob: _.cloneDeep(jobtemplate),
+
+const baseItems: Record<string, Item> = {
+  coijob: cloneDeep(jobtemplate),
+  auditjob: cloneDeep(jobtemplate),
+  certjob: cloneDeep(jobtemplate),
+  logjob: cloneDeep(jobtemplate),
 
   // -------------------------------------
   // Documents:
@@ -159,62 +183,86 @@ const items = {
     },
   },
 };
-// Fill out all missing things with defaults:
-_.each(items, (index, k) => {
-  index.key = `TEST-TARGETHELPER-${k.toUpperCase()}`; // Default key
-  if (!index.name.plural) index.name.plural = `${index.name.singular}s`; // Default plural
-  if (!index.source) index.source = 'trellisfw'; // Default source
-  if (!index.list)
-    index.list = `/bookmarks/${index.source}/${index.name.plural}`; // Default list
-  if (!index.data) index.data = { iam: k }; // Default data
-  if (!index._type)
-    index._type = `application/vnd.${index.source}.${index.name.singular}.1+json`;
-  if (!index.list_type)
-    index.list_type = `application/vnd.${index.source}.${index.name.plural}.1+json`;
-  // Also, fill out the tree for this list:
-  if (!jp.get(tree, index.list)) {
-    jp.set(tree, index.list, { _type: index.list_type });
-  }
 
-  // Add the '*' entry to the list in the tree:
-  let path = `${index.list}/*`;
-  if (!jp.get(tree, path)) {
-    jp.set(tree, path, { _type: index._type });
-  }
+// Fill out all missing things with defaults
+const items = Object.fromEntries(
+  Object.entries(baseItems).map(
+    ([
+      k,
+      {
+        name: { singular, plural = `${singular}s` },
+        source = 'trellisfw',
+        list = `/bookmarks/${source}/${plural}`,
+        _type = `application/vnd.${source}.${singular}.1+json`,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        list_type = `application/vnd.${source}.${plural}.1+json`,
+        data = { iam: k },
+        ...rest
+      },
+    ]) => {
+      const key = `TEST-TARGETHELPER-${k.toUpperCase()}`; // Default key
+      // Also, fill out the tree for this list:
+      if (!jp.get(tree, list)) {
+        jp.set(tree, list, { _type: list_type });
+      }
 
-  if (index.data.masterid) {
-    // This is masterdata, add the expand-index and masterid-index to the tree
-    path = `${index.list}/expand-index`;
-    if (!jp.get(tree, path)) {
-      jp.set(tree, path, { _type: index.list_type });
+      // Add the '*' entry to the list in the tree:
+      let path = `${list}/*`;
+      if (!jp.get(tree, path)) {
+        jp.set(tree, path, { _type });
+      }
+
+      if (data.masterid) {
+        // This is masterdata, add the expand-index and masterid-index to the tree
+        path = `${list}/expand-index`;
+        if (!jp.get(tree, path)) {
+          jp.set(tree, path, { _type: list_type });
+        }
+
+        path = `${list}/masterid-index`;
+        if (!jp.get(tree, path)) {
+          jp.set(tree, path, { _type: list_type });
+        }
+      }
+
+      return [
+        k,
+        {
+          ...rest,
+          name: { singular, plural },
+          source,
+          list,
+          _type,
+          list_type,
+          data,
+          key,
+        },
+      ];
     }
-
-    path = `${index.list}/masterid-index`;
-    if (!jp.get(tree, path)) {
-      jp.set(tree, path, { _type: index.list_type });
-    }
-  }
-});
+  )
+);
 // And finally, any inter-item relationships between master data:
-items.tp.data.facilities = {
-  [items.fac.key]: { _id: `resources/${items.fac.key}` },
+items.tp!.data.facilities = {
+  [items.fac!.key]: { _id: `resources/${items.fac!.key}` },
 };
-items.coiholder.data['trading-partners'] = {
-  [items.tp.key]: { _id: `resources/${items.tp.key}` },
+items.coiholder!.data['trading-partners'] = {
+  [items.tp!.key]: { _id: `resources/${items.tp!.key}` },
 };
-items.logbuyer.data['trading-partners'] = {
-  [items.tp.key]: { _id: `resources/${items.tp.key}` },
+items.logbuyer!.data['trading-partners'] = {
+  [items.tp!.key]: { _id: `resources/${items.tp!.key}` },
 };
 
 async function cleanup(keyOrKeys?: string | readonly string[]) {
-  let keys = _.keys(items);
-  if (_.isArray(keyOrKeys)) keys = keyOrKeys;
-  else if (keyOrKeys) keys = [keyOrKeys];
+  const keys = Array.isArray(keyOrKeys)
+    ? keyOrKeys
+    : keyOrKeys
+    ? [keyOrKeys]
+    : (Object.keys(items) as Array<keyof typeof items>);
   info('cleanup: removing any lingering test resources');
 
   for await (const k of keys) {
-    trace('cleanup: removing resources+links if they exist for key ', k);
-    const index = items[k];
+    trace('cleanup: removing resources+links if they exist for key %s', k);
+    const index = items[k as keyof typeof items]!;
     let path;
     // Delete the link path from the list:
     path = `${index.list}/${index.key}`;
@@ -230,7 +278,7 @@ async function cleanup(keyOrKeys?: string | readonly string[]) {
       await con.delete({ path });
     } catch {}
 
-    if (index.data.masterid) {
+    if (index.data?.masterid) {
       // This is master data, so remove from masterid-index and expand-index
       path = `${index.list}/expand-index/${index.key}`;
       try {
@@ -258,31 +306,43 @@ async function cleanup(keyOrKeys?: string | readonly string[]) {
   }
 }
 
-async function putData(keyOrKeys, merges) {
-  let keys = _.keys(items);
-  let dataMerges = [];
-  if (_.isArray(keyOrKeys)) {
-    keys = keyOrKeys;
-    dataMerges = merges || [];
+async function putData(
+  keyOrKeys: string | readonly string[],
+  merges?: unknown
+) {
+  let keys = Object.keys(items);
+  let dataMerges: unknown[] = [];
+  if (Array.isArray(keyOrKeys)) {
+    keys = keyOrKeys as string[];
+    dataMerges = (merges as unknown[]) ?? [];
   } else if (keyOrKeys) {
-    keys = [keyOrKeys];
+    keys = [keyOrKeys as string];
     dataMerges = [merges];
   }
 
   for await (const [ki, k] of Object.entries(keys)) {
-    trace('putData: adding test data for key: ', k);
-    const index = items[k];
-    let data;
+    trace('putData: adding test data for key: %s', k);
+    // eslint-disable-next-line security/detect-object-injection
+    const index = items[k]!;
+    let data: unknown;
 
     // Make the resource:
     const path = `/resources/${index.key}`;
     // Merge in any data overrides:
     data = index.data;
-    if (dataMerges[ki]) data = _.merge(data, dataMerges[ki]);
+    if (dataMerges[Number(ki)]) {
+      data = assign(data, dataMerges[Number(ki)]);
+    }
+
     // Do the put:
     trace('putData: path: ', path, ', data = ', data);
     try {
-      await con.put({ path, data, _type: index._type });
+      await con.put({
+        path,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+        data: data as any,
+        contentType: index._type,
+      });
     } catch (error_: unknown) {
       error(
         'Failed to make the resource. path = ',
@@ -294,15 +354,15 @@ async function putData(keyOrKeys, merges) {
         ', error = ',
         error_
       );
-      throw error_;
+      throw error_ as Error;
     }
 
     // If this has a user, go ahead and make their dummy bookmarks resource (i.e. a trading-partner)
-    if (index.data.user && index.data.user.bookmarks) {
+    if (index.data.user?.bookmarks) {
       try {
         await con.put({
           path: `/${index.data.user.bookmarks._id}`,
-          _type: tree.bookmarks,
+          // FIXME: contentType: tree.bookmarks,
           data: { iam: 'userbookmarks' },
         });
       } catch (error_: unknown) {
@@ -312,19 +372,22 @@ async function putData(keyOrKeys, merges) {
           ', error = ',
           error_
         );
-        throw error_;
+        throw error_ as Error;
       }
     }
   }
 }
 
-async function putLink(keyOrKeys) {
-  let keys = _.keys(items);
-  if (_.isArray(keyOrKeys)) keys = keyOrKeys;
-  else if (keyOrKeys) keys = [keyOrKeys];
+async function putLink(keyOrKeys?: string | readonly string[]) {
+  const keys = Array.isArray(keyOrKeys)
+    ? keyOrKeys
+    : keyOrKeys
+    ? [keyOrKeys]
+    : (Object.keys(items) as Array<keyof typeof items>);
 
-  await Promise.each(keys, async (k) => {
-    const index = items[k];
+  for await (const k of keys) {
+    // eslint-disable-next-line security/detect-object-injection
+    const index = items[k]!;
     trace(
       'putLink: linking test data for key: ',
       k,
@@ -337,14 +400,14 @@ async function putLink(keyOrKeys) {
     path = `${index.list}`;
     // NOTE: since we are doing a tree put, do NOT put the i.key on the end of the URL
     // because tree put will create a new resource instead of linking the existing one.
-    const data = { [index.key]: { _id: `resources/${index.key}` } };
-    if (!index.notversioned) {
-      data._rev = 0;
-    }
+    const data = {
+      [index.key]: { _id: `resources/${index.key}` },
+      _rev: index.notversioned ? undefined : 0,
+    };
 
     try {
       await con.put({ path, data, tree });
-    } catch (error_) {
+    } catch (error_: unknown) {
       error(
         'Failed to link the resource. path = ',
         path,
@@ -353,20 +416,25 @@ async function putLink(keyOrKeys) {
         ', error = ',
         error_
       );
-      throw error_;
+      throw error_ as Error;
     }
 
     if (index.data.masterid) {
       // This is master data, so put it into the expand-index and masterid-index
-      const masterMada = _.cloneDeep(index.data);
+      const masterMada = cloneDeep(index.data);
       masterMada.id = `resources/${index.key}`;
       // Put the expand-index:
       path = `${index.list}/expand-index`;
       try {
-        await con.put({ path, data: { [index.key]: masterMada }, tree });
-      } catch (error_) {
-        error('Failed to put the expand-index.  e = ', error_);
-        throw error_;
+        await con.put({
+          path,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+          data: { [index.key]: masterMada } as any,
+          tree,
+        });
+      } catch (error_: unknown) {
+        error(error_, 'Failed to put the expand-index');
+        throw error_ as Error;
       }
 
       // Put the masterid-index:
@@ -374,18 +442,22 @@ async function putLink(keyOrKeys) {
       try {
         await con.put({
           path,
-          data: { [index.data.masterid]: masterMada },
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+          data: { [index.data.masterid]: masterMada } as any,
           tree,
         });
-      } catch (error_) {
-        error('Failed to put the masterid-index.  e = ', error_);
-        throw error_;
+      } catch (error_: unknown) {
+        error(error_, 'Failed to put the masterid-index');
+        throw error_ as Error;
       }
     }
-  });
+  }
 }
 
-async function putAndLinkData(keyOrKeys, merges) {
+async function putAndLinkData(
+  keyOrKeys: string | readonly string[],
+  merges?: unknown
+) {
   await putData(keyOrKeys, merges);
   await putLink(keyOrKeys);
 }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import config from '../src/config.js';
+import config from '../dist/config.js';
 
 import test from 'ava';
 
