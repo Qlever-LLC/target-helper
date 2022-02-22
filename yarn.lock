@@ -154,30 +154,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/client@npm:^2.6.1":
-  version: 2.6.4
-  resolution: "@oada/client@npm:2.6.4"
-  dependencies:
-    "@oada/types": ^1.5.1
-    buffer: ^6.0.3
-    cross-fetch: ^3.0.6
-    debug: ^4.1.1
-    deep-clone: ^3.0.3
-    fetch-h2: ^3.0.0
-    file-type: ^16.5.3
-    isomorphic-ws: ^4.0.1
-    ksuid: ^2.0.0
-    p-queue: ^6.4.0
-    reconnecting-websocket: ^4.4.0
-    type-is: ^1.6.18
-    ws: ^8.0.0
-  checksum: d79e937b3317ae5fc3e277c768cbb10fe8c67c016d588934e55fa8f52f972a2ad117360fc340fe2b49aac4947af8db7646789afcf1117312d99d602e2473f014
-  languageName: node
-  linkType: hard
-
-"@oada/client@npm:^3.0.3, @oada/client@npm:^3.1.2":
-  version: 3.1.2
-  resolution: "@oada/client@npm:3.1.2"
+"@oada/client@npm:^3.0.3, @oada/client@npm:^3.0.7, @oada/client@npm:^3.1.3":
+  version: 3.1.3
+  resolution: "@oada/client@npm:3.1.3"
   dependencies:
     "@oada/types": ^1.8.1
     buffer: ^6.0.3
@@ -202,18 +181,20 @@ __metadata:
     type-is: ^1.6.18
     utf-8-validate: ^5.0.8
     ws: ^8.4.2
-  checksum: 32bf2ba4fa811e2894bc41ccf33c8b7a31383b290a75a8dcbec07a7628bc3c9ee425f99aef869acd75868cf371f97f9c3287b075e856402bc165c2c8b54db5ba
+  checksum: 7ccb779078799cadd77423e28db299f8f943c8b5b2c1f01f0d4f9d97f1a215e0f146fa53d1247e002e487973101ffcffc3486d989367befebf477714d5933547
   languageName: node
   linkType: hard
 
-"@oada/jobs@npm:^2.0.10":
-  version: 2.0.10
-  resolution: "@oada/jobs@npm:2.0.10"
+"@oada/jobs@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "@oada/jobs@npm:3.0.2"
   dependencies:
-    "@oada/client": ^2.6.1
+    "@oada/client": ^3.0.7
+    "@oada/oadaify": ^1.0.1
     "@oada/types": ^1.5.1
     "@sindresorhus/is": ^2.1.1
     "@types/bluebird": ^3.5.35
+    "@types/tiny-json-http": ^7.3.1
     bluebird: ^3.7.2
     chalk: ^4.1.1
     color-json: ^2.0.1
@@ -225,7 +206,7 @@ __metadata:
     tslib: ^2.2.0
   bin:
     oada-jobs: ./src/cli.mjs
-  checksum: ae8a676bd1b6a3023a8a10018e32b9e5924948e8a7a65f87702d8b40e9aec2b190976a079780ed78b85a69fe64b57c055846c1b6dcb5054a3dda16c1795a0d08
+  checksum: b5b800085b262cbda9bd2d287bfeed73c74ae0d9af454381fb89355e41d821b712d1578f12258b2a7ff2e123b2cf7bbe830b255ad5df53fed99d0b602f9fce14
   languageName: node
   linkType: hard
 
@@ -264,6 +245,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oada/oadaify@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "@oada/oadaify@npm:1.0.1"
+  dependencies:
+    type-fest: ^0.20.2
+  checksum: 7908ea6b211a2e51f244ce14c738986114e67192fb7cd66c433745bdee7a05ed2ab85a60d72b1ff036e4e892358a302b5203b43bcf4756edcdb84d26aeeaef8c
+  languageName: node
+  linkType: hard
+
 "@oada/types@npm:^1.5.1, @oada/types@npm:^1.7.0, @oada/types@npm:^1.8.1":
   version: 1.8.1
   resolution: "@oada/types@npm:1.8.1"
@@ -287,8 +277,8 @@ __metadata:
   resolution: "@qlever-llc/target-helper@workspace:."
   dependencies:
     "@ava/typescript": ^3.0.1
-    "@oada/client": ^3.1.2
-    "@oada/jobs": ^2.0.10
+    "@oada/client": ^3.1.3
+    "@oada/jobs": ^3.0.2
     "@oada/list-lib": ^2.2.0
     "@oada/types": ^1.8.1
     "@overleaf/o-error": ^3.4.0
@@ -560,6 +550,13 @@ __metadata:
   version: 7.3.9
   resolution: "@types/semver@npm:7.3.9"
   checksum: 60bfcfdfa7f937be2c6f4b37ddb6714fb0f27b05fe4cbdfdd596a97d35ed95d13ee410efdd88e72a66449d0384220bf20055ab7d6b5df10de4990fbd20e5cbe0
+  languageName: node
+  linkType: hard
+
+"@types/tiny-json-http@npm:^7.3.1":
+  version: 7.3.1
+  resolution: "@types/tiny-json-http@npm:7.3.1"
+  checksum: 98ccbb7d8cb43e363dcde88dd13fb5d630fccb8a649936afc1fd294595027bd6517a36515df4ae01b6a68008e24f1be6ae56d1f4f69784edf3446a4870d3d9f4
   languageName: node
   linkType: hard
 
@@ -1822,7 +1819,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cross-fetch@npm:^3.0.6, cross-fetch@npm:^3.1.4":
+"cross-fetch@npm:^3.1.4":
   version: 3.1.4
   resolution: "cross-fetch@npm:3.1.4"
   dependencies:
@@ -2857,7 +2854,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fetch-h2@npm:^3.0.0, fetch-h2@npm:^3.0.1":
+"fetch-h2@npm:^3.0.1":
   version: 3.0.1
   resolution: "fetch-h2@npm:3.0.1"
   dependencies:
@@ -3957,15 +3954,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ksuid@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "ksuid@npm:2.0.0"
-  dependencies:
-    base-convert-int-array: ^1.0.1
-  checksum: 24d284688264ae6949353b04a5544431267dcdf79711ef31cd95f8d1712f2e5435b0dedd839daae7048bcf9157ca67b921d19287f539822bfd650b1ded3a12ad
-  languageName: node
-  linkType: hard
-
 "ksuid@npm:^3.0.0":
   version: 3.0.0
   resolution: "ksuid@npm:3.0.0"
@@ -4823,7 +4811,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"p-queue@npm:^6.4.0, p-queue@npm:^6.6.2":
+"p-queue@npm:^6.6.2":
   version: 6.6.2
   resolution: "p-queue@npm:6.6.2"
   dependencies:
@@ -6390,7 +6378,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.0.0, ws@npm:^8.4.2":
+"ws@npm:^8.4.2":
   version: 8.4.2
   resolution: "ws@npm:8.4.2"
   peerDependencies:

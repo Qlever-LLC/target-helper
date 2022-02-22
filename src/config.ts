@@ -15,13 +15,12 @@
  * limitations under the License.
  */
 
+import 'dotenv/config';
+
 import convict from 'convict';
 // @ts-expect-error has no types
 import convictMoment from 'convict-format-with-moment';
 import convictValidator from 'convict-format-with-validator';
-import { config as load } from 'dotenv';
-
-load();
 
 convict.addFormats(convictMoment);
 convict.addFormats(convictValidator);

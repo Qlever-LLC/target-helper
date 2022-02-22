@@ -49,14 +49,18 @@ await Promise.all(
   tokens.map(async (token) => {
     // --------------------------------------------------
     // Create the service
-    const service = new Service('target', domain, token, 1, {
-      finishReporters: [
-        {
-          type: 'slack',
-          status: 'failure',
-          posturl: config.get('slack.posturl'),
-        },
-      ],
+    const service = new Service({
+      name: 'target',
+      oada: { domain, token },
+      opts: {
+        finishReporters: [
+          {
+            type: 'slack',
+            status: 'failure',
+            posturl: config.get('slack.posturl'),
+          },
+        ],
+      },
     }); // 1 concurrent job
 
     // --------------------------------------------------

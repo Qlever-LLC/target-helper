@@ -51,8 +51,6 @@ test.beforeEach(async () => {
 test.after(async () => cleanup());
 
 test('Should create a job to handle the test ASN when posted to /bookmarks/trellisfw/asns', async (t) => {
-  t.timeout(5000);
-
   // Get the initial job queue so we can figure out which job was created as a result of our posted test doc
   const { data: oldJobs } = await con.get({
     path: `/bookmarks/services/target/jobs`,
@@ -105,8 +103,6 @@ test('Should create a job to handle the test ASN when posted to /bookmarks/trell
 });
 
 test('Should error on an ASN job which posts an invalid update (i.e. update is a string)', async (t) => {
-  t.timeout(5000);
-
   // Get the initial job queue so we can figure out which job was created as a result of our posted test doc
   const { data: oldJobs } = await con.get({
     path: `/bookmarks/services/target/jobs`,
@@ -127,7 +123,7 @@ test('Should error on an ASN job which posts an invalid update (i.e. update is a
     path: `/bookmarks/services/target/jobs`,
   });
   jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]!; // Assume first difference is new one
-  t.assert(typeof jobkey === 'string');
+  t.is(typeof jobkey, 'string');
   t.assert(jobkey.length > 0);
   if (!jobkey || jobkey.length === 0) {
     throw new Error('TEST ERROR: job never showed up for ASN');

@@ -45,8 +45,7 @@ const con = await oada.connect({
   token: config.get('oada.token')[0]!,
 });
 
-test.before(async (t) => {
-  t.timeout(20_000);
+test.before(async () => {
   setConnection(con);
 
   // Clear out any old stuff:
