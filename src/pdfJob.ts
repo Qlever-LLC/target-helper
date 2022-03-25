@@ -29,12 +29,12 @@ import type Jobs from '@oada/types/oada/service/jobs.js';
 import { ListWatch } from '@oada/list-lib';
 import type Update from '@oada/types/oada/service/job/update.js';
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
+import axios from 'axios';
 
 import tree, { TreeKey } from './tree.js';
 import config from './config.js';
 
 const error = debug('target-helper:error');
-const warn = debug('target-helper:warn');
 const info = debug('target-helper:info');
 const trace = debug('target-helper:trace');
 
@@ -165,17 +165,6 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           'helper-started',
           'Target returned success, target-helper picking up'
         );
-        // Turn off watches so our own updates don't keep coming to us
-        try {
-          await unwatch();
-        } catch (cError: unknown) {
-          if (
-            (cError as Error).message !==
-            'Could not find watch state information.'
-          ) {
-            throw cError;
-          }
-        }
 
         // Get the latest copy of job
         // eslint-disable-next-line @typescript-eslint/no-shadow
@@ -541,31 +530,23 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         }
       };
 
-      let watchhandle: string;
-      const unwatch = async () => {
-        await oada.unwatch(watchhandle);
-      };
-
-      const watch = async () => {
-        if (watchhandle) {
-          warn(
-            'WARNING: watchhandle already exists, but watch() was called again'
-          );
-        }
-
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
-        watchhandle = await oada.watch({
-          path: `/bookmarks/services/target/jobs/${jobId}`,
-          watchCallback: jobChange,
-        });
-        const { data } = await oada.get({
-          path: `/bookmarks/services/target/jobs/${jobId}`,
-        });
-        return data;
-      };
-
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
+//      const watchhandler = await oada.watch({
+      const {changes} = await oada.watch({
+        path: `/bookmarks/services/target/jobs/${jobId}`,
+        type: 'single'
+      });
+      const { data } = await oada.get({
+        path: `/bookmarks/services/target/jobs/${jobId}`,
+      });
       // Initially just the original job is the "body" for a synthetic change
-      const w = (await watch()) as Change['body'];
+      const w = data as Change['body'];
+
+      const unwatch = async () => {
+        await changes.return?.();
+//        await oada.unwatch(watchhandler);
+      };
+
       if (Buffer.isBuffer(w)) {
         throw new TypeError('body is a buffer, cannot call jobChange');
       }
@@ -575,6 +556,12 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         body: w,
         type: 'merge',
       });
+
+      for await (const change of changes) {
+        await jobChange(change);
+      }
+
+
     } catch (cError: unknown) {
       reject(cError);
     } // Have to actually reject the promise
@@ -856,7 +843,7 @@ export async function startJobCreator({
     // eslint-disable-next-line no-inner-declarations
     async function watchTp(_tp: unknown, key: string) {
       key = key.replace(/^\//, '');
-      info(`New trading partner detected at key: [${key}]`);
+//      info(`New trading partner detected at key: [${key}]`);
       const path = `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`;
       info('Starting listwatch on %s', path);
       try {
@@ -872,7 +859,6 @@ export async function startJobCreator({
           tree,
         });
       }
-
       // eslint-disable-next-line no-new
       new ListWatch({
         path,
@@ -907,6 +893,29 @@ export async function startJobCreator({
             .then((l) => l?._id ?? false);
            */
           const documentID = `resources/${key}`;
+          let fl = await axios({
+            method: 'get',
+            headers: {Authorization: `Bearer ${config.get('oada.token')}`},
+            url: `https://${config.get('oada.domain')}/resources/${key}/_meta`,
+          }).then((r: any) => {
+            //@ts-ignore
+            let docs = Object.values(r!.data!.services!['fl-sync'] || {})
+            if (docs.length > 0) {
+              //@ts-ignore
+              return {_id: docs[0]._ref}
+            }
+          })
+
+          //TODO: Strip this out later and instead reference standardized
+          // document types from endpoints/paths instead of Food Logiq's terminonology
+          let dt;
+          if (fl && typeof fl === 'object') {
+            let flDoc = await con.get({
+              path: `/${fl._id}`
+            }).then((r:any) => r!.data!['food-logiq-mirror'])
+
+            dt = flDoc.shareSource!.type!.name;
+          }
 
           try {
             const { headers } = await con.post({
@@ -920,6 +929,8 @@ export async function startJobCreator({
                   type: 'pdf',
                   pdf: { _id: documentID },
                   documentsKey: key,
+                  foodlogiq: fl,
+                  "document-type": dt,
                 },
               },
             });

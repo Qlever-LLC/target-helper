@@ -153,6 +153,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         watchhandle = await oada.watch({
           path: `/bookmarks/services/target/jobs/${jobId}`,
           watchCallback: jobChange,
+          type: 'single'
         });
         const { data } = await oada.get({
           path: `/bookmarks/services/target/jobs/${jobId}`,

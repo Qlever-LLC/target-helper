@@ -34,6 +34,7 @@ import {
 const error = debug('target-helper:error');
 const info = debug('target-helper:info');
 const trace = debug('target-helper:trace');
+const warn = debug('target-helper:warn');
 
 const tokens = config.get('oada.token');
 let domain = config.get('oada.domain');
@@ -44,20 +45,33 @@ if (domain.startsWith('http')) {
 trace('Using token(s) = %s', tokens);
 info('Using domain = %s', domain);
 
+process.on('unhandledRejection', (reason, promise) => {
+  warn('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Application specific logging, throwing an error, or other logic here
+});
+
 // Handle each token concurrently
 await Promise.all(
   tokens.map(async (token) => {
     // --------------------------------------------------
     // Create the service
-    const service = new Service('target', domain, token, 1, {
-      finishReporters: [
-        {
-          type: 'slack',
-          status: 'failure',
-          posturl: config.get('slack.posturl'),
-        },
-      ],
-    }); // 1 concurrent job
+    const service = new Service({
+      name: 'target', 
+      oada: {
+        domain, 
+        token,
+        concurrency: 1
+      },
+      opts: {
+        finishReporters: [
+          {
+            type: 'slack',
+            status: 'failure',
+            posturl: config.get('slack.posturl'),
+          },
+        ],
+      }
+    });
 
     // --------------------------------------------------
     // Set the job type handlers
