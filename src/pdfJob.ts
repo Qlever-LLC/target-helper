@@ -29,7 +29,6 @@ import type Jobs from '@oada/types/oada/service/jobs.js';
 import { ListWatch } from '@oada/list-lib';
 import type Update from '@oada/types/oada/service/job/update.js';
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
-import axios from 'axios';
 
 import tree, { TreeKey } from './tree.js';
 import config from './config.js';
@@ -229,8 +228,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         // ------------- 4: put audits/cois/etc. to proper home
 
         const rootPath = job['trading-partner']
-          ? `${TP_MASTER_PATH}/${job['trading-partner']}/shared/trellisfw`
-          : `/bookmarks/trellisfw`;
+          ? `${TP_MASTER_PATH}/${job['trading-partner']}/shared/trellisfw/documents`
+          : `/bookmarks/trellisfw/documents`;
         const versionedResult = recursiveMakeAllLinksVersioned(
           job.result
         ) as Record<TreeKey, unknown>;
@@ -844,7 +843,7 @@ export async function startJobCreator({
     async function watchTp(_tp: unknown, key: string) {
       key = key.replace(/^\//, '');
 //      info(`New trading partner detected at key: [${key}]`);
-      const path = `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`;
+      const path = `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents/*`;
       info('Starting listwatch on %s', path);
       try {
         const { status } = await con.head({ path });
@@ -854,14 +853,15 @@ export async function startJobCreator({
       } catch {
         info('%s does not exist, creating....', path);
         await con.put({
-          path,
+          path: `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`,
           data: {},
           tree,
         });
       }
       // eslint-disable-next-line no-new
       new ListWatch({
-        path,
+        path: `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`,
+        itemsPath: `$.*.*`, // Two paths deep, e.g., `/cois/<coi id>`
         name: `target-helper-tp-docs`,
         onNewList: ListWatch.AssumeHandled,
         conn: con,
@@ -871,66 +871,41 @@ export async function startJobCreator({
     }
 
     // eslint-disable-next-line no-inner-declarations
-    function documentAdded(tp?: string) {
-      return async function (item: { _id: string }, key: string) {
+    function documentAdded(masterid?: string) {
+      return async function (item: { _id: string }, path: string) {
         try {
           // Bugfix leading slash that sometimes appears in key
-          key = key.replace(/^\//, '');
+          let pieces = path.replace(/^\//, '').split('/')
+          console.log({path, pieces})
+          let docType = pieces[0];
+          let key = pieces[1];
+          let _id = item._id;
           info('New Document posted at key = %s', key);
-          if (tp) info('New Document posted for tp = %s', tp);
-          // Get the _id for the actual PDF
-          // eslint-disable-next-line no-secrets/no-secrets
-          /* instead of POSTing, it now just PUTs with a known _id
-          const docid = await con
-            .get({
-              path: tp
-                ? `${TP_MASTER_PATH}/${tp}/shared/trellisfw/documents`
-                : `/bookmarks/trellisfw/documents`,
-            })
-            // Hack: have to get the whole list,
-            // then get the link for this key in order to figure out the _id at the moment.
-            .then((r) => (r.data as any)[key])
-            .then((l) => l?._id ?? false);
-           */
-          const documentID = `resources/${key}`;
-          let fl = await axios({
-            method: 'get',
-            headers: {Authorization: `Bearer ${config.get('oada.token')}`},
-            url: `https://${config.get('oada.domain')}/resources/${key}/_meta`,
-          }).then((r: any) => {
-            //@ts-ignore
-            let docs = Object.values(r!.data!.services!['fl-sync'] || {})
-            if (docs.length > 0) {
-              //@ts-ignore
-              return {_id: docs[0]._ref}
-            }
-          })
+          if (masterid) info('New Document posted for tp with masterid= %s', masterid);
+          console.log({item})
 
-          //TODO: Strip this out later and instead reference standardized
-          // document types from endpoints/paths instead of Food Logiq's terminonology
-          let dt;
-          if (fl && typeof fl === 'object') {
-            let flDoc = await con.get({
-              path: `/${fl._id}`
-            }).then((r:any) => r!.data!['food-logiq-mirror'])
-
-            dt = flDoc.shareSource!.type!.name;
-          }
+          // Fetch the PDF Document
+          let meta : any = await con.get({
+            path: `/${_id}/_meta`,
+          }).then(r => r.data)
+          console.log({meta});
+          let pdfId = meta!.pdf!._id;
+          console.log({pdfId})
 
           try {
             const { headers } = await con.post({
               path: '/resources',
               contentType: 'application/vnd.oada.job.1+json',
               data: {
-                'trading-partner': tp,
+                'trading-partner': masterid,
                 'type': 'transcription',
                 'service': 'target',
                 'config': {
                   type: 'pdf',
-                  pdf: { _id: documentID },
-                  documentsKey: key,
-                  foodlogiq: fl,
-                  "document-type": dt,
+                  pdf: { _id: pdfId },
+                  "doc-key": key,
+                  "document": { _id },
+                  "doc-type": docType,
                 },
               },
             });
