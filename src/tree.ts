@@ -73,6 +73,12 @@ const tree: Tree = {
               'documents': {
                 // eslint-disable-next-line no-secrets/no-secrets
                 _type: 'application/vnd.trellisfw.documents.1+json',
+                '*': {
+                  _type: 'application/vnd.trellisfw.documents.1+json',
+                  '*': {
+                    _type: 'application/vnd.trellisfw.document.1+json',
+                  }
+                }
               },
               'fsqa-audits': {
                 _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
@@ -89,6 +95,12 @@ const tree: Tree = {
               'documents': {
                 // eslint-disable-next-line no-secrets/no-secrets
                 _type: 'application/vnd.trellisfw.documents.1+json',
+                '*': {
+                  _type: 'application/vnd.trellisfw.documents.1+json',
+                  '*': {
+                    _type: 'application/vnd.trellisfw.document.1+json',
+                  }
+                }
               },
               'fsqa-audits': {
                 _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
@@ -117,6 +129,12 @@ const tree: Tree = {
                 'cois': {
                   _type: 'application/vnd.trellisfw.cois.1+json',
                 },
+                '*': {
+                  _type: 'application/vnd.trellisfw.doctype.1+json',
+                  '*': {
+                    _type: 'application/vnd.trellisfw.document.1+json',
+                  },
+                },
               },
             },
             shared: {
@@ -126,6 +144,12 @@ const tree: Tree = {
                 'documents': {
                   // eslint-disable-next-line no-secrets/no-secrets
                   _type: 'application/vnd.trellisfw.documents.1+json',
+                  '*': {
+                    _type: 'application/vnd.trellisfw.doctype.1+json',
+                    '*': {
+                      _type: 'application/vnd.trellisfw.document.1+json',
+                    },
+                  },
                 },
                 'fsqa-audits': {
                   _type: 'application/vnd.trellisfw.fsqa-audits.1+json',

@@ -37,6 +37,7 @@
     "debug": "^4.3.3",
     "dotenv": "^10.0.0",
     "jsonpointer": "^5.0.0",
+    "ksuid": "^3.0.0",
     "make-promises-safe": "^5.1.0",
     "moment": "^2.29.1",
     "tslib": "^2.3.1"
