@@ -181,21 +181,21 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         // merge the resource created by target into the partial json.
         // Do this all first and store it as the result for the remaining steps
         // to use.
-        const versionedResult = recursiveMakeAllLinksVersioned(
-          job.targetResult
-        ) as Record<TreeKey, unknown>;
-        trace(versionedResult, 'all versioned links to bookmarks');
+        job.result = {};
 
         // Track whether the partial JSON was ammended.
         let wroteToDocument = false;
-        for (const [doctype, data] of Object.entries(versionedResult)) {
+        //@ts-ignore
+        for (const [doctype, data] of Object.entries(job.targetResult)) {
+          job!.result![doctype] = {};
           //@ts-ignore
           for (const [docKey, docData] of Object.entries(data)) {
+            //@ts-ignore
+            let resultId = docData._id;
+            let oDocType = job!.config!["oada-doc-type"];
           //@ts-ignore
-            if (job.config!["oada-doc-type"] === doctype && job!.config!.docKey === docKey) {
+            if (oDocType === doctype && !wroteToDocument) {
               wroteToDocument = true;
-              //@ts-ignore
-              let resultId = docData._id;
               let docId = (job!.config!.document as any)._id;
               info(`Found a result of the same type as partial Json: ${doctype}. Merging from ${resultId} to ${docId}.`);
               let merge = await oada.get({
@@ -207,13 +207,25 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 data: merge as Json,
               })
               //@ts-ignore
-              job!.result![doctype][docKey] = { _id: docId }
-            } 
+              job!.result![doctype][job!.config!.docKey] = { _id: docId }
+            } else {
+              //@ts-ignore
+              job!.result![doctype][docKey] = job.targetResult[doctype][docKey]; 
+              info(`Result doctype [${doctype}] did not match partial Json: ${oDocType}. Linking into list ${resultId}.`);
+            }
           }
         }
+        // No results matched the existing partial JSON
+        if (!wroteToDocument) {
+          info(`Results did not include the doc type of the partial JSON: `);
+          await oada.delete({
+            path: `bookmarks/trellisfw/trading-partners/masterid-index/${job["trading-partner"]}/shared/trellisfw/documents/${job!.config!["oada-doc-type"]}/${job!.config!.docKey}`
+          })
+        }
+
         console.log({result:job!.result});
 
-        // Record the transfer/merge in the job
+        // Record the result in the job
         await oada.put({
           path: `/resources/${jobId}`,
           //@ts-ignore
@@ -221,6 +233,10 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             result: job!.result
           }
         })
+        void log.info(
+          'helper: stored result afte processing targetResult',
+          {}
+        );
 
         // ------------- 1: Look through all the things in result recursively,
         // if any are links then go there and set _meta/vdoc/pdf
@@ -248,8 +264,10 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               path: `/${object._id}/_meta`,
               data: {
                 services: {
-                  "target": { 
-                    [jobId] : { _id: `resources/${jobId}` },
+                  target: { 
+                    jobs: {
+                      [jobId] : { _id: `resources/${jobId}` },
+                    }
                   }
                 }
               }
@@ -294,27 +312,33 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         const rootPath = job['trading-partner']
           ? `${TP_MASTER_PATH}/${job['trading-partner']}/shared/trellisfw/documents`
           : `/bookmarks/trellisfw/documents`;
+        const versionedResult = recursiveMakeAllLinksVersioned(
+          job.result
+        ) as Record<TreeKey, unknown>;
         trace(versionedResult, 'all versioned links to bookmarks');
 
         for (const [doctype, data] of Object.entries(versionedResult)) {
           let docTypePath = rootPath + '/' + doctype;
           // Top-level keys are doc types
           // Automatically augment the base tree with the right content-type
-          pointer.set(tree, docTypePath, {_type: fromOadaType(doctype)!.type})
-
-          void log.info('linking', `Linking doctype ${doctype} from result`);
-          await oada.put({
-            path: docTypePath,
-            data: data as Json,
-            tree,
-          });
-        }
-        // No results matched the existing partial JSON
-        if (!wroteToDocument) {
-          info(`Results did not include the doc type of the partial JSON: `);
-          await oada.delete({
-            path: `bookmarks/trellisfw/trading-partners/masterid-index/${job["trading-partner"]}/shared/trellisfw/documents/${job!.config!["oada-doc-type"]}/${job!.config!.docKey}`
+          pointer.set(tree, docTypePath, {
+            _type: 'application/vnd.trellisfw.documents.1+json',
+            '*': {
+              _type: fromOadaType(doctype)!.type
+            }
           })
+          
+          //@ts-ignore
+          for (const [docKey, docData] of Object.entries(data)) {
+            void log.info('linking', `Linking doctype ${doctype} from result`);
+            console.log({docTypePath});
+            console.log({data});
+            await oada.put({
+              path: `${docTypePath}/${docKey}`,
+              data: docData as Json,
+              tree,
+            });
+          }
         }
 
         // ------------- 4: cross link vdoc for pdf <-> audits,cois,letters,etc.
@@ -560,6 +584,13 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
           trace('#jobChange: it is a change we want (has an update)');
           for (const [k, v] of Object.entries(updates)) {
+            // We have one change that has time as a stringified unix timestamp.
+            // I think target posts it: "information": "Job result loaded to resource: '281aZusXonG7b7ZYY5w8TCtedcZ'",
+            // "time": "1650386464"
+            // It throws a horrible deprecation warning, so address it here.
+            if (parseInt(v.time)) {
+              v.time = moment(parseInt(v.time)*1000).toISOString();
+            }
             const t = clone(v.time);
             v.time = moment(v.time).toISOString();
             if (v.time === null) {
@@ -941,6 +972,7 @@ export async function startJobCreator({
           let path = masterid ? `${TP_MASTER_PATH}/${masterid}/shared/trellisfw/documents/${docType}`
             : `/bookmarks/trellisfw/documents/${docType}`;
           key = key.replace(/^\//, '')
+          console.log({path: `${path}/${key}/_meta`})
           let meta : any = await con.get({
             path: `${path}/${key}/_meta`,
           }).then(r => r.data)
@@ -950,8 +982,12 @@ export async function startJobCreator({
             return;
           }
           //TODO: Fix this. For now, take the first pdf
+          console.log("META", meta);
+          if (!(meta && meta.vdoc && meta.vdoc.pdf)) {
+            info(`No /_meta/vdoc/pdf. Skipping this doc`);
+            return;
+          }
           let pdfs = Object.values(meta!.vdoc!.pdf);
-          if (pdfs.length < 1) throw new Error('No PDF available')
           let pdf = (pdfs)[0];
           info(`New Document was for ${masterid ? `tp with masterid=${masterid}`: 'Non-Trading Partner'}`);
           info(`New Document posted at ${path}/${key}`);
@@ -991,7 +1027,10 @@ export async function startJobCreator({
                 path: pending,
                 tree,
                 data: {
-                  [jobkey]: { _id: `resources/${jobkey}` },
+                  [jobkey]: { 
+                    _id: `resources/${jobkey}`,
+                    _rev: 0
+                  },
                 },
               });
               trace('Posted new PDF document to target task queue');

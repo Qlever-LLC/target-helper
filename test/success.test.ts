@@ -237,7 +237,7 @@ for (const doctype of doctypes) {
 
     const day = moment().format('YYYY-MM-DD');
     const { data: result7 } = await con.get({
-      path: `/bookmarks/services/target/jobs-success/day-index/${day}/${jobIndex.key}`,
+      path: `/bookmarks/services/target/jobs/success/day-index/${day}/${jobIndex.key}`,
     });
     t.is(
       (result7 as JsonObject)?._id,

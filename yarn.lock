@@ -154,14 +154,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/client@npm:^3.0.3, @oada/client@npm:^3.0.7, @oada/client@npm:^3.1.3":
-  version: 3.1.3
-  resolution: "@oada/client@npm:3.1.3"
+"@oada/client@portal:/home/sanoel/client::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@oada/client@portal:/home/sanoel/client::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A."
   dependencies:
     "@oada/types": ^1.8.1
     buffer: ^6.0.3
     bufferutil: ^4.0.6
-    cross-fetch: ^3.1.4
+    cross-fetch: ^3.1.5
     debug: ^4.3.3
     deep-clone: ^3.0.3
     encoding: ^0.1.13
@@ -180,14 +180,13 @@ __metadata:
     tslib: ^2.3.1
     type-is: ^1.6.18
     utf-8-validate: ^5.0.8
-    ws: ^8.4.2
-  checksum: 7ccb779078799cadd77423e28db299f8f943c8b5b2c1f01f0d4f9d97f1a215e0f146fa53d1247e002e487973101ffcffc3486d989367befebf477714d5933547
+    ws: ^8.5.0
   languageName: node
   linkType: soft
 
-"@oada/jobs@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "@oada/jobs@npm:3.0.2"
+"@oada/jobs@portal:/home/sanoel/jobs::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@oada/jobs@portal:/home/sanoel/jobs::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A."
   dependencies:
     "@oada/client": ^3.0.7
     "@oada/oadaify": ^1.0.1
@@ -206,7 +205,6 @@ __metadata:
     tslib: ^2.2.0
   bin:
     oada-jobs: ./src/cli.mjs
-  checksum: b5b800085b262cbda9bd2d287bfeed73c74ae0d9af454381fb89355e41d821b712d1578f12258b2a7ff2e123b2cf7bbe830b255ad5df53fed99d0b602f9fce14
   languageName: node
   linkType: soft
 
@@ -294,6 +292,7 @@ __metadata:
     "@yarnpkg/sdks": ^2.6.0
     assign-deep: ^1.0.1
     ava: 4.0.0-rc.1
+    axios: ^0.26.1
     clone-deep: ^4.0.1
     convict: ^6.2.1
     convict-format-with-moment: ^6.2.0
@@ -326,6 +325,7 @@ __metadata:
     eslint-plugin-unicorn: ^41.0.0
     isomorphic-timers-promises: ^1.0.1
     jsonpointer: ^5.0.0
+    ksuid: ^3.0.0
     lodash: ^4.17.21
     make-promises-safe: ^5.1.0
     moment: ^2.29.1
@@ -930,18 +930,6 @@ __metadata:
   linkType: hard
 
 "ajv@npm:^8.0.0, ajv@npm:^8.8.2":
-  version: 8.9.0
-  resolution: "ajv@npm:8.9.0"
-  dependencies:
-    fast-deep-equal: ^3.1.1
-    json-schema-traverse: ^1.0.0
-    require-from-string: ^2.0.2
-    uri-js: ^4.2.2
-  checksum: 756c048bfa917b43bb84c8a0a53e6a489123203bc4bdec8cbeb8ec2d715674f5e61d49560a1a6ec83268af4f33bed324f5cb6d9c76d96849fd58ed7089b8e7f3
-  languageName: node
-  linkType: hard
-
-"ajv@npm:^8.8.2":
   version: 8.9.0
   resolution: "ajv@npm:8.9.0"
   dependencies:
@@ -1839,7 +1827,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cross-fetch@npm:^3.1.4":
+"cross-fetch@npm:^3.1.5":
   version: 3.1.5
   resolution: "cross-fetch@npm:3.1.5"
   dependencies:
@@ -2874,9 +2862,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fetch-h2@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "fetch-h2@npm:3.0.1"
+"fetch-h2@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "fetch-h2@npm:3.0.2"
   dependencies:
     "@types/tough-cookie": ^4.0.0
     already: ^2.2.1
@@ -6439,9 +6427,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.4.2":
-  version: 8.4.2
-  resolution: "ws@npm:8.4.2"
+"ws@npm:^8.5.0":
+  version: 8.5.0
+  resolution: "ws@npm:8.5.0"
   peerDependencies:
     bufferutil: ^4.0.1
     utf-8-validate: ^5.0.2
@@ -6450,7 +6438,7 @@ __metadata:
       optional: true
     utf-8-validate:
       optional: true
-  checksum: 4369caaac8d1092a73871f5cf1d87fcbb995dc4183a1bc48e4f451bc2d02d0a8bf7c17edf1da18e2be3c773b09262275356b256d1c55bc7ca096154293ba2a8c
+  checksum: 76f2f90e40344bf18fd544194e7067812fb1372b2a37865678d8f12afe4b478ff2ebc0c7c0aff82cd5e6b66fc43d889eec0f1865c2365d8f7a66d92da7744a77
   languageName: node
   linkType: hard
 

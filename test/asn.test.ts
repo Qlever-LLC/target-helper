@@ -38,6 +38,7 @@ const jobID = `resources/${jobkey}`;
 const asnID = `resources/${asnkey}`;
 const dayIndex = moment().format('YYYY-MM-DD');
 const contentType = 'application/vnd.trellisfw.asn.sf.1+json';
+const pending = `/bookmarks/services/target/jobs/pending`;
 
 const con = await oada.connect({
   domain: config.get('oada.domain'),
@@ -53,7 +54,7 @@ test.after(async () => cleanup());
 test('Should create a job to handle the test ASN when posted to /bookmarks/trellisfw/asns', async (t) => {
   // Get the initial job queue so we can figure out which job was created as a result of our posted test doc
   const { data: oldJobs } = await con.get({
-    path: `/bookmarks/services/target/jobs`,
+    path: pending,
   });
 
   // Post the test doc
@@ -67,7 +68,7 @@ test('Should create a job to handle the test ASN when posted to /bookmarks/trell
 
   // get the new job list, find the new key
   const { data: newJobs } = await con.get({
-    path: `/bookmarks/services/target/jobs`,
+    path: pending,
   });
   jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]!; // Assume first difference is new one
   t.is(jobkey, 'string');
@@ -78,7 +79,7 @@ test('Should create a job to handle the test ASN when posted to /bookmarks/trell
 
   // Get the job info, validate it
   const { data: job } = (await con.get({
-    path: `/bookmarks/services/target/jobs/${jobkey}`,
+    path: `${pending}/${jobkey}`,
   })) as unknown as { data: Job };
   t.is(job?.type, 'asn');
   t.is(job?.config?.type, 'asn');
@@ -86,14 +87,14 @@ test('Should create a job to handle the test ASN when posted to /bookmarks/trell
 
   // Mark the job as "success"
   await con.post({
-    path: `/bookmarks/services/target/jobs/${jobkey}/updates`,
+    path: `${pending}/${jobkey}/updates`,
     data: { status: 'success', info: 'test was a success' },
     contentType: 'application/vnd.oada.job.1+json',
   });
   await setTimeout(1500); // Wait for oada-jobs to move it to jobs-success
   try {
     const { data: doesnotexist } = await con.get({
-      path: `/bookmarks/services/target/jobs/${jobkey}`,
+      path: `${pending}/${jobkey}`,
     });
     t.true(doesnotexist);
   } catch (error: unknown) {
@@ -105,7 +106,7 @@ test('Should create a job to handle the test ASN when posted to /bookmarks/trell
 test('Should error on an ASN job which posts an invalid update (i.e. update is a string)', async (t) => {
   // Get the initial job queue so we can figure out which job was created as a result of our posted test doc
   const { data: oldJobs } = await con.get({
-    path: `/bookmarks/services/target/jobs`,
+    path: `${pending}`,
   });
 
   // Post the test doc
@@ -120,7 +121,7 @@ test('Should error on an ASN job which posts an invalid update (i.e. update is a
 
   // get the new job list, find the new key
   const { data: newJobs } = await con.get({
-    path: `/bookmarks/services/target/jobs`,
+    path: `${pending}`,
   });
   jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]!; // Assume first difference is new one
   t.is(typeof jobkey, 'string');
@@ -131,7 +132,7 @@ test('Should error on an ASN job which posts an invalid update (i.e. update is a
 
   // Get the job info, validate it
   const { data: job } = (await con.get({
-    path: `/bookmarks/services/target/jobs/${jobkey}`,
+    path: `${pending}/${jobkey}`,
   })) as unknown as { data: Job };
   t.is(job?.type, 'asn');
   t.is(job?.config?.type, 'asn');
@@ -139,18 +140,18 @@ test('Should error on an ASN job which posts an invalid update (i.e. update is a
 
   // Put the "bad" status update
   await con.put({
-    path: `/bookmarks/services/target/jobs/${jobkey}/updates`,
+    path: `${pending}/${jobkey}/updates`,
     data: { status: 'error_bad_update' },
     contentType: 'application/vnd.oada.job.1+json',
   });
   await setTimeout(1500); // Wait for oada-jobs to move it to jobs-error
   const doesnotexist = await con
-    .get({ path: `/bookmarks/services/target/jobs/${jobkey}` })
+    .get({ path: `${pending}/${jobkey}` })
     .then((r) => r.data)
     .catch((error) => error.status === 404);
   const errorexists = await con
     .get({
-      path: `/bookmarks/services/target/jobs-failure/day-index/${day}/${jobkey}`,
+      path: `/bookmarks/services/target/jobs/failure/day-index/${day}/${jobkey}`,
     })
     .then((r) => Boolean(r.data))
     .catch(() => false);
@@ -163,9 +164,9 @@ async function cleanup() {
     [
       `/bookmarks/trellisfw/asns/${asnkey}`,
       `/${asnID}`,
-      `/bookmarks/trellisfw/jobs/${jobkey}`,
-      `/bookmarks/trellisfw/jobs-success/day-index/${dayIndex}/${jobkey}`,
-      `/bookmarks/trellisfw/jobs-failure/day-index/${dayIndex}/${jobkey}`,
+      `/bookmarks/services/target/jobs/pending/${jobkey}`,
+      `/bookmarks/services/target/jobs/success/day-index/${dayIndex}/${jobkey}`,
+      `/bookmarks/services/target/jobs/failure/day-index/${dayIndex}/${jobkey}`,
       `/${jobID}`,
     ].map(async (value) => deleteIfExists(value))
   );

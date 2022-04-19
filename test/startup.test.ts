@@ -117,9 +117,10 @@ async function cleanup() {
     [
       `/bookmarks/trellisfw/asns/${asnkey}`,
       `/${asnID}`,
+      `/bookmarks/services/target/jobs/pending/${jobkey}`,
       `/bookmarks/trellisfw/jobs/${jobkey}`,
-      `/bookmarks/trellisfw/jobs-success/day-index/${dayIndex}/${jobkey}`,
-      `/bookmarks/trellisfw/jobs-failure/day-index/${dayIndex}/${jobkey}`,
+      `/bookmarks/services/target/jobs/success/day-index/${dayIndex}/${jobkey}`,
+      `/bookmarks/services/target/jobs/failure/day-index/${dayIndex}/${jobkey}`,
       `/${jobID}`,
     ].map(async (path) => deleteIfExists(path))
   );

@@ -38,20 +38,23 @@ const tree = {
         '_type': 'application/vnd.oada.service.1+json',
         'jobs': {
           '_type': 'application/vnd.oada.jobs.1+json',
-          '*': {
-            _type: 'application/vnd.oada.job.1+json',
+          'pending': {
+            '_type': 'application/vnd.oada.jobs.1+json',
+            '*': {
+              _type: 'application/vnd.oada.job.1+json',
+            },
           },
-        },
-        'jobs-success': {
-          '_type': 'application/vnd.oada.jobs.1+json',
-          '*': {
-            _type: 'application/vnd.oada.job.1+json',
+          'success': {
+            '_type': 'application/vnd.oada.jobs.1+json',
+            '*': {
+              _type: 'application/vnd.oada.job.1+json',
+            },
           },
-        },
-        'jobs-failure': {
-          '_type': 'application/vnd.oada.jobs.1+json',
-          '*': {
-            _type: 'application/vnd.oada.job.1+json',
+          'failure': {
+            '_type': 'application/vnd.oada.jobs.1+json',
+            '*': {
+              _type: 'application/vnd.oada.job.1+json',
+            },
           },
         },
       },
@@ -91,12 +94,12 @@ const day = moment().format('YYYY-MM-DD');
 const jobtemplate: Item = {
   source: 'oada',
   name: { singular: 'job' },
-  list: '/bookmarks/services/target/jobs',
+  list: '/bookmarks/services/target/jobs/pending',
   notversioned: true, // Do not make this a versioned link in it's list
   cleanup: {
     lists: [
-      `/bookmarks/services/target/jobs-success/day-index/${day}`,
-      `/bookmarks/services/target/jobs-failure/day-index/${day}`,
+      `/bookmarks/services/target/jobs/success/day-index/${day}`,
+      `/bookmarks/services/target/jobs/failure/day-index/${day}`,
     ],
   },
 };
