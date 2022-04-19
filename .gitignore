@@ -5,9 +5,11 @@ package.lock
 .DS_Store
 .dccache
 .history
+.nvimlog
 
 # TypeScript
 dist
+.test
 *.tsbuildinfo
 
 # Docker overrides

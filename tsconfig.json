@@ -1,6 +1,7 @@
 {
   "extends": "@tsconfig/node16",
   "compilerOptions": {
+    "composite": true,
     "module": "esnext",
     "moduleResolution": "node",
     "removeComments": true,

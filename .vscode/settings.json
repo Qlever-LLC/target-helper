@@ -7,6 +7,7 @@
     "*.log": true,
     ".DS_Store": true,
     "dist": true,
+    ".test": true,
     "*.tsbuildinfo": true,
     ".actrc": true,
     "act": true,
@@ -28,6 +29,7 @@
     "*.log": true,
     ".DS_Store": true,
     "dist": true,
+    ".test": true,
     "*.tsbuildinfo": true,
     ".actrc": true,
     "act": true,
@@ -36,7 +38,6 @@
     ".vim": true
   },
   "eslint.packageManager": "yarn",
-  "eslint.useESLintClass": true,
   "licenser.author": "Qlever LLC",
   "licenser.license": "AL2",
   "cSpell.words": [
@@ -44,9 +45,11 @@
     "asns",
     "Buildx",
     "codeql",
+    "coiholder",
     "cois",
     "facilityid",
     "fsqa",
+    "jsonpointer",
     "ksuid",
     "ksuids",
     "masterid",
@@ -56,5 +59,8 @@
     "trellisfw",
     "unwatching",
     "vdoc"
-  ]
+  ],
+  "eslint.format.enable": true,
+  "eslint.lintTask.enable": true,
+  "eslint.useESLintClass": true
 }

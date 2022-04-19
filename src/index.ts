@@ -56,12 +56,8 @@ await Promise.all(
     // --------------------------------------------------
     // Create the service
     const service = new Service({
-      name: 'target', 
-      oada: {
-        domain, 
-        token,
-        concurrency: 1
-      },
+      name: 'target',
+      oada: { domain, token },
       opts: {
         finishReporters: [
           {
@@ -70,8 +66,8 @@ await Promise.all(
             posturl: config.get('slack.posturl'),
           },
         ],
-      }
-    });
+      },
+    }); // 1 concurrent job
 
     // --------------------------------------------------
     // Set the job type handlers

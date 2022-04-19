@@ -15,70 +15,66 @@
  * limitations under the License.
  */
 
-import config from '../config.mjs';
+import config from '../dist/config.js';
 
-import Promise from 'bluebird';
+import test from 'ava';
+
 import moment from 'moment';
 import oada from '@oada/client';
 
 // DO NOT include ../ because we are testing externally.
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+// External ASN tests of target-helper, run from admin
 
 const jobkey = 'TARGETHELPER_ASNTEST_JOB1'; // Replaced in first test with actual job key
 const asnkey = 'TARGETHELPER_ASNTEST_ASN1';
 const jobID = `resources/${jobkey}`;
 const asnID = `resources/${asnkey}`;
 const dayIndex = moment().format('YYYY-MM-DD');
-const listheaders = { 'content-type': 'application/vnd.trellisfw.asns.1+json' };
+const contentType = 'application/vnd.trellisfw.asns.1+json';
 
-let con = false;
-describe('External ASN tests of target-helper, run from admin', () => {
-  before(async () => {
-    con = await oada.connect({
-      domain: config.get('domain'),
-      token: config.get('token'),
-    });
-  });
+const con = await oada.connect({
+  domain: config.get('oada.domain'),
+  token: config.get('oada.token')[0]!,
+});
 
-  beforeEach(async () => {
-    await cleanup();
-  });
+test.beforeEach(async () => {
+  await cleanup();
+});
 
-  it(`Shouldn't reprocess existing queue items if resume is set to true`, async function () {
-    // eslint-disable-next-line no-invalid-this
-    this.timeout(5000);
-
+test.failing(
+  'Should not reprocess existing queue items if resume is set to true',
+  async () => {
     await con.put({
       path: `/resources/testa1`,
       data: { test: 'hello1' },
-      headers: listheaders,
+      contentType,
     });
     await con.put({
       path: `/resources/testa2`,
       data: { test: 'hello2' },
-      headers: listheaders,
+      contentType,
     });
     await con.put({
       path: `/resources/testa3`,
       data: { test: 'hello3' },
-      headers: listheaders,
+      contentType,
     });
     await con.put({
       path: `/resources/testa4`,
       data: { test: 'hello4' },
-      headers: listheaders,
+      contentType,
     });
 
     await con.put({
       path: `/resources/testa5`,
       data: { test: 'hello5' },
-      headers: listheaders,
+      contentType,
     });
     await con.put({
       path: `/resources/testa6`,
       data: { test: 'hello6' },
-      headers: listheaders,
+      contentType,
     });
 
     // Create day 1
@@ -90,7 +86,7 @@ describe('External ASN tests of target-helper, run from admin', () => {
         testq3: { _id: `resources/testa3`, _rev: 0 },
         testq4: { _id: `resources/testa4`, _rev: 0 },
       },
-      headers: listheaders,
+      contentType,
     });
 
     await con.put({
@@ -99,7 +95,7 @@ describe('External ASN tests of target-helper, run from admin', () => {
         testq5: { _id: `resources/testa5`, _rev: 0 },
         testq6: { _id: `resources/testa6`, _rev: 0 },
       },
-      headers: listheaders,
+      contentType,
     });
 
     // Create the list
@@ -111,10 +107,10 @@ describe('External ASN tests of target-helper, run from admin', () => {
           '2021-01-02': { _id: `resources/test-day2`, _rev: 0 },
         },
       },
-      headers: listheaders,
+      contentType,
     });
-  });
-});
+  }
+);
 
 async function cleanup() {
   return Promise.all(
@@ -125,11 +121,11 @@ async function cleanup() {
       `/bookmarks/trellisfw/jobs-success/day-index/${dayIndex}/${jobkey}`,
       `/bookmarks/trellisfw/jobs-failure/day-index/${dayIndex}/${jobkey}`,
       `/${jobID}`,
-    ].map((path) => deleteIfExists(path))
+    ].map(async (path) => deleteIfExists(path))
   );
 }
 
-async function deleteIfExists(path) {
+async function deleteIfExists(path: string) {
   try {
     await con.get({ path });
     await con.delete({ path }); // Delete it
