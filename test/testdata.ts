@@ -18,7 +18,7 @@
 import assign from 'assign-deep';
 import cloneDeep from 'clone-deep';
 import debug from 'debug';
-import jp from 'jsonpointer';
+import { JsonPointer } from 'json-ptr';
 import moment from 'moment';
 
 import type { OADAClient } from '@oada/client';
@@ -200,28 +200,29 @@ const items = Object.fromEntries(
         ...rest
       },
     ]) => {
+      const listPtr = new JsonPointer(list);
       const key = `TEST-TARGETHELPER-${k.toUpperCase()}`; // Default key
       // Also, fill out the tree for this list:
-      if (!jp.get(tree, list)) {
-        jp.set(tree, list, { _type: list_type });
+      if (!listPtr.get(tree)) {
+        listPtr.set(tree, { _type: list_type });
       }
 
       // Add the '*' entry to the list in the tree:
-      let path = `${list}/*`;
-      if (!jp.get(tree, path)) {
-        jp.set(tree, path, { _type });
+      const ptr = listPtr.concat('*');
+      if (!ptr.get(tree)) {
+        ptr.set(tree, { _type });
       }
 
       if (data.masterid) {
         // This is masterdata, add the expand-index and masterid-index to the tree
-        path = `${list}/expand-index`;
-        if (!jp.get(tree, path)) {
-          jp.set(tree, path, { _type: list_type });
+        const expandPtr = listPtr.concat('expand-index');
+        if (!expandPtr.get(tree)) {
+          expandPtr.set(tree, { _type: list_type });
         }
 
-        path = `${list}/masterid-index`;
-        if (!jp.get(tree, path)) {
-          jp.set(tree, path, { _type: list_type });
+        const masterPtr = listPtr.concat('masterid-index');
+        if (!masterPtr.get(tree)) {
+          masterPtr.set(tree, { _type: list_type });
         }
       }
 
