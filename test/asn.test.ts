@@ -17,16 +17,16 @@
 
 import config from '../dist/config.js';
 
-import { setTimeout } from 'isomorphic-timers-promises';
-
 import test from 'ava';
+
+import { setTimeout } from 'isomorphic-timers-promises';
 
 import _ from 'lodash';
 import moment from 'moment';
 
-import oada from '@oada/client';
+import { connect } from '@oada/client';
 
-import type { Job } from '@oada/types/oada/service/job';
+import type Job from '@oada/types/oada/service/job';
 
 import testasn from './testasn.js';
 
@@ -39,16 +39,18 @@ const asnID = `resources/${asnkey}`;
 const dayIndex = moment().format('YYYY-MM-DD');
 const contentType = 'application/vnd.trellisfw.asn.sf.1+json';
 
-const con = await oada.connect({
+const con = await connect({
   domain: config.get('oada.domain'),
   token: config.get('oada.token')[0]!,
+});
+
+test.after(async () => {
+  await cleanup();
 });
 
 test.beforeEach(async () => {
   await cleanup();
 });
-
-test.after(async () => cleanup());
 
 test('Should create a job to handle the test ASN when posted to /bookmarks/trellisfw/asns', async (t) => {
   // Get the initial job queue so we can figure out which job was created as a result of our posted test doc

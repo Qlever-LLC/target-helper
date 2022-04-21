@@ -19,8 +19,8 @@ import config from '../dist/config.js';
 
 import test from 'ava';
 
+import { connect } from '@oada/client';
 import moment from 'moment';
-import oada from '@oada/client';
 
 // DO NOT include ../ because we are testing externally.
 
@@ -33,7 +33,7 @@ const asnID = `resources/${asnkey}`;
 const dayIndex = moment().format('YYYY-MM-DD');
 const contentType = 'application/vnd.trellisfw.asns.1+json';
 
-const con = await oada.connect({
+const con = await connect({
   domain: config.get('oada.domain'),
   token: config.get('oada.token')[0]!,
 });

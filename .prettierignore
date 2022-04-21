@@ -1,5 +1,7 @@
 dist
+bundle.*
 .test
+coverage
 node_modules
 yarn-cache
 services-available

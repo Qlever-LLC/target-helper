@@ -1,4 +1,6 @@
 dist
+bundle.*
 .test
-
-.history
+coverage
+.pnp.*
+.yarn

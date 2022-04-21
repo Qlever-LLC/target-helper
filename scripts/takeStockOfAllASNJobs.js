@@ -45,8 +45,7 @@ try {
     }
 
     const resp = (await ask(`${message} [Yn] `)).toUpperCase();
-    if (resp === 'Y' || resp === '') return true;
-    return false;
+    return resp === 'Y' || resp === '';
   };
 
   const yesOrDie = async (message, eulogy) => {
