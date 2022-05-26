@@ -1,46 +1,7 @@
-import type {FlObject} from './mirrorWatch.js'
-
 export function fromOadaType(type: string) {
   let vals = Object.values(conversions)
 
-  return vals.filter(v => v.urlName === type)[0] 
-}
-
-export async function flToTrellis(flDoc: FlObject) {
-  let flDocType = flDoc.shareSource.type.name as keyof typeof conversions;
-  let document : any = {
-    effective_date: flDoc!.shareSource!.shareSpecificAttributes!.effectiveDate,
-  }
-
-  switch(flDocType) {
-
-    case "Certificate of Insurance":
-      document.expire_date = flDoc!.expirationDate;
-      document.holder = {
-        name: flDoc!.shareSource!.sourceBusiness!.name,
-        location: {
-          street_address: flDoc!.shareSource!.sourceBusiness!.address!.addressLineOne,
-          postal_code: flDoc!.shareSource!.sourceBusiness!.address!.postalCode,
-          city: flDoc!.shareSource!.sourceBusiness!.address!.city,
-          state: flDoc!.shareSource!.sourceBusiness!.address!.region,
-          country: flDoc!.shareSource!.sourceBusiness!.address!.country,
-        }
-      }
-      break;
-    case "100g Nutritional Information":
-      break;
-
-
-    default:
-      break;
-  }
-
-  return {
-    document, 
-    docType: fromName(flDocType).type,
-    urlName: fromName(flDocType).urlName
-
-  }
+  return vals.filter(v => v.urlName === type)[0]
 }
 
 let conversions = {

@@ -210,9 +210,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/list-lib@portal:/home/sanoel/list-lib::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@oada/list-lib@portal:/home/sanoel/list-lib::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A."
+"@oada/list-lib@npm:^3.0.6":
+  version: 3.0.6
+  resolution: "@oada/list-lib@npm:3.0.6"
   dependencies:
     "@oada/client": ^4.0.2
     "@oada/types": ^2.0.1
@@ -222,8 +222,9 @@ __metadata:
     json-pointer: ^0.6.2
     jsonpath-plus: ^6.0.1
     tslib: ^2.4.0
+  checksum: be777ad342a3f73014acff0ac6a4de8dfcea879944ca57df912effe85bcbf8bd9f78908270bb56a9f60b361ab4bbef2844f2e546b14db276ce31803eb32efe1a
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@oada/oada-certs@npm:^3.1.0":
   version: 3.2.0
