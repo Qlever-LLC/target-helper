@@ -17,11 +17,11 @@
 
 import config from '../dist/config.js';
 
-import { setTimeout } from 'isomorphic-timers-promises';
-
 import test from 'ava';
 
-import oada, { JsonObject } from '@oada/client';
+import { setTimeout } from 'isomorphic-timers-promises';
+
+import { JsonObject, connect } from '@oada/client';
 import debug from 'debug';
 import moment from 'moment';
 
@@ -40,7 +40,7 @@ const REALISTIC_TIMING = true;
 
 const doctypes = ['audit', 'cert', 'coi', 'log'];
 
-const con = await oada.connect({
+const con = await connect({
   domain: config.get('oada.domain'),
   token: config.get('oada.token')[0]!,
 });
@@ -162,7 +162,6 @@ test.before(async () => {
 // 7: oada-jobs should move the job to jobs-success under today's index
 
 for (const doctype of doctypes) {
-  // eslint-disable-next-line @typescript-eslint/no-loop-func
   test(`#${doctype}`, async (t) => {
     const jobtype = `${doctype}job`;
     const index = items[doctype]!;

@@ -21,7 +21,7 @@
 
 import config from '../config.js';
 
-import oada from '@oada/client';
+import { connect } from '@oada/client';
 
 const jobpath = `/bookmarks/services/target/jobs`;
 const pdfkey = 'TEST-PDF1';
@@ -57,10 +57,9 @@ const tree = {
   },
 };
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 let domain = config.get('domain');
 if (domain.startsWith('http')) domain = domain.replace(/^https:\/\//, '');
-const con = await oada.connect({ domain, token: config.get('token') });
+const con = await connect({ domain, token: config.get('token') });
 try {
   await con.get({ path: `/resources/${pdfkey}` });
 } catch (error) {

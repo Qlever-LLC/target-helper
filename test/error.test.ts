@@ -17,14 +17,14 @@
 
 import config from '../dist/config.js';
 
-import { setTimeout } from 'isomorphic-timers-promises';
-
 import test from 'ava';
+
+import { setTimeout } from 'isomorphic-timers-promises';
 
 import debug from 'debug';
 import moment from 'moment';
 
-import oada, { JsonObject } from '@oada/client';
+import { JsonObject, connect } from '@oada/client';
 
 import {
   cleanup,
@@ -36,10 +36,10 @@ import {
 
 const trace = debug('target-helper#test:trace');
 
-const doctypes = <const>['audit', 'cert', 'coi', 'log'];
+const doctypes = ['audit', 'cert', 'coi', 'log'] as const;
 const REALISTIC_TIMING = true;
 
-const con = await oada.connect({
+const con = await connect({
   domain: config.get('oada.domain'),
   token: config.get('oada.token')[0]!,
 });

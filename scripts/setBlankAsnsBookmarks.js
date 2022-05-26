@@ -23,18 +23,14 @@ import config from '../config.js';
 
 import readline from 'node:readline'; // Node.js built-in
 
-import debug from 'debug';
+import { connect } from '@oada/client';
 import ksuid from 'ksuid';
 import minimist from 'minimist';
 import moment from 'moment';
-import oada from '@oada/client';
 
-const trace = debug('target-helper#test:trace');
 const argv = minimist(process.argv.slice(2));
 
 // DO NOT include ../ because we are testing externally.
-
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const jobkey = 'TARGETHELPER_ASNTEST_JOB1'; // Replaced in first test with actual job key
 const asnkey = 'TARGETHELPER_ASNTEST_ASN1';
@@ -54,7 +50,7 @@ if (!argv.force) {
 
 console.log('Replacing /bookmarks/trellisfw/asns with a new blank test tree');
 
-const con = await oada.connect({
+const con = await connect({
   domain: config.get('domain'),
   token: config.get('token'),
 });
