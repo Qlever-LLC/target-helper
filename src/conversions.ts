@@ -1,20 +1,21 @@
-export function fromOadaType(type: any) {
+import type {FlObject} from './mirrorWatch.js'
+
+export function fromOadaType(type: string) {
   let vals = Object.values(conversions)
 
   return vals.filter(v => v.urlName === type)[0] 
 }
 
-export async function flToTrellis(flDoc: any) {
-  let flDocType = flDoc.shareSource.type.name;
-  console.log(flDocType);
+export async function flToTrellis(flDoc: FlObject) {
+  let flDocType = flDoc.shareSource.type.name as keyof typeof conversions;
   let document : any = {
-    expire_date: flDoc!.expirationDate,
     effective_date: flDoc!.shareSource!.shareSpecificAttributes!.effectiveDate,
   }
 
   switch(flDocType) {
 
     case "Certificate of Insurance":
+      document.expire_date = flDoc!.expirationDate;
       document.holder = {
         name: flDoc!.shareSource!.sourceBusiness!.name,
         location: {
@@ -26,6 +27,9 @@ export async function flToTrellis(flDoc: any) {
         }
       }
       break;
+    case "100g Nutritional Information":
+      break;
+
 
     default:
       break;
@@ -80,7 +84,7 @@ let conversions = {
   },
   '100g Nutritional Information': {
     name: '100g Nutritional Information',
-    urlName: 'nutritional-information',
+    urlName: '100g-nutritional-information',
     type: 'application/vnd.trellisfw.nutritional-information.1+json',
     alternativeNames: [
       'Nutrition Information',
