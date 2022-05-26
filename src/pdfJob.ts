@@ -210,7 +210,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               job!.result![doctype][job!.config!.docKey] = { _id: docId }
             } else {
               //@ts-ignore
-              job!.result![doctype][docKey] = job.targetResult[doctype][docKey]; 
+              job!.result![doctype][docKey] = job.targetResult[doctype][docKey];
               info(`Result doctype [${doctype}] did not match partial Json: ${oDocType}. Linking into list ${resultId}.`);
             }
           }
@@ -222,8 +222,6 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             path: `bookmarks/trellisfw/trading-partners/masterid-index/${job["trading-partner"]}/shared/trellisfw/documents/${job!.config!["oada-doc-type"]}/${job!.config!.docKey}`
           })
         }
-
-        console.log({result:job!.result});
 
         // Record the result in the job
         await oada.put({
@@ -264,7 +262,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               path: `/${object._id}/_meta`,
               data: {
                 services: {
-                  target: { 
+                  target: {
                     jobs: {
                       [jobId] : { _id: `resources/${jobId}` },
                     }
@@ -327,12 +325,10 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               _type: fromOadaType(doctype)!.type
             }
           })
-          
+
           //@ts-ignore
           for (const [docKey, docData] of Object.entries(data)) {
             void log.info('linking', `Linking doctype ${doctype} from result`);
-            console.log({docTypePath});
-            console.log({data});
             await oada.put({
               path: `${docTypePath}/${docKey}`,
               data: docData as Json,
@@ -952,7 +948,7 @@ export async function startJobCreator({
           : `/bookmarks/trellisfw/documents${key}`;
         let docType = key.replace(/^\//, '');
         info('Starting trading partner doc type listwatch on %s', docPath);
-        //Register new watch on 
+        //Register new watch on
         new ListWatch({
           path: docPath,
           name: `target-helper-tp-docs`,
@@ -972,7 +968,6 @@ export async function startJobCreator({
           let path = masterid ? `${TP_MASTER_PATH}/${masterid}/shared/trellisfw/documents/${docType}`
             : `/bookmarks/trellisfw/documents/${docType}`;
           key = key.replace(/^\//, '')
-          console.log({path: `${path}/${key}/_meta`})
           let meta : any = await con.get({
             path: `${path}/${key}/_meta`,
           }).then(r => r.data)
@@ -982,7 +977,6 @@ export async function startJobCreator({
             return;
           }
           //TODO: Fix this. For now, take the first pdf
-          console.log("META", meta);
           if (!(meta && meta.vdoc && meta.vdoc.pdf)) {
             info(`No /_meta/vdoc/pdf. Skipping this doc`);
             return;
@@ -1027,7 +1021,7 @@ export async function startJobCreator({
                 path: pending,
                 tree,
                 data: {
-                  [jobkey]: { 
+                  [jobkey]: {
                     _id: `resources/${jobkey}`,
                     _rev: 0
                   },

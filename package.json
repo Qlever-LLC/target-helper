@@ -32,9 +32,9 @@
     }
   },
   "dependencies": {
-    "@oada/client": "^3.1.3",
-    "@oada/jobs": "^3.0.2",
-    "@oada/list-lib": "^2.2.0",
+    "@oada/client": "^4.0.2",
+    "@oada/jobs": "^4.0.0",
+    "@oada/list-lib": "^3.0.6",
     "@oada/types": "^1.8.1",
     "@overleaf/o-error": "^3.4.0",
     "@trellisfw/signatures": "^2.1.3",
@@ -95,10 +95,5 @@
     "prettier": "^2.5.1",
     "typescript": "4.5.5"
   },
-  "packageManager": "yarn@3.1.1",
-  "resolutions": {
-    "@oada/list-lib": "portal:/home/sanoel/list-lib",
-    "@oada/client": "portal:/home/sanoel/client",
-    "@oada/jobs": "portal:/home/sanoel/jobs"
-  }
+  "packageManager": "yarn@3.1.1"
 }
