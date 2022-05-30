@@ -916,11 +916,6 @@ export async function startJobCreator({
       key = key.replace(/^\//, '');
 //      info(`New trading partner detected at key: [${key}]`);
 
-    //TODO: TEMPORARY FIX ONLY
-      if (key !== "d4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e") {
-        return
-      }
-
       const path = `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`;
       await con.ensure({
         path,
