@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc -b",
     "watch": "tsc --watch",
-    "start": "node --enable-source-maps dist/index.js",
+    "start": "node ${INSPECT:-} --enable-source-maps dist/index.js",
     "test": "yarn build test && ava",
     "test:debug": "ava -T 60m -svc 1 --no-worker-threads"
   },
@@ -47,7 +47,7 @@
     ]
   },
   "dependencies": {
-    "@oada/client": "^4.1.0",
+    "@oada/client": "^4.1.1",
     "@oada/jobs": "^4.0.0",
     "@oada/list-lib": "^3.0.8",
     "@oada/types": "^2.0.1",

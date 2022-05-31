@@ -86,12 +86,13 @@ await Promise.all(
     info('Started pdf and asn job creator processes');
     info('Ready');
 
-    // Catch errors
-    // eslint-disable-next-line github/no-then
-    await Promise.all([serviceP, pdfP, asnP]).catch((cError) => {
+    // Catch errors?
+    try {
+      await Promise.all([serviceP, pdfP, asnP]);
+    } catch (cError: unknown) {
       error(cError);
       // eslint-disable-next-line no-process-exit, unicorn/no-process-exit
       process.exit(1);
-    });
+    }
   })
 );

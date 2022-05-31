@@ -140,9 +140,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/client@npm:^4.0.1, @oada/client@npm:^4.0.2, @oada/client@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "@oada/client@npm:4.1.0"
+"@oada/client@npm:^4.0.1, @oada/client@npm:^4.0.2, @oada/client@npm:^4.1.1":
+  version: 4.1.1
+  resolution: "@oada/client@npm:4.1.1"
   dependencies:
     "@oada/types": ^2.0.1
     abort-controller: ^3.0.0
@@ -167,7 +167,7 @@ __metadata:
     utf-8-validate: ^5.0.9
     ws: ^8.7.0
     xksuid: ^0.0.3
-  checksum: 7d60262547a9b9563d26abd61620867d11523aecf86d27db79f6a2d9684ac77bb3d4950850c5500d19a9f62ade89475fd40f3974a3f4d71bfd3386e51f229c8e
+  checksum: cc9c8c7f96dd5ab72f2a8b600a222f8377fe0cdbc4f50d3e9b5aafeede248ded4cbd507fc8cf9db69f62bbf193199f5ac88b800ac5cf525f9967ab69d593886e
   languageName: node
   linkType: hard
 
@@ -263,7 +263,7 @@ __metadata:
   resolution: "@qlever-llc/target-helper@workspace:."
   dependencies:
     "@ava/typescript": ^3.0.1
-    "@oada/client": ^4.1.0
+    "@oada/client": ^4.1.1
     "@oada/jobs": ^4.0.0
     "@oada/list-lib": ^3.0.8
     "@oada/types": ^2.0.1
