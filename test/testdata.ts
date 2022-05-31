@@ -35,22 +35,22 @@ const tree = {
     services: {
       _type: 'application/vnd.oada.services.1+json',
       target: {
-        '_type': 'application/vnd.oada.service.1+json',
-        'jobs': {
-          '_type': 'application/vnd.oada.jobs.1+json',
-          'pending': {
+        _type: 'application/vnd.oada.service.1+json',
+        jobs: {
+          _type: 'application/vnd.oada.jobs.1+json',
+          pending: {
             '_type': 'application/vnd.oada.jobs.1+json',
             '*': {
               _type: 'application/vnd.oada.job.1+json',
             },
           },
-          'success': {
+          success: {
             '_type': 'application/vnd.oada.jobs.1+json',
             '*': {
               _type: 'application/vnd.oada.job.1+json',
             },
           },
-          'failure': {
+          failure: {
             '_type': 'application/vnd.oada.jobs.1+json',
             '*': {
               _type: 'application/vnd.oada.job.1+json',

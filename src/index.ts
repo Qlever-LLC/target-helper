@@ -46,7 +46,7 @@ trace('Using token(s) = %s', tokens);
 info('Using domain = %s', domain);
 
 process.on('unhandledRejection', (reason, promise) => {
-  warn('Unhandled Rejection at:', promise, 'reason:', reason);
+  warn({ promise, reason }, 'Unhandled Rejection');
   // Application specific logging, throwing an error, or other logic here
 });
 
