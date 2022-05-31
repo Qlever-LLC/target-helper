@@ -14,15 +14,15 @@
       "outputCapture": "std",
       "program": "${workspaceFolder}/dist/index.js",
       "preLaunchTask": "${defaultBuildTask}",
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
     },
     {
       "type": "node",
       "request": "attach",
       "name": "Docker: Attach to service container",
       "smartStep": true,
-      "localRoot": "${workspaceFolder}/oada/",
-      "remoteRoot": "/oada/",
+      "localRoot": "${workspaceFolder}",
+      "remoteRoot": "/Qlever-LLC/target-helper",
       "resolveSourceMapLocations": null,
       "port": "${input:port}"
     }

@@ -76,15 +76,13 @@ await Promise.all(
 
     // --------------------------------------------------
     // Start the jobs watching service
+    info('Initializing target-helper service. v1.1.9');
     const serviceP = service.start();
 
     // Start the things watching to create jobs
+    info('Started pdf and asn job creator processes');
     const pdfP = pdfStartJobCreator({ domain, token });
     const asnP = asnStartJobCreator({ domain, token });
-
-    info('Initializing target-helper service. v1.1.9');
-    info('Started pdf and asn job creator processes');
-    info('Ready');
 
     // Catch errors?
     try {
@@ -94,5 +92,7 @@ await Promise.all(
       // eslint-disable-next-line no-process-exit, unicorn/no-process-exit
       process.exit(1);
     }
+
+    info('Ready');
   })
 );
