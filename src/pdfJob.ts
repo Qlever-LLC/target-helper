@@ -947,7 +947,7 @@ export async function startJobCreator({
         new ListWatch({
           path: docPath,
           name: `target-helper-tp-docs`,
-          onNewList: ListWatch.AssumeHandled,
+          onNewList: ListWatch.AssumeNew,
           conn: con,
           resume: true,
           onAddItem: documentAdded(docType, masterid),
