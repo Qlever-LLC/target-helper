@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-/* eslint-disable sonarjs/no-duplicate-string */
+/* eslint-disable sonarjs/no-duplicate-string, no-secrets/no-secrets */
 
 type Letter =
   | 'a'
@@ -71,14 +71,13 @@ const tree: Tree = {
             trellisfw: {
               '_type': 'application/vnd.trellisfw.1+json',
               'documents': {
-                // eslint-disable-next-line no-secrets/no-secrets
-                _type: 'application/vnd.trellisfw.documents.1+json',
+                '_type': 'application/vnd.trellisfw.documents.1+json',
                 '*': {
-                  _type: 'application/vnd.trellisfw.documents.1+json',
+                  '_type': 'application/vnd.trellisfw.documents.1+json',
                   '*': {
                     _type: 'application/vnd.trellisfw.document.1+json',
-                  }
-                }
+                  },
+                },
               },
               'fsqa-audits': {
                 _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
@@ -93,14 +92,13 @@ const tree: Tree = {
             trellisfw: {
               '_type': 'application/vnd.trellisfw.1+json',
               'documents': {
-                // eslint-disable-next-line no-secrets/no-secrets
-                _type: 'application/vnd.trellisfw.documents.1+json',
+                '_type': 'application/vnd.trellisfw.documents.1+json',
                 '*': {
-                  _type: 'application/vnd.trellisfw.documents.1+json',
+                  '_type': 'application/vnd.trellisfw.documents.1+json',
                   '*': {
                     _type: 'application/vnd.trellisfw.document.1+json',
-                  }
-                }
+                  },
+                },
               },
               'fsqa-audits': {
                 _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
@@ -120,7 +118,6 @@ const tree: Tree = {
               trellisfw: {
                 '_type': 'application/vnd.trellisfw.1+json',
                 'documents': {
-                  // eslint-disable-next-line no-secrets/no-secrets
                   _type: 'application/vnd.trellisfw.documents.1+json',
                 },
                 'fsqa-audits': {
@@ -130,7 +127,7 @@ const tree: Tree = {
                   _type: 'application/vnd.trellisfw.cois.1+json',
                 },
                 '*': {
-                  _type: 'application/vnd.trellisfw.doctype.1+json',
+                  '_type': 'application/vnd.trellisfw.doctype.1+json',
                   '*': {
                     _type: 'application/vnd.trellisfw.document.1+json',
                   },
@@ -142,10 +139,9 @@ const tree: Tree = {
               trellisfw: {
                 '_type': 'application/vnd.trellisfw.1+json',
                 'documents': {
-                  // eslint-disable-next-line no-secrets/no-secrets
-                  _type: 'application/vnd.trellisfw.documents.1+json',
+                  '_type': 'application/vnd.trellisfw.documents.1+json',
                   '*': {
-                    _type: 'application/vnd.trellisfw.doctype.1+json',
+                    '_type': 'application/vnd.trellisfw.doctype.1+json',
                     '*': {
                       _type: 'application/vnd.trellisfw.document.1+json',
                     },
@@ -163,7 +159,6 @@ const tree: Tree = {
         },
       },
       'documents': {
-        // eslint-disable-next-line no-secrets/no-secrets
         _type: 'application/vnd.trellisfw.documents.1+json',
       },
       'asns': {

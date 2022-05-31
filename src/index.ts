@@ -46,7 +46,7 @@ trace('Using token(s) = %s', tokens);
 info('Using domain = %s', domain);
 
 process.on('unhandledRejection', (reason, promise) => {
-  warn('Unhandled Rejection at:', promise, 'reason:', reason);
+  warn({ promise, reason }, 'Unhandled Rejection');
   // Application specific logging, throwing an error, or other logic here
 });
 
@@ -76,22 +76,23 @@ await Promise.all(
 
     // --------------------------------------------------
     // Start the jobs watching service
+    info('Initializing target-helper service. v1.1.9');
     const serviceP = service.start();
 
     // Start the things watching to create jobs
+    info('Started pdf and asn job creator processes');
     const pdfP = pdfStartJobCreator({ domain, token });
     const asnP = asnStartJobCreator({ domain, token });
 
-    info('Initializing target-helper service. v1.1.9');
-    info('Started pdf and asn job creator processes');
-    info('Ready');
-
-    // Catch errors
-    // eslint-disable-next-line github/no-then
-    await Promise.all([serviceP, pdfP, asnP]).catch((cError) => {
+    // Catch errors?
+    try {
+      await Promise.all([serviceP, pdfP, asnP]);
+    } catch (cError: unknown) {
       error(cError);
       // eslint-disable-next-line no-process-exit, unicorn/no-process-exit
       process.exit(1);
-    });
+    }
+
+    info('Ready');
   })
 );

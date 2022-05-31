@@ -111,7 +111,7 @@ rules:
   unicorn/filename-case: off
   i18n-text/no-en: off
   eslint-comments/no-use: off
-  no-secrets/no-secrets: error
+  no-secrets/no-secrets: [error, { tolerance: 5 }]
   no-empty-label: off
   no-return-await: off
   no-warning-comments: off
