@@ -47,7 +47,7 @@
     ]
   },
   "dependencies": {
-    "@oada/client": "^4.0.2",
+    "@oada/client": "^4.1.0",
     "@oada/jobs": "^4.0.0",
     "@oada/list-lib": "^3.0.8",
     "@oada/types": "^2.0.1",

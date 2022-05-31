@@ -140,9 +140,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/client@npm:^4.0.1, @oada/client@npm:^4.0.2":
-  version: 4.0.2
-  resolution: "@oada/client@npm:4.0.2"
+"@oada/client@npm:^4.0.1, @oada/client@npm:^4.0.2, @oada/client@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "@oada/client@npm:4.1.0"
   dependencies:
     "@oada/types": ^2.0.1
     abort-controller: ^3.0.0
@@ -165,9 +165,9 @@ __metadata:
     supports-color: ^9.2.2
     tslib: ^2.4.0
     utf-8-validate: ^5.0.9
-    ws: ^8.6.0
-    xksuid: "https://github.com/qlever-llc/xksuid.git#commit=5b2761792b1b1b59ea71ab48df1252fcb851e502"
-  checksum: d05f7f2bf1672ff7bd3daafbf51fd9be84197795c89b6ba0d525be71f0516978a1801e4f171226dc9f9652d06cae3e911ad3207c7b14093dab17c023c2c4ad78
+    ws: ^8.7.0
+    xksuid: ^0.0.3
+  checksum: 7d60262547a9b9563d26abd61620867d11523aecf86d27db79f6a2d9684ac77bb3d4950850c5500d19a9f62ade89475fd40f3974a3f4d71bfd3386e51f229c8e
   languageName: node
   linkType: hard
 
@@ -263,7 +263,7 @@ __metadata:
   resolution: "@qlever-llc/target-helper@workspace:."
   dependencies:
     "@ava/typescript": ^3.0.1
-    "@oada/client": ^4.0.2
+    "@oada/client": ^4.1.0
     "@oada/jobs": ^4.0.0
     "@oada/list-lib": ^3.0.8
     "@oada/types": ^2.0.1
@@ -6327,9 +6327,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.6.0":
-  version: 8.6.0
-  resolution: "ws@npm:8.6.0"
+"ws@npm:^8.7.0":
+  version: 8.7.0
+  resolution: "ws@npm:8.7.0"
   peerDependencies:
     bufferutil: ^4.0.1
     utf-8-validate: ^5.0.2
@@ -6338,14 +6338,14 @@ __metadata:
       optional: true
     utf-8-validate:
       optional: true
-  checksum: e2fca82059f1e087d0c78e2f37135e1b8332bc804fce46f83c2db1cb8571685abf9d2c99b964bab3752536ad90b99b46fb8d1428899aed3e560684ab4641bffd
+  checksum: 078fa2dbc06b31a45e0057b19e2930d26c222622e355955afe019c9b9b25f62eb2a8eff7cceabdad04910ecd2bd6ef4fa48e6f3673f2fdddff02a6e4c2459584
   languageName: node
   linkType: hard
 
-"xksuid@https://github.com/qlever-llc/xksuid.git#commit=5b2761792b1b1b59ea71ab48df1252fcb851e502":
-  version: 0.0.2
-  resolution: "xksuid@https://github.com/qlever-llc/xksuid.git#commit=5b2761792b1b1b59ea71ab48df1252fcb851e502"
-  checksum: 4dd7228bb490ddbbe49da9b916eae09de0bdcd7131a4e04589ae2b4820b8759925085302ca883d73588e568f61a9e2b401c4110487ab84c5c848377e14c35c4b
+"xksuid@npm:^0.0.3":
+  version: 0.0.3
+  resolution: "xksuid@npm:0.0.3"
+  checksum: bc1161dd6de10c39db9d0754546d57abf4dc7ce869934798e55d094fa13bb970d8cfd5364be30b8c6a263a21ff6f64f81990447dd38cdc42cf8495931b8e6178
   languageName: node
   linkType: hard
 
