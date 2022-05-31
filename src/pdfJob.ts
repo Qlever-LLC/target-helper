@@ -265,7 +265,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 services: {
                   target: {
                     jobs: {
-                      [jobId] : { _id: `resources/${jobId}` },
+                      [jobId] : { _ref: `resources/${jobId}` },
                     }
                   }
                 }
