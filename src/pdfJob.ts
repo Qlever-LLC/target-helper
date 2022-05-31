@@ -132,6 +132,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
   trace('Received job: ', job);
   // Until oada-jobs adds cross-linking, make sure we are linked under the PDF's jobs
   trace('Linking job under pdf/_meta until oada-jobs can do that natively');
+  //TODO: This seems broken when it writes to the target job
   await oada.put({
     path: `${pending}/${jobId}/config/pdf/_meta/services/target/jobs`,
     data: {
