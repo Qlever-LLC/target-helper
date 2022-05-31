@@ -853,6 +853,7 @@ export async function startJobCreator({
       tree,
     })
 
+
     trace('Trading partners enabled %s', tradingPartnersEnabled);
     if (tradingPartnersEnabled) {
       // eslint-disable-next-line no-new
@@ -886,6 +887,11 @@ export async function startJobCreator({
 
     // eslint-disable-next-line no-inner-declarations
     async function cleanupBrokenLinks() {
+      await con.ensure({
+        path: pending,
+        data: {},
+        tree,
+      })
       const { data: jobs = {} } = (await con.get({
         path: pending,
       })) as unknown as { data: Jobs };

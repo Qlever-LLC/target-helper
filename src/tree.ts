@@ -185,9 +185,12 @@ const tree: Tree = {
         _type: 'application/vnd.oada.service.1+json',
         jobs: {
           '_type': 'application/vnd.oada.service.jobs.1+json',
-          '*': {
-            _type: 'application/vnd.oada.service.job.1+json',
-            _rev: 0,
+          'pending': {
+            '_type': 'application/vnd.oada.service.jobs.1+json',
+            '*': {
+              _type: 'application/vnd.oada.service.job.1+json',
+              _rev: 0,
+            },
           },
         },
       },
