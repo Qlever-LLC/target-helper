@@ -187,9 +187,12 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
         // Track whether the partial JSON was amended.
         let wroteToDocument = false;
-        for await (const [doctype, data] of Object.entries(
+        for await (let [doctype, data] of Object.entries(
           job.targetResult as Record<string, Record<string, { _id: string }>>
         )) {
+          //@ts-ignore
+          //TODO: Unsafe...remove this line after processing already-approved stuff
+          doctype = doctype === "" ? job.config['oada-doc-type'] : doctype;
           job.result[doctype] = {};
           for await (const [documentKey, documentData] of Object.entries(
             data
@@ -228,9 +231,10 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 // @ts-expect-error FIXME: Fix the job schema
                 job.targetResult[doctype][documentKey];
               info(
-                'Result doctype [%s] did not match partial Json: %o. Linking into list %s.',
+                'Result doctype [%s] did not match partial Json: %o for job id %s. Linking into list %s.',
                 doctype,
                 oDocumentType,
+                jobId,
                 resultId
               );
             }
@@ -591,6 +595,15 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             if (v.time === null) {
               // @ts-expect-error --- ?
               v.time = moment(t, 'X');
+            }
+            if (v.information === "File is not a Textual PDF,requires OCR to be processed.") {
+              await oada.post({
+                path: `/${jobId}/updates`,
+                data: {
+                  status: 'error',
+                  information: v.information
+                }
+              })
             }
 
             trace(v, '#jobChange: change update');
