@@ -159,7 +159,14 @@ const tree: Tree = {
         },
       },
       'documents': {
-        _type: 'application/vnd.trellisfw.documents.1+json',
+        '_type': 'application/vnd.trellisfw.documents.1+json',
+        '*': {
+          '_type': 'application/vnd.trellisfw.doctype.1+json',
+          '*': {
+            _type: 'application/vnd.trellisfw.document.1+json',
+            _rev: 0,
+          },
+        },
       },
       'asns': {
         '_type': 'application/vnd.trellisfw.asns.1+json',
@@ -179,8 +186,8 @@ const tree: Tree = {
         // We will post to shares/jobs
         _type: 'application/vnd.oada.service.1+json',
         jobs: {
-          '_type': 'application/vnd.oada.service.jobs.1+json',
-          'pending': {
+          _type: 'application/vnd.oada.service.jobs.1+json',
+          pending: {
             '_type': 'application/vnd.oada.service.jobs.1+json',
             '*': {
               _type: 'application/vnd.oada.service.job.1+json',
