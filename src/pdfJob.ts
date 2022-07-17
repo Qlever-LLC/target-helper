@@ -22,6 +22,7 @@ import debug from 'debug';
 import moment from 'moment';
 import oError from '@overleaf/o-error';
 import pointer from 'jsonpointer';
+import { join } from 'node:path';
 
 import { Change, OADAClient, connect } from '@oada/client';
 import type { Json, Logger, WorkerFunction } from '@oada/jobs';
@@ -35,12 +36,15 @@ import { assert as assertJob } from '@oada/types/oada/service/job.js';
 import tree, { TreeKey } from './tree.js';
 import config from './config.js';
 import { fromOadaType } from './conversions.js';
+import type { Link } from '@oada/types/oada/link/v1';
 
 const error = debug('target-helper:error');
 const info = debug('target-helper:info');
 const trace = debug('target-helper:trace');
 
 const pending = '/bookmarks/services/target/jobs/pending';
+
+type List<T> = { [k: string]: T };
 
 /**
  * Helper because TS is dumb and doesn't realize `in` means the key definitely exists.
@@ -50,6 +54,23 @@ function has<T, K extends string>(
   key: K
 ): value is T & { [P in K]: unknown } {
   return value && key in value;
+}
+
+// Becuase OADA resource keys are always in the way
+type Striped<T> = Omit<T, '_id' | '_rev' | '_meta' | '_type' | '_ref'>;
+function stripResource<T>(r: T): Striped<T> {
+  // @ts-expect-error
+  delete r._id;
+  // @ts-expect-error
+  delete r._rev;
+  // @ts-expect-error
+  delete r._meta;
+  // @ts-expect-error
+  delete r._type;
+  // @ts-expect-error
+  delete r._ref;
+
+  return r;
 }
 
 // You can generate a signing key pair by running `oada-certs --create-keys`
@@ -166,17 +187,30 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
       // - once it sees "success" in the updates,
       // it will post a job to trellis-signer and notify oada-jobs of success
       const targetSuccess = async () => {
-        void log.info(
+        log.info(
           'helper-started',
           'Target returned success, target-helper picking up'
         );
 
         // Get the latest copy of job
         // eslint-disable-next-line @typescript-eslint/no-shadow
-        const { data: job } = await oada.get({ path: `/resources/${jobId}` });
-        assertJob(job);
+        let r = await oada.get({ path: `/resources/${jobId}` });
+        assertJob(r.data);
+        // FIXME: Make a proper type and assert
+        // Note the types *should* be okay at runtime becuase these are needed to get to a target success
+        const job = r.data as typeof r.data & {
+          targetResult: List<List<Link>>;
+          config: {
+            'pdf': Link;
+            'oada-doc-type': string;
+            'document': Resource;
+            'docKey': string;
+          };
+          result: List<List<Link>>;
+        };
 
-        const pdfID = (job.config?.pdf as { _id?: string })?._id;
+        // FIXME: Fail job if not exist?
+        const pdfID = job.config.pdf._id;
 
         // ------------- 0: Construct the result from the targetResult
         // If/when a result that matches the input partial json is found,
@@ -185,72 +219,75 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         // to use.
         job.result = {};
 
-        // Track whether the partial JSON was amended.
-        let wroteToDocument = false;
-        for await (let [doctype, data] of Object.entries(
-          job.targetResult as Record<string, Record<string, { _id: string }>>
-        )) {
-          //@ts-ignore
-          //TODO: Unsafe...remove this line after processing already-approved stuff
-          doctype = doctype === "" ? job.config['oada-doc-type'] : doctype;
-          job.result[doctype] = {};
-          for await (const [documentKey, documentData] of Object.entries(
-            data
-          )) {
-            const resultId = documentData._id;
-            const oDocumentType = job.config!['oada-doc-type'];
-            if (oDocumentType === doctype && !wroteToDocument) {
-              wroteToDocument = true;
-              const documentId = (job.config!.document as Resource)._id;
+        for (let [docType, data] of Object.entries(job.targetResult)) {
+          info('Document identified as %s', docType);
+
+          job.result[docType] = {};
+
+          for (const docData of Object.values(data)) {
+            // If the document type mismatches, move the link to the right place and let the flow start over.
+            // Ex: LaserFiche "unidentified" documents, FoodLogiq wrong PDF uploaded, etc.
+            // Note: One day we might officially separate "identification" from "transcription". This is almost that.
+            if (job.config['oada-doc-type'] !== docType) {
               info(
-                'Found a result of the same type as partial Json: %s. Merging from %s to %s.',
-                doctype,
-                resultId,
-                documentId
-              );
-              const { data } = await oada.get({
-                path: resultId,
-              });
-              const merge = Object.fromEntries(
-                Object.entries(data ?? {}).filter(
-                  ([key]) => !key.startsWith('_')
-                )
+                'Document type mismatch. Trellis: [%s], Target: [%s]. Moving tree location and bailing.',
+                docType,
+                job.config['oada-doc-type']
               );
 
+              trace(`Removing from ${job.config['oada-doc-type']} list.`);
+              await oada.delete({
+                path: join(
+                  '/bookmarks/trellisfw/documents',
+                  job.config['oada-doc-type'],
+                  job.config.docKey
+                ),
+              });
+
+              const newType = fromOadaType(docType)?.type;
+
+              trace(`Updating resource type to ${newType}`);
               await oada.put({
-                path: documentId,
-                data: merge as Json,
+                path: job.config.document._id,
+                data: { _type: newType },
               });
-              // @ts-expect-error FIXME: Fix the job schema
-              job.result[doctype][job.config!.docKey] = {
-                _id: documentId,
-              };
-            } else {
-              // @ts-expect-error FIXME: Fix the job schema
-              job.result[doctype][documentKey] =
-                // @ts-expect-error FIXME: Fix the job schema
-                job.targetResult[doctype][documentKey];
-              info(
-                'Result doctype [%s] did not match partial Json: %o for job id %s. Linking into list %s.',
-                doctype,
-                oDocumentType,
-                jobId,
-                resultId
-              );
-            }
-          }
-        }
+              await oada.put({
+                path: join(job.config.document._id, '_meta'),
+                data: { _type: newType },
+              });
 
-        // No results matched the existing partial JSON
-        if (!wroteToDocument) {
-          info(`Results did not include the doc type of the partial JSON: `);
-          await oada.delete({
-            path: `bookmarks/trellisfw/trading-partners/masterid-index/${
-              job['trading-partner']
-            }/shared/trellisfw/documents/${job.config!['oada-doc-type']}/${
-              job.config!.docKey
-            }`,
-          });
+              trace(`Putting document into ${docType} list.`);
+              await oada.put({
+                tree,
+                path: join('/bookmarks/trellisfw/documents/', docType),
+                data: {
+                  [job.config.docKey]: { _id: job.config.document._id, rev: 0 },
+                },
+              });
+
+              void log.info(
+                'done',
+                'Document moved for proper doctype for re-processing.'
+              );
+              return resolve(job.result as Json);
+            }
+
+            trace(
+              'Merging from %s to %s.',
+              docData._id,
+              job.config.document._id
+            );
+            const { data } = await oada.get({ path: docData._id });
+            await oada.put({
+              path: job.config.document._id,
+              data: stripResource(data),
+            });
+
+            job.result[docType] = {
+              ...job.result[docType],
+              [job.config.docKey]: { _id: job.config.document._id },
+            };
+          }
         }
 
         // Record the result in the job
@@ -358,9 +395,11 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           )) {
             void log.info('linking', `Linking doctype ${doctype} from result`);
             await oada.put({
-              path: `${documentTypePath}/${documentKey}`,
-              data: documentData as Json,
               tree,
+              path: documentTypePath,
+              data: {
+                [documentKey]: documentData as Json,
+              },
             });
           }
         }
@@ -596,14 +635,17 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               // @ts-expect-error --- ?
               v.time = moment(t, 'X');
             }
-            if (v.information === "File is not a Textual PDF,requires OCR to be processed.") {
+            if (
+              v.information ===
+              'File is not a Textual PDF,requires OCR to be processed.'
+            ) {
               await oada.post({
                 path: `/${jobId}/updates`,
                 data: {
                   status: 'error',
-                  information: v.information
-                }
-              })
+                  information: v.information,
+                },
+              });
             }
 
             trace(v, '#jobChange: change update');
@@ -859,7 +901,6 @@ export async function startJobCreator({
       tree,
     });
 
-
     trace('Trading partners enabled %s', tradingPartnersEnabled);
     if (tradingPartnersEnabled) {
       // eslint-disable-next-line no-new
@@ -897,7 +938,7 @@ export async function startJobCreator({
         path: pending,
         data: {},
         tree,
-      })
+      });
       const { data: jobs = {} } = (await con.get({
         path: pending,
       })) as unknown as { data: Jobs };
