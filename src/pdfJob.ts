@@ -596,6 +596,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               // @ts-expect-error --- ?
               v.time = moment(t, 'X');
             }
+            /* They new return a result. Let these through, do not error, and attempt to retrieve a result. I think.
             if (v.information === "File is not a Textual PDF,requires OCR to be processed.") {
               await oada.post({
                 path: `/${jobId}/updates`,
@@ -604,7 +605,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                   information: v.information
                 }
               })
-            }
+              }
+              */
 
             trace(v, '#jobChange: change update');
             if (v.status === 'success') {
