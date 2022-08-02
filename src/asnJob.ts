@@ -31,6 +31,8 @@ const warn = debug('target-helper#asn:warn');
 const info = debug('target-helper#asn:info');
 const trace = debug('target-helper#asn:trace');
 
+const pending = '/bookmarks/services/target/jobs/pending';
+
 // ------------------------------------------------------------------------------------------------------------
 // - receive the job from oada-jobs
 export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
@@ -39,7 +41,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
   // Link the job under the asn's _meta
   trace('Linking job under asn/_meta until oada-jobs can do that natively');
   await oada.put({
-    path: `/bookmarks/services/target/jobs/${jobId}/config/asn/_meta/services/target/jobs`,
+    path: `${pending}/${jobId}/config/asn/_meta/services/target/jobs`,
     data: {
       [jobId]: { _ref: `resources/${jobId}` },
     },
@@ -151,12 +153,12 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
         // eslint-disable-next-line security/detect-non-literal-fs-filename
         watchhandle = await oada.watch({
-          path: `/bookmarks/services/target/jobs/${jobId}`,
+          path: `${pending}/${jobId}`,
           watchCallback: jobChange,
           type: 'single',
         });
         const { data } = await oada.get({
-          path: `/bookmarks/services/target/jobs/${jobId}`,
+          path: `${pending}/${jobId}`,
         });
         return data;
       };
@@ -294,7 +296,7 @@ export async function startJobCreator({
       trace('Posted ASN job resource, jobkey = %s', jobkey);
       try {
         await con.put({
-          path: `/bookmarks/services/target/jobs`,
+          path: `${pending}`,
           tree,
           data: {
             [jobkey]: { _id: `resources/${jobkey}` },
