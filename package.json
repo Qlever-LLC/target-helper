@@ -63,7 +63,7 @@
     "jsonpointer": "^5.0.0",
     "ksuid": "^3.0.0",
     "make-promises-safe": "^5.1.0",
-    "moment": "^2.29.3",
+    "moment": "^2.29.4",
     "tslib": "^2.4.0"
   },
   "devDependencies": {
