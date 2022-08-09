@@ -275,6 +275,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           'helper: linking _meta/vdoc/pdf for each link in result',
           {}
         );
+
+        let pdfKey = (pdfID || "").replace(/^resources\//, '');
         async function recursivePutVdocAtLinks(object: unknown): Promise<void> {
           if (typeof object !== 'object' || !object) {
             return;
@@ -284,7 +286,11 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             await oada.put({
               path: `/${object._id}/_meta`,
               data: {
-                vdoc: { pdf: { _id: `${pdfID}` } },
+                vdoc: {
+                  pdf: {
+                    [pdfKey]: {_id: `${pdfID}` }
+                  }
+                },
               },
             });
             await oada.put({
