@@ -76,7 +76,9 @@ await Promise.all(
 
     // --------------------------------------------------
     // Start the jobs watching service
-    info('Initializing target-helper service. v1.1.9');
+    info(
+      `Initializing target-helper service. Version: ${process.env.npm_package_version}`
+    );
     const serviceP = service.start();
 
     // Start the things watching to create jobs
