@@ -302,6 +302,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           {}
         );
 
+        /* Target-helper not /expects/ this and does not need to re-create it (wrongly)
+
         // ------------- 1: Look through all the things in result recursively,
         // if any are links then go there and set _meta/vdoc/pdf
         // Also, write a reference to the target-job that did it. This serves to
@@ -351,6 +353,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         }
 
         await recursivePutVdocAtLinks(job.result);
+        */
 
         // ------------- 2: sign audit/coi/etc.
         void log.info('helper: signing all links in result', {});
