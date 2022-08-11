@@ -24,7 +24,7 @@ import oError from '@overleaf/o-error';
 import pointer from 'jsonpointer';
 import { join } from 'node:path';
 
-import { Change, OADAClient, connect } from '@oada/client';
+import { Change, OADAClient, connect, JsonObject } from '@oada/client';
 import type { Json, Logger, WorkerFunction } from '@oada/jobs';
 import tSignatures, { JWK } from '@trellisfw/signatures';
 import type Jobs from '@oada/types/oada/service/jobs.js';
@@ -307,11 +307,13 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         // Also, write a reference to the target-job that did it. This serves to
         // tell our ListWatch not to queue a target job when we add the
         // resource to /shared/trellisfw/documents/<doctype>
-        // Really, this gets done already by fl-sync more than likely.
+
+        /* The _meta/vdoc/pdf/[hash] already exists under the new target-helper flow
         void log.info(
           'helper: linking _meta/vdoc/pdf for each link in result',
           {}
         );
+        let pdfKey: string = pdfID.replace(/^resources\//, '');
         async function recursivePutVdocAtLinks(object: unknown): Promise<void> {
           if (typeof object !== 'object' || !object) {
             return;
@@ -321,7 +323,11 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             await oada.put({
               path: `/${object._id}/_meta`,
               data: {
-                vdoc: { pdf: { _id: `${pdfID}` } },
+                vdoc: {
+                  pdf: {
+                    [pdfKey]: {_id: `${pdfID}` }
+                  },
+                },
               },
             });
             await oada.put({
@@ -345,6 +351,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         }
 
         await recursivePutVdocAtLinks(job.result);
+        */
 
         // ------------- 2: sign audit/coi/etc.
         void log.info('helper: signing all links in result', {});
@@ -635,6 +642,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               // @ts-expect-error --- ?
               v.time = moment(t, 'X');
             }
+            /*
             if (
               v.information ===
               'File is not a Textual PDF,requires OCR to be processed.'
@@ -646,6 +654,28 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                   information: v.information,
                 },
               });
+            }
+             */
+
+            // Fix for Target identifying loop
+            if (v.status === 'identifying') {
+              let otherUpdates = await oada.get({
+                path: `/resources/${jobId}/updates`,
+              }).then(r => r.data as unknown as JsonObject)
+
+              let others = Object.values(otherUpdates).filter((obj:any) => obj.status && obj.status === "identifying");
+              if (others.length > 5) {
+                info(`Job ${jobId} stuck in 'identifying' loop for more than 5 minutes. Timing out.`)
+                await oada.post({
+                  path: `/${jobId}/updates`,
+                  data: {
+                    status: 'error',
+                    information: "TimeoutError",
+                  }
+                })
+              } else {
+                trace(`Job ${jobId} update status 'identifying' happened less than 10 times.`)
+              }
             }
 
             trace(v, '#jobChange: change update');

@@ -275,7 +275,7 @@ __metadata:
     "@types/convict-format-with-validator": ^6.0.2
     "@types/debug": ^4.1.7
     "@types/lodash": ^4.14.182
-    "@types/node": ^16.11.36
+    "@types/node": ^18.6.5
     "@typescript-eslint/eslint-plugin": ^5.27.0
     "@typescript-eslint/parser": ^5.27.0
     "@yarnpkg/sdks": ^3.0.0-rc.6
@@ -499,10 +499,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^16.11.36":
+"@types/node@npm:*":
   version: 16.11.36
   resolution: "@types/node@npm:16.11.36"
   checksum: 878e8e2032869785dd4f73dd862042c7eb588fb9a27199f1b493a7029438ccb58f96e203c35c2e66e08307ca3f9767133cae888958c15e031982f7e9719e5e47
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^18.6.5":
+  version: 18.6.5
+  resolution: "@types/node@npm:18.6.5"
+  checksum: e3e66c9a84b94010a57c1b9dac882c08484278d74f9d120dbe6a3e45d00740d178bd1d34a5deee28197c94b9f4359153b637bab9b305328e865027e9987a0f3d
   languageName: node
   linkType: hard
 

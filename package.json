@@ -1,6 +1,6 @@
 {
   "name": "@qlever-llc/target-helper",
-  "version": "1.2.17",
+  "version": "1.2.18",
   "description": "A Trellis microservice to fill in around Target integration",
   "author": "Andrew Balmos <andrew@qlever.io>",
   "license": "Apache-2.0",
@@ -74,7 +74,7 @@
     "@types/convict-format-with-validator": "^6.0.2",
     "@types/debug": "^4.1.7",
     "@types/lodash": "^4.14.182",
-    "@types/node": "^16.11.36",
+    "@types/node": "^18.6.5",
     "@typescript-eslint/eslint-plugin": "^5.27.0",
     "@typescript-eslint/parser": "^5.27.0",
     "@yarnpkg/sdks": "^3.0.0-rc.6",
