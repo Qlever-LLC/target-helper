@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 export function fromOadaType(type: string) {
-  const vals = Object.values(conversions);
+  const values = Object.values(conversions);
 
-  return vals.find((v) => v.urlName === type);
+  return values.find((v) => v.urlName === type);
 }
 
 const conversions = {

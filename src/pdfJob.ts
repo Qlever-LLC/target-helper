@@ -15,28 +15,32 @@
  * limitations under the License.
  */
 
+import config from './config.js';
+
+import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 
+import { JsonPointer } from 'json-ptr';
 import clone from 'clone-deep';
 import debug from 'debug';
 import moment from 'moment';
 import oError from '@overleaf/o-error';
-import pointer from 'jsonpointer';
-import { join } from 'node:path';
 
-import { Change, OADAClient, connect } from '@oada/client';
+import type { Change, JsonObject, OADAClient } from '@oada/client';
 import type { Json, Logger, WorkerFunction } from '@oada/jobs';
-import tSignatures, { JWK } from '@trellisfw/signatures';
+import type { JWK } from '@trellisfw/signatures';
 import type Jobs from '@oada/types/oada/service/jobs.js';
+import type { Link } from '@oada/types/oada/link/v1.js';
 import { ListWatch } from '@oada/list-lib';
 import type Resource from '@oada/types/oada/resource.js';
 import type Update from '@oada/types/oada/service/job/update.js';
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
+import { connect } from '@oada/client';
+import tSignatures from '@trellisfw/signatures';
 
-import tree, { TreeKey } from './tree.js';
-import config from './config.js';
+import type { TreeKey } from './tree.js';
 import { fromOadaType } from './conversions.js';
-import type { Link } from '@oada/types/oada/link/v1';
+import tree from './tree.js';
 
 const error = debug('target-helper:error');
 const info = debug('target-helper:info');
@@ -44,7 +48,7 @@ const trace = debug('target-helper:trace');
 
 const pending = '/bookmarks/services/target/jobs/pending';
 
-type List<T> = { [k: string]: T };
+type List<T> = Record<string, T>;
 
 /**
  * Helper because TS is dumb and doesn't realize `in` means the key definitely exists.
@@ -56,21 +60,24 @@ function has<T, K extends string>(
   return value && key in value;
 }
 
-// Becuase OADA resource keys are always in the way
-type Striped<T> = Omit<T, '_id' | '_rev' | '_meta' | '_type' | '_ref'>;
-function stripResource<T>(r: T): Striped<T> {
-  // @ts-expect-error
-  delete r._id;
-  // @ts-expect-error
-  delete r._rev;
-  // @ts-expect-error
-  delete r._meta;
-  // @ts-expect-error
-  delete r._type;
-  // @ts-expect-error
-  delete r._ref;
+// Because OADA resource keys are always in the way
+function stripResource<
+  T extends
+    | {
+        _id?: unknown;
+        _rev?: unknown;
+        _meta?: unknown;
+        _type?: unknown;
+        _ref?: unknown;
+      }
+    | undefined
+>(resource: T) {
+  if (!resource) {
+    return resource;
+  }
 
-  return r;
+  const { _id, _rev, _meta, _type, _ref, ...rest } = resource;
+  return rest;
 }
 
 // You can generate a signing key pair by running `oada-certs --create-keys`
@@ -187,14 +194,14 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
       // - once it sees "success" in the updates,
       // it will post a job to trellis-signer and notify oada-jobs of success
       const targetSuccess = async () => {
-        log.info(
+        void log.info(
           'helper-started',
           'Target returned success, target-helper picking up'
         );
 
         // Get the latest copy of job
-        // eslint-disable-next-line @typescript-eslint/no-shadow
-        let r = await oada.get({ path: `/resources/${jobId}` });
+
+        const r = await oada.get({ path: `/resources/${jobId}` });
         assertJob(r.data);
         // FIXME: Make a proper type and assert
         // Note the types *should* be okay at runtime becuase these are needed to get to a target success
@@ -219,19 +226,21 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         // to use.
         job.result = {};
 
-        for (let [docType, data] of Object.entries(job.targetResult)) {
-          info('Document identified as %s', docType);
+        for await (const [documentType, data] of Object.entries(
+          job.targetResult
+        )) {
+          info('Document identified as %s', documentType);
 
-          job.result[docType] = {};
+          job.result[documentType] = {};
 
-          for (const docData of Object.values(data)) {
+          for await (const documentData of Object.values(data)) {
             // If the document type mismatches, move the link to the right place and let the flow start over.
             // Ex: LaserFiche "unidentified" documents, FoodLogiq wrong PDF uploaded, etc.
             // Note: One day we might officially separate "identification" from "transcription". This is almost that.
-            if (job.config['oada-doc-type'] !== docType) {
+            if (job.config['oada-doc-type'] !== documentType) {
               info(
                 'Document type mismatch. Trellis: [%s], Target: [%s]. Moving tree location and bailing.',
-                docType,
+                documentType,
                 job.config['oada-doc-type']
               );
 
@@ -244,7 +253,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 ),
               });
 
-              const newType = fromOadaType(docType)?.type;
+              const newType = fromOadaType(documentType)?.type;
 
               trace(`Updating resource type to ${newType}`);
               await oada.put({
@@ -256,10 +265,10 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 data: { _type: newType },
               });
 
-              trace(`Putting document into ${docType} list.`);
+              trace(`Putting document into ${documentType} list.`);
               await oada.put({
                 tree,
-                path: join('/bookmarks/trellisfw/documents/', docType),
+                path: join('/bookmarks/trellisfw/documents/', documentType),
                 data: {
                   [job.config.docKey]: { _id: job.config.document._id, rev: 0 },
                 },
@@ -269,22 +278,23 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 'done',
                 'Document moved for proper doctype for re-processing.'
               );
-              return resolve(job.result as Json);
+              resolve(job.result as Json);
+              return;
             }
 
             trace(
               'Merging from %s to %s.',
-              docData._id,
+              documentData._id,
               job.config.document._id
             );
-            const { data } = await oada.get({ path: docData._id });
+            const { data } = await oada.get({ path: documentData._id });
             await oada.put({
               path: job.config.document._id,
-              data: stripResource(data),
+              data: stripResource(data as JsonObject),
             });
 
-            job.result[docType] = {
-              ...job.result[docType],
+            job.result[documentType] = {
+              ...job.result[documentType],
               [job.config.docKey]: { _id: job.config.document._id },
             };
           }
@@ -392,12 +402,17 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           const documentTypePath = `${rootPath}/${doctype}`;
           // Top-level keys are doc types
           // Automatically augment the base tree with the right content-type
-          pointer.set(tree, documentTypePath, {
-            '_type': 'application/vnd.trellisfw.documents.1+json',
-            '*': {
-              _type: fromOadaType(doctype)!.type,
+          JsonPointer.set(
+            tree,
+            documentTypePath,
+            {
+              '_type': 'application/vnd.trellisfw.documents.1+json',
+              '*': {
+                _type: fromOadaType(doctype)!.type,
+              },
             },
-          });
+            true
+          );
 
           for await (const [documentKey, documentData] of Object.entries(
             data

@@ -18,8 +18,11 @@
 import debug from 'debug';
 import oError from '@overleaf/o-error';
 
-import { Change, connect } from '@oada/client';
-import Job, { assert as assertJob } from '@oada/types/oada/service/job.js';
+import { type Change, connect } from '@oada/client';
+import {
+  type default as Job,
+  assert as assertJob,
+} from '@oada/types/oada/service/job.js';
 import type { Json, WorkerFunction } from '@oada/jobs';
 import { ListWatch } from '@oada/list-lib';
 import type Update from '@oada/types/oada/service/job/update.js';
@@ -324,7 +327,6 @@ export async function startJobCreator({
       // Need tree and itemsPath for this to work
       tree,
       itemsPath: `$.day-index.*.*`,
-      // eslint-disable-next-line no-secrets/no-secrets
       name: 'TARGET-1gdQycxI4C1QLq5QfHbF99R3wpD',
       conn: con,
       resume: true,

@@ -24,7 +24,7 @@ import { setTimeout } from 'isomorphic-timers-promises';
 import debug from 'debug';
 import moment from 'moment';
 
-import { JsonObject, connect } from '@oada/client';
+import { type JsonObject, connect } from '@oada/client';
 
 import {
   cleanup,
