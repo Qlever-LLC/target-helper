@@ -322,7 +322,6 @@ export async function startJobCreator({
     new ListWatch({
       path: `/bookmarks/trellisfw/asns`,
       // Need tree and itemsPath for this to work
-      tree,
       itemsPath: `$.day-index.*.*`,
       // eslint-disable-next-line no-secrets/no-secrets
       name: 'TARGET-1gdQycxI4C1QLq5QfHbF99R3wpD',

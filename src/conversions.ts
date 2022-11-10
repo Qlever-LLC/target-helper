@@ -21,6 +21,11 @@ export function fromOadaType(type: string) {
 }
 
 const conversions = {
+  'Unidentified': {
+    name: 'Unidentified',
+    urlName: 'unidentified',
+    type: 'application/vnd.trellisfw.unidentified',
+  },
   'ACH Form': {
     name: 'ACH Form',
     urlName: 'ach-forms',

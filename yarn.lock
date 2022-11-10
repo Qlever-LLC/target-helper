@@ -140,7 +140,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/client@npm:^4.0.1, @oada/client@npm:^4.0.2, @oada/client@npm:^4.1.1":
+"@oada/client@npm:^4.0.1, @oada/client@npm:^4.1.1":
   version: 4.1.1
   resolution: "@oada/client@npm:4.1.1"
   dependencies:
@@ -196,19 +196,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/list-lib@npm:^3.0.8":
-  version: 3.0.8
-  resolution: "@oada/list-lib@npm:3.0.8"
+"@oada/list-lib@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "@oada/list-lib@npm:4.1.0"
   dependencies:
-    "@oada/client": ^4.0.2
-    "@oada/types": ^2.0.1
-    clone-deep: ^4.0.1
+    "@oada/types": ^3.3.0
+    abort-controller: ^3.0.0
     debug: ^4.3.4
+    eventemitter3: ^4.0.7
     isomorphic-timers-promises: ^1.0.1
-    json-pointer: ^0.6.2
-    jsonpath-plus: ^6.0.1
-    tslib: ^2.4.0
-  checksum: 0f5a4e15f9d302d997270ac5ee025a8a31e732bd6eb7efe62cdfc8dcbf680da2711746a817c5f121d22fc126604c68c381b8badecc9c449d27192e81fd7bbc19
+    json-ptr: ^3.1.1
+    jsonpath-plus: ^7.2.0
+    object-assign-deep: ^0.4.0
+    tslib: ^2.4.1
+  peerDependencies:
+    "@oada/client": ^4.3.2
+  checksum: 3ba3a5ca4d692aa04684ea8e2aeae59bc9c9131e7eb798a78cf8a043da633f6eb0ab04887448cb245000fd74ea30a260262cbfffe9980a45f61496b4bac21468
   languageName: node
   linkType: hard
 
@@ -251,6 +254,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@oada/types@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "@oada/types@npm:3.3.0"
+  dependencies:
+    ajv: 8.11.0
+    ajv-formats: ^2.1.1
+    ajv-formats-draft2019: ^1.6.1
+    tslib: ^2.4.0
+  checksum: f515e984645cae7e91e1c17b0249c801b66f6932f98447c62bccce855cb6affbd32d6d0fa55c5685e64b02efe63f5da396e19e9b6c315838972ac9f82a7832e9
+  languageName: node
+  linkType: hard
+
 "@overleaf/o-error@npm:^3.4.0":
   version: 3.4.0
   resolution: "@overleaf/o-error@npm:3.4.0"
@@ -265,7 +280,7 @@ __metadata:
     "@ava/typescript": ^3.0.1
     "@oada/client": ^4.1.1
     "@oada/jobs": ^4.0.0
-    "@oada/list-lib": ^3.0.8
+    "@oada/list-lib": ^4.1.0
     "@oada/types": ^2.0.1
     "@overleaf/o-error": ^3.4.0
     "@trellisfw/signatures": ^2.1.3
@@ -275,7 +290,7 @@ __metadata:
     "@types/convict-format-with-validator": ^6.0.2
     "@types/debug": ^4.1.7
     "@types/lodash": ^4.14.182
-    "@types/node": ^16.11.36
+    "@types/node": ^18.6.5
     "@typescript-eslint/eslint-plugin": ^5.27.0
     "@typescript-eslint/parser": ^5.27.0
     "@yarnpkg/sdks": ^3.0.0-rc.6
@@ -499,10 +514,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^16.11.36":
+"@types/node@npm:*":
   version: 16.11.36
   resolution: "@types/node@npm:16.11.36"
   checksum: 878e8e2032869785dd4f73dd862042c7eb588fb9a27199f1b493a7029438ccb58f96e203c35c2e66e08307ca3f9767133cae888958c15e031982f7e9719e5e47
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^18.6.5":
+  version: 18.6.5
+  resolution: "@types/node@npm:18.6.5"
+  checksum: e3e66c9a84b94010a57c1b9dac882c08484278d74f9d120dbe6a3e45d00740d178bd1d34a5deee28197c94b9f4359153b637bab9b305328e865027e9987a0f3d
   languageName: node
   linkType: hard
 
@@ -2947,7 +2969,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"foreach@npm:^2.0.4, foreach@npm:^2.0.5":
+"foreach@npm:^2.0.5":
   version: 2.0.5
   resolution: "foreach@npm:2.0.5"
   checksum: dab4fbfef0b40b69ee5eab81bcb9626b8fa8b3469c8cfa26480f3e5e1ee08c40eae07048c9a967c65aeda26e774511ccc70b3f10a604c01753c6ef24361f0fc8
@@ -3849,19 +3871,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"json-pointer@npm:^0.6.2":
-  version: 0.6.2
-  resolution: "json-pointer@npm:0.6.2"
-  dependencies:
-    foreach: ^2.0.4
-  checksum: 668143014b16d7f90e6f0e6c2d756b00b799424f58d750794a79a24cbce595855b224f7861986aaff719579558fbab81fb83c7371f5e24aded9dc33b3838de30
-  languageName: node
-  linkType: hard
-
 "json-ptr@npm:^3.1.0":
   version: 3.1.0
   resolution: "json-ptr@npm:3.1.0"
   checksum: b64990594e77d562f5d6dfdf866d4dc338788ddfee6493ce09d2d0b373571dbafbc71364ab02b277c05f911ad4e1ec26e2a05ef899029d747153e51bf8a7de3b
+  languageName: node
+  linkType: hard
+
+"json-ptr@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "json-ptr@npm:3.1.1"
+  checksum: 58da208d842647e8c2681452508eb4af4bb29a9470bebccf0040ad4d6c49eb0a4f1ae726a62918a22b3e5b13765f36642e2c23670cba152f4eb03676449dba6c
   languageName: node
   linkType: hard
 
@@ -3897,10 +3917,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsonpath-plus@npm:^6.0.1":
-  version: 6.0.1
-  resolution: "jsonpath-plus@npm:6.0.1"
-  checksum: bddec34b742249c5b38077dfcd8eb479fab4e077943253017326503ce4f527ef66938288c728712fd923907493d6eaba69a43015dc3dd9fdf48d89028ae7f466
+"jsonpath-plus@npm:^7.2.0":
+  version: 7.2.0
+  resolution: "jsonpath-plus@npm:7.2.0"
+  checksum: 05f447339d29be861e307d6e812aec1b9b88a3ba6bba286966a4e8bed3e752bee3d715eabfc21dce968be85ccb48bf79d2c1af78da7b9b74cd1b446d4d5d02f5
   languageName: node
   linkType: hard
 
@@ -4572,6 +4592,13 @@ __metadata:
   version: 1.0.1
   resolution: "number-is-nan@npm:1.0.1"
   checksum: 13656bc9aa771b96cef209ffca31c31a03b507ca6862ba7c3f638a283560620d723d52e626d57892c7fff475f4c36ac07f0600f14544692ff595abff214b9ffb
+  languageName: node
+  linkType: hard
+
+"object-assign-deep@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "object-assign-deep@npm:0.4.0"
+  checksum: 3c31920ca887e507253b71fe5d38ce752b47e8cbcd2cd9dc6e5909ae6ce05a31dbc64ba7bb46037c4f5ff449ec0199db247bd9d8d768574876ed7a79fa5810ab
   languageName: node
   linkType: hard
 
@@ -6003,6 +6030,13 @@ __metadata:
   version: 2.4.0
   resolution: "tslib@npm:2.4.0"
   checksum: 8c4aa6a3c5a754bf76aefc38026134180c053b7bd2f81338cb5e5ebf96fefa0f417bff221592bf801077f5bf990562f6264fecbc42cd3309b33872cb6fc3b113
+  languageName: node
+  linkType: hard
+
+"tslib@npm:^2.4.1":
+  version: 2.4.1
+  resolution: "tslib@npm:2.4.1"
+  checksum: 19480d6e0313292bd6505d4efe096a6b31c70e21cf08b5febf4da62e95c265c8f571f7b36fcc3d1a17e068032f59c269fab3459d6cd3ed6949eafecf64315fca
   languageName: node
   linkType: hard
 
