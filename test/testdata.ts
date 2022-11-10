@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
+import { JsonPointer } from 'json-ptr';
 import assign from 'assign-deep';
 import cloneDeep from 'clone-deep';
 import debug from 'debug';
-import { JsonPointer } from 'json-ptr';
 import moment from 'moment';
 
 import type { OADAClient } from '@oada/client';

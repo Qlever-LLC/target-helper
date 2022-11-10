@@ -71,5 +71,5 @@ declare module '@trellisfw/signatures' {
   }
   export = TrellisSignatures;
 
-  export { JWK } from '@oada/oada-certs';
+  export type { JWK } from '@oada/oada-certs';
 }

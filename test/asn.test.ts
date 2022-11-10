@@ -26,7 +26,7 @@ import moment from 'moment';
 
 import { connect } from '@oada/client';
 
-import type Job from '@oada/types/oada/service/job';
+import type Job from '@oada/types/oada/service/job.js';
 
 import testasn from './testasn.js';
 

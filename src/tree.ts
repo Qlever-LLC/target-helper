@@ -15,41 +15,9 @@
  * limitations under the License.
  */
 
-/* eslint-disable sonarjs/no-duplicate-string, no-secrets/no-secrets */
+/* eslint-disable sonarjs/no-duplicate-string */
 
-type Letter =
-  | 'a'
-  | 'b'
-  | 'c'
-  | 'd'
-  | 'e'
-  | 'f'
-  | 'g'
-  | 'h'
-  | 'i'
-  | 'j'
-  | 'k'
-  | 'l'
-  | 'm'
-  | 'p'
-  | 'q'
-  | 'r'
-  | 's'
-  | 't'
-  | 'u'
-  | 'v'
-  | 'w'
-  | 'x'
-  | 'y'
-  | 'z';
-
-export type TreeKey = `${Letter | '*' | Uppercase<Letter>}${string}`;
-
-export type Tree = {
-  [key: TreeKey]: Tree;
-  _type?: string;
-  _rev?: number;
-};
+import type Tree from '@oada/types/oada/tree/v1.js';
 
 const tree: Tree = {
   bookmarks: {
@@ -201,3 +169,4 @@ const tree: Tree = {
 };
 
 export default tree;
+export { type TreeKey } from '@oada/types/oada/tree/v1.js';

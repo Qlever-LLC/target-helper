@@ -2,8 +2,8 @@
   "extends": "@tsconfig/node16",
   "compilerOptions": {
     "composite": true,
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
     "removeComments": true,
     "stripInternal": true,
     "importHelpers": true,
@@ -20,7 +20,8 @@
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "target": "ES2018"
   },
   "include": ["src"]
 }
