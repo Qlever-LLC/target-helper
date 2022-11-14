@@ -22,7 +22,6 @@ import config from './config.js';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 
-import { JsonPointer } from 'json-ptr';
 import clone from 'clone-deep';
 import debug from 'debug';
 import moment from 'moment';
@@ -392,47 +391,10 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         await recursiveSignLinks(job.result);
 
         // ------------- 3: put audits/cois/etc. to proper home
-        const rootPath = job['trading-partner']
-          ? `${TP_MASTER_PATH}/${job['trading-partner']}/shared/trellisfw/documents`
-          : `/bookmarks/trellisfw/documents`;
         const versionedResult = recursiveMakeAllLinksVersioned(
           job.result
         ) as Record<TreeKey, Record<string, unknown>>;
         trace(versionedResult, 'all versioned links to bookmarks');
-
-        for await (const [doctype, data] of Object.entries(versionedResult)) {
-          const documentTypePath = `${rootPath}/${doctype}`;
-          // Top-level keys are doc types
-          // Automatically augment the base tree with the right content-type
-          JsonPointer.set(
-            tree,
-            documentTypePath,
-            {
-              '_type': 'application/vnd.trellisfw.documents.1+json',
-              '*': {
-                _type: fromOadaType(doctype)!.type,
-              },
-            },
-            true
-          );
-
-          for await (const [documentKey, documentData] of Object.entries(
-            data
-          )) {
-            console.log('and the data', {documentKey, documentData})
-            void log.info('linking', `Linking doctype ${doctype} from result`);
-            info(`Linking doctype ${doctype} from result`);
-            /*
-            await oada.put({
-              tree,
-              path: documentTypePath,
-              data: {
-                [documentKey]: documentData as Json,
-              },
-            });
-            */
-          }
-        }
 
         // ------------- 4: cross link vdoc for pdf <-> audits,cois,letters,etc.
         void log.info(
@@ -1024,7 +986,6 @@ export async function startJobCreator({
       key = key.replace(/^\//, '');
       //      Info(`New trading partner detected at key: [${key}]`);
 
-      if (key !== 'd4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e') return
       const documentsPath = `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`;
       await con.ensure({
         path: documentsPath,
@@ -1040,7 +1001,7 @@ export async function startJobCreator({
         conn: con,
         resume: false,
         onAddItem: documentTypeAdded(key),
-        tree
+        tree,
       });
     }
 
