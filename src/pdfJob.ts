@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+/* eslint-disable complexity */
+
 import config from './config.js';
 
 import { join } from 'node:path';
@@ -417,7 +419,10 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           for await (const [documentKey, documentData] of Object.entries(
             data
           )) {
+            console.log('and the data', {documentKey, documentData})
             void log.info('linking', `Linking doctype ${doctype} from result`);
+            info(`Linking doctype ${doctype} from result`);
+            /*
             await oada.put({
               tree,
               path: documentTypePath,
@@ -425,6 +430,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 [documentKey]: documentData as Json,
               },
             });
+            */
           }
         }
 
@@ -957,6 +963,8 @@ export async function startJobCreator({
         conn: con,
         resume: false,
         onAddItem: watchTp,
+        onNewList: ListWatch.AssumeNew,
+        tree,
       });
     }
 
@@ -977,6 +985,7 @@ export async function startJobCreator({
       resume: false,
       onNewList: ListWatch.AssumeNew,
       onAddItem: documentTypeAdded(),
+      tree,
     });
 
     // eslint-disable-next-line no-inner-declarations
@@ -1015,6 +1024,7 @@ export async function startJobCreator({
       key = key.replace(/^\//, '');
       //      Info(`New trading partner detected at key: [${key}]`);
 
+      if (key !== 'd4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e') return
       const documentsPath = `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`;
       await con.ensure({
         path: documentsPath,
@@ -1030,6 +1040,7 @@ export async function startJobCreator({
         conn: con,
         resume: false,
         onAddItem: documentTypeAdded(key),
+        tree
       });
     }
 

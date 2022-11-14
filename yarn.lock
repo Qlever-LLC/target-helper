@@ -211,11 +211,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/client@npm:^4.0.1, @oada/client@npm:^4.1.2, @oada/client@npm:^4.3.2":
-  version: 4.3.2
-  resolution: "@oada/client@npm:4.3.2"
+"@oada/client@portal:/home/sanoel/client::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@oada/client@portal:/home/sanoel/client::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A."
   dependencies:
-    "@oada/types": ^3.2.1
+    "@oada/types": ^3.3.0
     abort-controller: ^3.0.0
     buffer: ^6.0.3
     bufferutil: ^4.0.6
@@ -226,21 +226,20 @@ __metadata:
     event-iterator: ^2.0.0
     eventemitter3: ^4.0.7
     fetch-h2: ^3.0.2
-    file-type: ^17.1.6
+    file-type: ^18.0.0
     isomorphic-timers-promises: ^1.0.1
     isomorphic-ws: ^5.0.0
     media-type: ^0.3.1
     p-queue: ^7.3.0
     reconnecting-websocket: ^4.4.0
     resolve-alpn: ^1.2.1
-    supports-color: ^9.2.2
+    supports-color: ^9.2.3
     tslib: ^2.4.0
     utf-8-validate: ^5.0.9
-    ws: ^8.8.1
+    ws: ^8.9.0
     xksuid: ^0.0.3
-  checksum: 39e481877fe06072f5226da8bd1fd6fc442504489562d8dc3273895e44cccd6554ec06978bbb80ed6a71a1db3a0dcf490ba2d768f96fe3e6eeed8a4d6403515e
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@oada/jobs@npm:^4.1.4":
   version: 4.1.4
@@ -276,26 +275,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/list-lib@npm:^3.0.9":
-  version: 3.0.9
-  resolution: "@oada/list-lib@npm:3.0.9"
-  dependencies:
-    "@oada/client": ^4.1.2
-    "@oada/types": ^3.0.3
-    clone-deep: ^4.0.1
-    debug: ^4.3.4
-    eventemitter3: ^4.0.7
-    isomorphic-timers-promises: ^1.0.1
-    json-pointer: ^0.6.2
-    jsonpath-plus: ^6.0.1
-    tslib: ^2.4.0
-  checksum: e8274f3745f362ff659b1bb03d8d2a1674ba543f678b34ab3f7d06b9b6050aa099db033f37ccd4c98b1ac574e0440dd42b82af347299939173131f82fda3993e
-  languageName: node
-  linkType: hard
-
-"@oada/list-lib@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "@oada/list-lib@npm:4.1.0"
+"@oada/list-lib@portal:/home/sanoel/list-lib::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@oada/list-lib@portal:/home/sanoel/list-lib::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A."
   dependencies:
     "@oada/types": ^3.3.0
     abort-controller: ^3.0.0
@@ -308,9 +290,8 @@ __metadata:
     tslib: ^2.4.1
   peerDependencies:
     "@oada/client": ^4.3.2
-  checksum: 3ba3a5ca4d692aa04684ea8e2aeae59bc9c9131e7eb798a78cf8a043da633f6eb0ab04887448cb245000fd74ea30a260262cbfffe9980a45f61496b4bac21468
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@oada/oada-certs@npm:^3.1.0":
   version: 3.2.0
@@ -351,7 +332,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/types@npm:^3.0.3, @oada/types@npm:^3.2.1":
+"@oada/types@npm:^3.2.1":
   version: 3.2.1
   resolution: "@oada/types@npm:3.2.1"
   dependencies:
@@ -3115,14 +3096,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"file-type@npm:^17.1.6":
-  version: 17.1.6
-  resolution: "file-type@npm:17.1.6"
+"file-type@npm:^18.0.0":
+  version: 18.0.0
+  resolution: "file-type@npm:18.0.0"
   dependencies:
     readable-web-to-node-stream: ^3.0.2
-    strtok3: ^7.0.0-alpha.9
-    token-types: ^5.0.0-alpha.2
-  checksum: 797e0d155ecaf4b575d4569a0188bfed85af19d18cf3d93ec8bb66d797172a1fde9f13d56135c6a0b471cacd7ecc1adb0c9a45c6e3a19436f682a275d0be16cc
+    strtok3: ^7.0.0
+    token-types: ^5.0.1
+  checksum: 67f5a927b8030e35a4faf9dd9dea9e17bcb042fb61b9851b7dd1b1b3bb3ecfdd9f83bc3bc72686316ea2bac70df652c61e10affa9b5957b1a3d731df4925e3cb
   languageName: node
   linkType: hard
 
@@ -4226,13 +4207,6 @@ __metadata:
   bin:
     json5: lib/cli.js
   checksum: e76ea23dbb8fc1348c143da628134a98adf4c5a4e8ea2adaa74a80c455fc2cdf0e2e13e6398ef819bfe92306b610ebb2002668ed9fc1af386d593691ef346fc3
-  languageName: node
-  linkType: hard
-
-"jsonpath-plus@npm:^6.0.1":
-  version: 6.0.1
-  resolution: "jsonpath-plus@npm:6.0.1"
-  checksum: bddec34b742249c5b38077dfcd8eb479fab4e077943253017326503ce4f527ef66938288c728712fd923907493d6eaba69a43015dc3dd9fdf48d89028ae7f466
   languageName: node
   linkType: hard
 
@@ -6124,7 +6098,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strtok3@npm:^7.0.0-alpha.9":
+"strtok3@npm:^7.0.0":
   version: 7.0.0
   resolution: "strtok3@npm:7.0.0"
   dependencies:
@@ -6183,10 +6157,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"supports-color@npm:^9.2.2":
-  version: 9.2.2
-  resolution: "supports-color@npm:9.2.2"
-  checksum: 976d84877402fc38c1d43b1fde20b0a8dc0283273f21cfebe4ff7507d27543cdfbeec7db108a96b82d694465f06d64e8577562b05d0520b41710088e0a33cc50
+"supports-color@npm:^9.2.3":
+  version: 9.2.3
+  resolution: "supports-color@npm:9.2.3"
+  checksum: 47d598b70d2bac3cbce98950344134de17c2935f45e8ad6256cde78ebe5da440e240d9fa17c1146bd84b1c36f865239fef6c563d70068a8d901ca5a6c56960af
   languageName: node
   linkType: hard
 
@@ -6299,13 +6273,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"token-types@npm:^5.0.0-alpha.2":
-  version: 5.0.0-alpha.2
-  resolution: "token-types@npm:5.0.0-alpha.2"
+"token-types@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "token-types@npm:5.0.1"
   dependencies:
     "@tokenizer/token": ^0.3.0
     ieee754: ^1.2.1
-  checksum: ee23eeed6f383b1072d99781d62fc7840f1296a96d47e636e36fca757debd7eb4274d31fcd2d56997606eede00b12b1e61a64610fe0ed7807d6b1c4dcf5ccc6b
+  checksum: 32780123bc6ce8b6a2231d860445c994a02a720abf38df5583ea957aa6626873cd1c4dd8af62314da4cf16ede00c379a765707a3b06f04b8808c38efdae1c785
   languageName: node
   linkType: hard
 
@@ -6681,9 +6655,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.8.1":
-  version: 8.8.1
-  resolution: "ws@npm:8.8.1"
+"ws@npm:^8.9.0":
+  version: 8.11.0
+  resolution: "ws@npm:8.11.0"
   peerDependencies:
     bufferutil: ^4.0.1
     utf-8-validate: ^5.0.2
@@ -6692,7 +6666,7 @@ __metadata:
       optional: true
     utf-8-validate:
       optional: true
-  checksum: 2152cf862cae0693f3775bc688a6afb2e989d19d626d215e70f5fcd8eb55b1c3b0d3a6a4052905ec320e2d7734e20aeedbf9744496d62f15a26ad79cf4cf7dae
+  checksum: 316b33aba32f317cd217df66dbfc5b281a2f09ff36815de222bc859e3424d83766d9eb2bd4d667de658b6ab7be151f258318fb1da812416b30be13103e5b5c67
   languageName: node
   linkType: hard
 

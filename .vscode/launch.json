@@ -13,8 +13,7 @@
       "runtimeArgs": ["start"],
       "outputCapture": "std",
       "program": "${workspaceFolder}/dist/index.js",
-      "preLaunchTask": "${defaultBuildTask}",
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+      "preLaunchTask": "${defaultBuildTask}"
     },
     {
       "type": "node",
