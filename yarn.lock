@@ -292,7 +292,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/list-lib@npm:^4.1.0":
+"@oada/list-lib@npm:^4.1.3":
   version: 4.1.3
   resolution: "@oada/list-lib@npm:4.1.3"
   dependencies:
@@ -388,7 +388,7 @@ __metadata:
     "@ava/typescript": ^3.0.1
     "@oada/client": ^4.3.2
     "@oada/jobs": ^4.1.4
-    "@oada/list-lib": ^4.1.0
+    "@oada/list-lib": ^4.1.3
     "@oada/types": ^3.2.1
     "@overleaf/o-error": ^3.4.0
     "@trellisfw/signatures": ^2.1.3
