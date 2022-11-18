@@ -43,6 +43,8 @@ import type { TreeKey } from './tree.js';
 import { fromOadaType } from './conversions.js';
 import tree from './tree.js';
 
+const PERSIST_INTERVAL = config.get('oada.listWatch.persistInterval');
+
 const tpTree : Tree = JSON.parse(JSON.stringify(tree));
 delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['masterid-index']?.[
   '*'
@@ -944,6 +946,7 @@ export async function startJobCreator({
         onAddItem: watchTp,
         onNewList: ListWatch.AssumeNew,
         tree: { ...tpTree },
+        persistInterval: PERSIST_INTERVAL
       });
     }
 
@@ -965,6 +968,7 @@ export async function startJobCreator({
       onNewList: ListWatch.AssumeNew,
       onAddItem: documentTypeAdded(),
       tree: { ...documentTypeTree },
+      persistInterval: PERSIST_INTERVAL
     });
 
     // eslint-disable-next-line no-inner-declarations
@@ -1019,6 +1023,7 @@ export async function startJobCreator({
         resume: false,
         onAddItem: documentTypeAdded(key),
         tree: tpDocumentTypeTree,
+        persistInterval: PERSIST_INTERVAL,
       });
     }
 
@@ -1041,6 +1046,7 @@ export async function startJobCreator({
           conn: con,
           resume: true,
           onAddItem: documentAdded(documentType, masterid),
+          persistInterval: PERSIST_INTERVAL,
         });
       };
     }

@@ -98,8 +98,8 @@ const conversions = {
   },
   'Gluten Statement': {
     name: 'Gluten Statement',
-    urlName: 'gluten-statements',
-    type: 'application/vnd.trellisfw.gluten-statement.1+json',
+    urlName: 'gluten-claim-statements',
+    type: 'application/vnd.trellisfw.gluten-claim-statement.1+json',
     alternativeNames: ['Gluten Claim'],
   },
   'Ingredient Breakdown Range %': {
