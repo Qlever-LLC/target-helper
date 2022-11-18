@@ -81,6 +81,11 @@ const conversions = {
     urlName: 'be-ingredient-statements',
     type: 'application/vnd.trellisfw.be-ingredient-statement.1+json',
   },
+  'Ingredient Statement': {
+    name: 'Ingredient Statement',
+    urlName: 'ingredient-statements',
+    type: 'application/vnd.trellisfw.ingredient-statement.1+json',
+  },
   'California Prop 65 Statement': {
     name: 'California Prop 65 Statement',
     urlName: 'ca-prop-65-statements',
