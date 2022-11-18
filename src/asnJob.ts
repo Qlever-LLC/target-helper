@@ -35,7 +35,7 @@ const warn = debug('target-helper#asn:warn');
 const info = debug('target-helper#asn:info');
 const trace = debug('target-helper#asn:trace');
 
-const PERSIST_INTERVAL = config.get('oada.ListWatch.persistInterval');
+const PERSIST_INTERVAL = config.get('oada.listWatch.persistInterval');
 const pending = '/bookmarks/services/target/jobs/pending';
 
 // ------------------------------------------------------------------------------------------------------------
