@@ -38,10 +38,26 @@ import type Update from '@oada/types/oada/service/job/update.js';
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
 import { connect } from '@oada/client';
 import tSignatures from '@trellisfw/signatures';
-
+import type { Tree } from '@oada/types/oada/tree/v1.js';
 import type { TreeKey } from './tree.js';
 import { fromOadaType } from './conversions.js';
 import tree from './tree.js';
+
+const tpTree : Tree = JSON.parse(JSON.stringify(tree));
+delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['masterid-index']?.[
+  '*'
+]?.shared;
+delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['masterid-index']?.[
+  '*'
+]?.bookmarks;
+
+const documentTypeTree : Tree = JSON.parse(JSON.stringify(tree));
+delete documentTypeTree.bookmarks!.trellisfw!.documents!['*'];
+
+const tpDocumentTypeTree : Tree = JSON.parse(JSON.stringify(tree));
+delete tpDocumentTypeTree.bookmarks!.trellisfw!['trading-partners']![
+  'masterid-index'
+]!['*']!.shared!.trellisfw!.documents!['*']!['*'];
 
 const error = debug('target-helper:error');
 const info = debug('target-helper:info');
@@ -916,6 +932,7 @@ export async function startJobCreator({
       tree,
     });
 
+    // Adding these trees because the recursiveGet within ListWatch recurses too deep otherwise
     trace('Trading partners enabled %s', tradingPartnersEnabled);
     if (tradingPartnersEnabled) {
       // eslint-disable-next-line no-new
@@ -926,7 +943,7 @@ export async function startJobCreator({
         resume: false,
         onAddItem: watchTp,
         onNewList: ListWatch.AssumeNew,
-        tree,
+        tree: { ...tpTree },
       });
     }
 
@@ -947,7 +964,7 @@ export async function startJobCreator({
       resume: false,
       onNewList: ListWatch.AssumeNew,
       onAddItem: documentTypeAdded(),
-      tree,
+      tree: { ...documentTypeTree },
     });
 
     // eslint-disable-next-line no-inner-declarations
@@ -1001,7 +1018,7 @@ export async function startJobCreator({
         conn: con,
         resume: false,
         onAddItem: documentTypeAdded(key),
-        tree,
+        tree: tpDocumentTypeTree,
       });
     }
 

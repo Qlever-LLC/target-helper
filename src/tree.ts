@@ -17,7 +17,18 @@
 
 /* eslint-disable sonarjs/no-duplicate-string */
 
+
 import type Tree from '@oada/types/oada/tree/v1.js';
+
+const documents: Tree = {
+  '_type': 'application/vnd.trellisfw.documents.1+json',
+  '*': {
+    '_type': 'application/vnd.trellisfw.documents.1+json',
+    '*': {
+      _type: 'application/vnd.trellisfw.document.1+json',
+    },
+  },
+};
 
 const tree: Tree = {
   bookmarks: {
@@ -38,15 +49,7 @@ const tree: Tree = {
             _type: 'application/vnd.oada.bookmarks.1+json',
             trellisfw: {
               '_type': 'application/vnd.trellisfw.1+json',
-              'documents': {
-                '_type': 'application/vnd.trellisfw.documents.1+json',
-                '*': {
-                  '_type': 'application/vnd.trellisfw.documents.1+json',
-                  '*': {
-                    _type: 'application/vnd.trellisfw.document.1+json',
-                  },
-                },
-              },
+              documents,
               'fsqa-audits': {
                 _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
               },
@@ -59,15 +62,7 @@ const tree: Tree = {
             _type: 'application/vnd.oada.bookmarks.1+json',
             trellisfw: {
               '_type': 'application/vnd.trellisfw.1+json',
-              'documents': {
-                '_type': 'application/vnd.trellisfw.documents.1+json',
-                '*': {
-                  '_type': 'application/vnd.trellisfw.documents.1+json',
-                  '*': {
-                    _type: 'application/vnd.trellisfw.document.1+json',
-                  },
-                },
-              },
+              documents,
               'fsqa-audits': {
                 _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
               },
@@ -85,9 +80,7 @@ const tree: Tree = {
               _type: 'application/vnd.oada.bookmarks.1+json',
               trellisfw: {
                 '_type': 'application/vnd.trellisfw.1+json',
-                'documents': {
-                  _type: 'application/vnd.trellisfw.documents.1+json',
-                },
+                documents,
                 'fsqa-audits': {
                   _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
                 },
@@ -106,15 +99,7 @@ const tree: Tree = {
               _type: 'application/vnd.oada.bookmarks.1+json',
               trellisfw: {
                 '_type': 'application/vnd.trellisfw.1+json',
-                'documents': {
-                  '_type': 'application/vnd.trellisfw.documents.1+json',
-                  '*': {
-                    '_type': 'application/vnd.trellisfw.doctype.1+json',
-                    '*': {
-                      _type: 'application/vnd.trellisfw.document.1+json',
-                    },
-                  },
-                },
+                documents,
                 'fsqa-audits': {
                   _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
                 },
@@ -126,16 +111,7 @@ const tree: Tree = {
           },
         },
       },
-      'documents': {
-        '_type': 'application/vnd.trellisfw.documents.1+json',
-        '*': {
-          '_type': 'application/vnd.trellisfw.doctype.1+json',
-          '*': {
-            _type: 'application/vnd.trellisfw.document.1+json',
-            _rev: 0,
-          },
-        },
-      },
+      documents,
       'asns': {
         '_type': 'application/vnd.trellisfw.asns.1+json',
         'day-index': {

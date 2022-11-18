@@ -212,8 +212,8 @@ __metadata:
   linkType: hard
 
 "@oada/client@npm:^4.3.2, @oada/client@npm:^4.4.1":
-  version: 4.4.1
-  resolution: "@oada/client@npm:4.4.1"
+  version: 4.5.0
+  resolution: "@oada/client@npm:4.5.0"
   dependencies:
     "@oada/types": ^3.3.0
     abort-controller: ^3.0.0
@@ -238,7 +238,7 @@ __metadata:
     utf-8-validate: ^5.0.9
     ws: ^8.9.0
     xksuid: ^0.0.3
-  checksum: 4c40612498904ea74f6cd274a4e46319ba3caeffc72f230ddb1c2f6f2ce3c8e0dac24e226099578c967ec622b1435e4c0dae7bf4f91bcb56644f2dbb15ba9197
+  checksum: d0f13e4058dbd2b6a5117774d7aafbb5b23d0f595de4bbbfd132b444131f8bf42bc56c2d0321d5a02da6b134e4fd5a41a1b137e9ca6379a30610f4cdc8252b00
   languageName: node
   linkType: hard
 
@@ -276,9 +276,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/list-lib@npm:^4.1.4":
-  version: 4.1.4
-  resolution: "@oada/list-lib@npm:4.1.4"
+"@oada/list-lib@npm:^4.1.4, @oada/list-lib@npm:^4.2.2":
+  version: 4.2.2
+  resolution: "@oada/list-lib@npm:4.2.2"
   dependencies:
     "@oada/types": ^3.3.0
     abort-controller: ^3.0.0
@@ -291,7 +291,7 @@ __metadata:
     tslib: ^2.4.1
   peerDependencies:
     "@oada/client": ^4.3.2
-  checksum: 3006d026c4bb07a86e67f65767f2f2eaa54f9874d36d9873ba644f5dcc597c838a5faf4227b19f3e8b9d8f343eaecc7ce0b9638e4343d506df04c680b253f424
+  checksum: 592173b9c9d07aab89cff507c050c1efb2b491bd6978c016f53fd544c97a9da1c7d5036f1a338cd6f1e270484d98fe34d0b648520f589609d227014ebc9629b8
   languageName: node
   linkType: hard
 
@@ -372,7 +372,7 @@ __metadata:
     "@ava/typescript": ^3.0.1
     "@oada/client": ^4.3.2
     "@oada/jobs": ^4.1.6
-    "@oada/list-lib": ^4.1.4
+    "@oada/list-lib": ^4.2.2
     "@oada/types": ^3.2.1
     "@overleaf/o-error": ^3.4.0
     "@trellisfw/signatures": ^2.1.3
