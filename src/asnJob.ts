@@ -26,6 +26,7 @@ import {
 import type { Json, WorkerFunction } from '@oada/jobs';
 import { ListWatch } from '@oada/list-lib';
 import type Update from '@oada/types/oada/service/job/update.js';
+import config from './config.js';
 
 import tree from './tree.js';
 
