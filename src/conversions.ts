@@ -17,10 +17,26 @@
 export function fromOadaType(type: string) {
   const values = Object.values(conversions);
 
-  return values.find((v) => v.urlName === type);
+  return values.find((v) => (v.urlName === type) || (v.alternativeUrlNames || []).includes(type));
 }
 
-const conversions = {
+export function matchesAlternateUrlNames(urlName: string, alternate: string) {
+  const values = Object.values(conversions);
+
+  let conv = values.find((v) => v.urlName === urlName);
+  if (!conv) return false;
+  return (conv.alternativeUrlNames || []).includes(alternate)
+}
+
+type Conversion = {
+  name: string;
+  urlName: string;
+  type: string;
+  alternativeNames?: string[],
+  alternativeUrlNames?: string[]
+}
+
+const conversions: Record<string, Conversion> = {
   'Unidentified': {
     name: 'Unidentified',
     urlName: 'unidentified',
@@ -35,6 +51,7 @@ const conversions = {
     name: 'Certificate of Insurance',
     urlName: 'cois',
     type: 'application/vnd.trellisfw.coi.accord.1+json',
+    alternativeUrlNames: ['COI'],
   },
   'Pure Food Guaranty and Indemnification Agreement (LOG)': {
     name: 'Pure Food Guaranty and Indemnification Agreement (LOG)',
@@ -98,6 +115,7 @@ const conversions = {
     name: 'Country of Origin Statement',
     urlName: 'coo-statements',
     type: 'application/vnd.trellisfw.coo-statement.1+json',
+    alternativeUrlNames: ['country-origin-statements']
   },
   'Gluten Statement': {
     name: 'Gluten Statement',
@@ -141,6 +159,7 @@ const conversions = {
     name: 'GFSI Certificate',
     urlName: 'gfsi-certificates',
     type: 'application/vnd.trellisfw.gfsi-certificate.1+json',
+    alternativeUrlNames: ['gfsi-certificate']
   },
   'Non-Ambulatory (3D/4D) Animal Statement': {
     name: 'Non-Ambulatory (3D/4D) Animal Statement',
@@ -171,6 +190,7 @@ const conversions = {
     name: 'E.Coli 0157:H7 Intervention Audit',
     urlName: 'ecoli-audits',
     type: 'application/vnd.trellisfw.ecoli-audit.1+json',
+    alternativeUrlNames: ['ecoli-intervention-statements-audits', 'ecoli-intervention-statement-audits', 'ecoli-statements'],
   },
   'Foreign Material Control Plan': {
     name: 'Foreign Material Control Plan',
@@ -187,6 +207,7 @@ const conversions = {
     urlName: 'humane-harvest-statements',
     type: 'application/vnd.trellisfw.humane-harvest-statement.1+json',
     alternativeNames: ['Humane Slaughter Statement'],
+    alternativeUrlNames: ['humane-slaughter-statements'],
   },
   'National Residue Program (NRP) Statement': {
     name: 'National Residue Program (NRP) Statement',
@@ -282,11 +303,13 @@ const conversions = {
     name: 'E.Coli 0157:H7 Intervention Statement',
     urlName: 'ecoli-statements',
     type: 'application/vnd.trellisfw.ecoli-statement.1+json',
+    alternativeUrlNames: ['ecoli-intervention-statements-audits', 'ecoli-intervention-statement-audits' ],
   },
   'E.Coli 0157:H7 Intervention Statement / Audit': {
     name: 'E.Coli 0157:H7 Intervention Statement / Audit',
     urlName: 'ecoli-intervention-statements-audits',
     type: 'application/vnd.trellisfw.ecoli-intervention-statement-audits.1+json',
+    alternativeUrlNames: ['ecoli-statements', 'ecoli-intervention-statement-audits'],
   },
   'Business License': {
     name: 'Business License',

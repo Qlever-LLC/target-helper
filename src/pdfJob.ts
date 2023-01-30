@@ -40,7 +40,7 @@ import { connect } from '@oada/client';
 import tSignatures from '@trellisfw/signatures';
 import type { Tree } from '@oada/types/oada/tree/v1.js';
 import type { TreeKey } from './tree.js';
-import { fromOadaType } from './conversions.js';
+import { fromOadaType, matchesAlternateUrlNames } from './conversions.js';
 import tree from './tree.js';
 
 const PERSIST_INTERVAL = config.get('oada.listWatch.persistInterval');
@@ -251,11 +251,12 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
           job.result[documentType] = {};
 
+          // @ts-ignore
           for await (const documentData of Object.values(data)) {
             // If the document type mismatches, move the link to the right place and let the flow start over.
             // Ex: LaserFiche "unidentified" documents, FoodLogiq wrong PDF uploaded, etc.
             // Note: One day we might officially separate "identification" from "transcription". This is almost that.
-            if (job.config['oada-doc-type'] !== documentType) {
+            if (job.config['oada-doc-type'] !== documentType && !matchesAlternateUrlNames(job.config['oada-doc-type'], documentType)) {
               info(
                 'Document type mismatch. Trellis: [%s], Target: [%s]. Moving tree location and bailing.',
                 documentType,
@@ -302,9 +303,11 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
             trace(
               'Merging from %s to %s.',
+              // @ts-ignore
               documentData._id,
               job.config.document._id
             );
+            // @ts-ignore
             const { data } = await oada.get({ path: documentData._id });
             await oada.put({
               path: job.config.document._id,
@@ -313,7 +316,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
             job.result[documentType] = {
               ...job.result[documentType],
-              [job.config.docKey]: { _id: job.config.document._id },
+              //TODO: Why did we need this?
+              //[job.config.docKey]: { _id: job.config.document._id },
             };
           }
         }
@@ -664,7 +668,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             if (v.status === 'identifying') {
               let otherUpdates = await oada.get({
                 path: `/resources/${jobId}/updates`,
-              }).then(r => r.data as unknown as JsonObject)
+              }).then((r: any) => r.data as unknown as JsonObject)
 
               let others = Object.values(otherUpdates).filter((obj:any) => obj.status && obj.status === "identifying");
               if (others.length > 5) {
@@ -1005,8 +1009,7 @@ export async function startJobCreator({
     // eslint-disable-next-line no-inner-declarations
     async function watchTp(_tp: unknown, key: string) {
       key = key.replace(/^\//, '');
-      //      Info(`New trading partner detected at key: [${key}]`);
-
+      info(`New trading partner detected at key: [${key}]`);
       const documentsPath = `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`;
       await con.ensure({
         path: documentsPath,
@@ -1046,6 +1049,7 @@ export async function startJobCreator({
           conn: con,
           resume: true,
           onAddItem: documentAdded(documentType, masterid),
+          tree: tpDocumentTypeTree,
           persistInterval: PERSIST_INTERVAL,
         });
       };
@@ -1104,7 +1108,7 @@ export async function startJobCreator({
               pdf,
               'document': { _id },
               'docKey': key,
-              'document-type': fromOadaType(documentType)!.name,
+              'document-type': fromOadaType(documentType)?.name || 'unknown',
               'oada-doc-type': documentType,
             },
             '_type': `application/vnd.oada.job.1+json`,
