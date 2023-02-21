@@ -276,9 +276,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/list-lib@portal:/home/sanoel/list-lib::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@oada/list-lib@portal:/home/sanoel/list-lib::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A."
+"@oada/list-lib@npm:^4.1.4, @oada/list-lib@npm:^4.2.4":
+  version: 4.2.6
+  resolution: "@oada/list-lib@npm:4.2.6"
   dependencies:
     "@oada/types": ^3.3.0
     abort-controller: ^3.0.0
@@ -291,8 +291,9 @@ __metadata:
     tslib: ^2.4.1
   peerDependencies:
     "@oada/client": ^4.3.2
+  checksum: 083e8cfc820192bbd18c83748b362fbdf8e73899d9a8e19ec9dc490219323a6645c265da63a280dc49137637ed5f891951e0aa8aa19ec6f52a4dcc0558888068
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@oada/oada-certs@npm:^3.1.0":
   version: 3.2.0

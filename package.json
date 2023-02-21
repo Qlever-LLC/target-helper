@@ -1,6 +1,6 @@
 {
   "name": "@qlever-llc/target-helper",
-  "version": "1.5.5",
+  "version": "1.5.6",
   "description": "A Trellis microservice to fill in around Target integration",
   "author": "Andrew Balmos <andrew@qlever.io>",
   "license": "Apache-2.0",
