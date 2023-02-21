@@ -316,8 +316,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
             job.result[documentType] = {
               ...job.result[documentType],
-              //TODO: Why did we need this?
-              //[job.config.docKey]: { _id: job.config.document._id },
+              // write the target data to the original document
+              [job.config.docKey]: { _id: job.config.document._id },
             };
           }
         }
@@ -1009,6 +1009,8 @@ export async function startJobCreator({
     // eslint-disable-next-line no-inner-declarations
     async function watchTp(_tp: unknown, key: string) {
       key = key.replace(/^\//, '');
+      //FOR DEBUGGING:
+      //if (key !== 'd4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e') return
       info(`New trading partner detected at key: [${key}]`);
       const documentsPath = `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`;
       await con.ensure({
