@@ -14,26 +14,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 export function fromOadaType(type: string) {
   const values = Object.values(conversions);
 
-  return values.find((v) => (v.urlName === type) || (v.alternativeUrlNames || []).includes(type));
+  return values.find(
+    (v) => v.urlName === type || (v.alternativeUrlNames ?? []).includes(type)
+  );
 }
 
 export function matchesAlternateUrlNames(urlName: string, alternate: string) {
   const values = Object.values(conversions);
 
-  let conv = values.find((v) => v.urlName === urlName);
+  const conv = values.find((v) => v.urlName === urlName);
   if (!conv) return false;
-  return (conv.alternativeUrlNames || []).includes(alternate)
+  return (conv.alternativeUrlNames ?? []).includes(alternate);
 }
 
-type Conversion = {
+interface Conversion {
   name: string;
   urlName: string;
   type: string;
-  alternativeNames?: string[],
-  alternativeUrlNames?: string[]
+  alternativeNames?: string[];
+  alternativeUrlNames?: string[];
 }
 
 const conversions: Record<string, Conversion> = {
@@ -115,7 +118,7 @@ const conversions: Record<string, Conversion> = {
     name: 'Country of Origin Statement',
     urlName: 'coo-statements',
     type: 'application/vnd.trellisfw.coo-statement.1+json',
-    alternativeUrlNames: ['country-origin-statements']
+    alternativeUrlNames: ['country-origin-statements'],
   },
   'Gluten Statement': {
     name: 'Gluten Statement',
@@ -159,7 +162,7 @@ const conversions: Record<string, Conversion> = {
     name: 'GFSI Certificate',
     urlName: 'gfsi-certificates',
     type: 'application/vnd.trellisfw.gfsi-certificate.1+json',
-    alternativeUrlNames: ['gfsi-certificate']
+    alternativeUrlNames: ['gfsi-certificate'],
   },
   'Non-Ambulatory (3D/4D) Animal Statement': {
     name: 'Non-Ambulatory (3D/4D) Animal Statement',
@@ -190,7 +193,11 @@ const conversions: Record<string, Conversion> = {
     name: 'E.Coli 0157:H7 Intervention Audit',
     urlName: 'ecoli-audits',
     type: 'application/vnd.trellisfw.ecoli-audit.1+json',
-    alternativeUrlNames: ['ecoli-intervention-statements-audits', 'ecoli-intervention-statement-audits', 'ecoli-statements'],
+    alternativeUrlNames: [
+      'ecoli-intervention-statements-audits',
+      'ecoli-intervention-statement-audits',
+      'ecoli-statements',
+    ],
   },
   'Foreign Material Control Plan': {
     name: 'Foreign Material Control Plan',
@@ -303,13 +310,19 @@ const conversions: Record<string, Conversion> = {
     name: 'E.Coli 0157:H7 Intervention Statement',
     urlName: 'ecoli-statements',
     type: 'application/vnd.trellisfw.ecoli-statement.1+json',
-    alternativeUrlNames: ['ecoli-intervention-statements-audits', 'ecoli-intervention-statement-audits' ],
+    alternativeUrlNames: [
+      'ecoli-intervention-statements-audits',
+      'ecoli-intervention-statement-audits',
+    ],
   },
   'E.Coli 0157:H7 Intervention Statement / Audit': {
     name: 'E.Coli 0157:H7 Intervention Statement / Audit',
     urlName: 'ecoli-intervention-statements-audits',
     type: 'application/vnd.trellisfw.ecoli-intervention-statement-audits.1+json',
-    alternativeUrlNames: ['ecoli-statements', 'ecoli-intervention-statement-audits'],
+    alternativeUrlNames: [
+      'ecoli-statements',
+      'ecoli-intervention-statement-audits',
+    ],
   },
   'Business License': {
     name: 'Business License',

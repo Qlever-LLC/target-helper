@@ -105,17 +105,24 @@ test.before(async () => {
     let meta;
     switch (doctype) {
       case 'audit':
-      case 'cert':
+      case 'cert': {
         meta = { organization: { _ref: `resources/${items.fac?.key}` } };
         break;
-      case 'coi':
+      }
+
+      case 'coi': {
         meta = { holder: { _ref: `resources/${items.coiholder?.key}` } };
         break;
-      case 'log':
+      }
+
+      case 'log': {
         meta = { buyer: { _ref: `resources/${items.logbuyer?.key}` } };
         break;
-      default:
+      }
+
+      default: {
         throw new Error(`Unknown doctype: ${doctype}`);
+      }
     }
 
     await con.put({

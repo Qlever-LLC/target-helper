@@ -156,7 +156,6 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
           );
         }
 
-        // eslint-disable-next-line security/detect-non-literal-fs-filename
         watchhandle = await oada.watch({
           path: `${pending}/${jobId}`,
           watchCallback: jobChange,
@@ -335,7 +334,7 @@ export async function startJobCreator({
       // TODO: actually check if each thing has a target job in its _meta?
       onNewList: ListWatch.AssumeHandled,
       // TODO: onDeleteList
-      persistInterval: PERSIST_INTERVAL
+      persistInterval: PERSIST_INTERVAL,
     });
   } catch (cError: unknown) {
     error(cError, 'uncaught exception in watching /bookmarks/trellisfw/asns');

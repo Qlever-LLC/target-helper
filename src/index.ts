@@ -18,8 +18,12 @@
 // Load config first so it can set up env
 import config from './config.js';
 
+// Needs to be imported _before_ debug
+import '@oada/pino-debug';
+
 import debug from 'debug';
 
+import '@oada/lib-prom';
 import { Service } from '@oada/jobs';
 
 import {
