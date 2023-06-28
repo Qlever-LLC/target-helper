@@ -17,7 +17,6 @@
 
 /* eslint-disable sonarjs/no-duplicate-string */
 
-
 import type Tree from '@oada/types/oada/tree/v1.js';
 
 const documents: Tree = {

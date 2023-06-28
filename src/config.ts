@@ -56,7 +56,7 @@ const config = convict({
         env: 'PERSIST_INTERVAL',
         arg: 'persistInterval',
       },
-    }
+    },
   },
   timeouts: {
     pdf: {

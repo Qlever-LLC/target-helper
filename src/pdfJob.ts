@@ -30,22 +30,24 @@ import oError from '@overleaf/o-error';
 import type { Change, JsonObject, OADAClient } from '@oada/client';
 import type { Json, Logger, WorkerFunction } from '@oada/jobs';
 import type { JWK } from '@trellisfw/signatures';
+import type Job from '@oada/types/oada/service/job.js';
 import type Jobs from '@oada/types/oada/service/jobs.js';
 import type { Link } from '@oada/types/oada/link/v1.js';
 import { ListWatch } from '@oada/list-lib';
 import type Resource from '@oada/types/oada/resource.js';
+import type { Tree } from '@oada/types/oada/tree/v1.js';
 import type Update from '@oada/types/oada/service/job/update.js';
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
 import { connect } from '@oada/client';
 import tSignatures from '@trellisfw/signatures';
-import type { Tree } from '@oada/types/oada/tree/v1.js';
-import type { TreeKey } from './tree.js';
+
 import { fromOadaType, matchesAlternateUrlNames } from './conversions.js';
+import type { TreeKey } from './tree.js';
 import tree from './tree.js';
 
 const PERSIST_INTERVAL = config.get('oada.listWatch.persistInterval');
 
-const tpTree : Tree = JSON.parse(JSON.stringify(tree));
+const tpTree: Tree = JSON.parse(JSON.stringify(tree));
 delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['masterid-index']?.[
   '*'
 ]?.shared;
@@ -53,10 +55,10 @@ delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['masterid-index']?.[
   '*'
 ]?.bookmarks;
 
-const documentTypeTree : Tree = JSON.parse(JSON.stringify(tree));
+const documentTypeTree: Tree = JSON.parse(JSON.stringify(tree));
 delete documentTypeTree.bookmarks!.trellisfw!.documents!['*'];
 
-const tpDocumentTypeTree : Tree = JSON.parse(JSON.stringify(tree));
+const tpDocumentTypeTree: Tree = JSON.parse(JSON.stringify(tree));
 delete tpDocumentTypeTree.bookmarks!.trellisfw!['trading-partners']![
   'masterid-index'
 ]!['*']!.shared!.trellisfw!.documents!['*']!['*'];
@@ -76,7 +78,7 @@ function has<T, K extends string>(
   value: T,
   key: K
 ): value is T & { [P in K]: unknown } {
-  return value && key in value;
+  return value && typeof value === 'object' && key in value;
 }
 
 // Because OADA resource keys are always in the way
@@ -122,7 +124,6 @@ const TP_MASTER_PATH = '/bookmarks/trellisfw/trading-partners/masterid-index';
 
 // Will fill in expandIndex on first job to handle
 let expandIndex: {
-  // eslint-disable-next-line sonarjs/no-duplicate-string
   'trading-partners': Record<
     string,
     { id: string; facilities?: Record<string, { _id: string }> }
@@ -225,7 +226,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         const r = await oada.get({ path: `/${jobId}` });
         assertJob(r.data); //TODO: This is already done in the jobs library?
         // FIXME: Make a proper type and assert
-        // Note the types *should* be okay at runtime becuase these are needed to get to a target success
+        // Note the types *should* be okay at runtime because these are needed to get to a target success
         const job = r.data as typeof r.data & {
           targetResult: List<List<Link>>;
           config: {
@@ -254,13 +255,19 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
           job.result[documentType] = {};
 
-          // @ts-ignore
+          // @ts-expect-error
           for await (const documentData of Object.values(data)) {
             // If the document type mismatches, move the link to the right place and let the flow start over.
             // Ex: LaserFiche "unidentified" documents, FoodLogiq wrong PDF uploaded, etc.
             // Note: One day we might officially separate "identification" from "transcription". This is almost that.
             // TODO: Reconsider this as it doesn't really work well with jobs created outside of the helper watches
-            if (job.config['oada-doc-type'] !== documentType && !matchesAlternateUrlNames(job.config['oada-doc-type'], documentType)) {
+            if (
+              job.config['oada-doc-type'] !== documentType &&
+              !matchesAlternateUrlNames(
+                job.config['oada-doc-type'],
+                documentType
+              )
+            ) {
               info(
                 'Document type mismatch. Trellis: [%s], Target: [%s]. Moving tree location and bailing.',
                 documentType,
@@ -307,11 +314,11 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
             trace(
               'Merging from %s to %s.',
-              // @ts-ignore
+              // @ts-expect-error
               documentData._id,
               job.config.document._id
             );
-            // @ts-ignore
+            // @ts-expect-error
             const { data } = await oada.get({ path: documentData._id });
             await oada.put({
               path: job.config.document._id,
@@ -320,7 +327,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
             job.result[documentType] = {
               ...job.result[documentType],
-              // write the target data to the original document
+              // Write the target data to the original document
               [job.config.docKey]: { _id: job.config.document._id },
             };
           }
@@ -470,7 +477,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             trace(lookups, 'lookups');
             let facilityID;
             switch (doctype) {
-              case 'fsqa-audits':
+              case 'fsqa-audits': {
                 facilityID = lookups['fsqa-audit']!.organization!._ref;
                 await pushSharesForFacility({
                   facilityid: facilityID,
@@ -479,8 +486,9 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                   shares,
                 });
                 break;
+              }
 
-              case 'fsqa-certificates':
+              case 'fsqa-certificates': {
                 facilityID = lookups['fsqa-certificate']!.organization!._ref;
                 await pushSharesForFacility({
                   facilityid: facilityID,
@@ -489,6 +497,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                   shares,
                 });
                 break;
+              }
 
               case 'cois': {
                 const { data: holder } = (await oada.get({
@@ -538,10 +547,11 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 break;
               }
 
-              default:
+              default: {
                 throw new Error(
                   `Unknown document type (${doctype}) when attempting to do lookups`
                 );
+              }
             }
           }
 
@@ -655,7 +665,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               v.time = moment(t, 'X');
             }
             /*
-            if (
+            If (
               v.information ===
               'File is not a Textual PDF,requires OCR to be processed.'
             ) {
@@ -671,22 +681,31 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
             // Fix for Target identifying loop
             if (v.status === 'identifying') {
-              let otherUpdates = await oada.get({
-                path: `/${jobId}/updates`,
-              }).then((r: any) => r.data as unknown as JsonObject)
+              const otherUpdates = await oada
+                .get({
+                  path: `/resources/${jobId}/updates`,
+                })
+                .then((r: any) => r.data as unknown as JsonObject);
 
-              let others = Object.values(otherUpdates).filter((obj:any) => obj.status && obj.status === "identifying");
+              const others = Object.values(otherUpdates).filter(
+                (object: any) =>
+                  object.status && object.status === 'identifying'
+              );
               if (others.length > 5) {
-                info(`Job ${jobId} stuck in 'identifying' loop for more than 5 minutes. Timing out.`)
+                info(
+                  `Job ${jobId} stuck in 'identifying' loop for more than 5 minutes. Timing out.`
+                );
                 await oada.post({
                   path: `/${jobId}/updates`,
                   data: {
                     status: 'error',
-                    information: "TimeoutError",
-                  }
-                })
+                    information: 'TimeoutError',
+                  },
+                });
               } else {
-                trace(`Job ${jobId} update status 'identifying' happened less than 10 times.`)
+                trace(
+                  `Job ${jobId} update status 'identifying' happened less than 10 times.`
+                );
               }
             }
 
@@ -720,7 +739,6 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         }
       };
 
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
       const { changes } = await oada.watch({
         path: `${pending}/${jobKey}`,
         type: 'single',
@@ -955,7 +973,7 @@ export async function startJobCreator({
         onAddItem: watchTp,
         onNewList: ListWatch.AssumeNew,
         tree: { ...tpTree },
-        persistInterval: PERSIST_INTERVAL
+        persistInterval: PERSIST_INTERVAL,
       });
     }
 
@@ -977,7 +995,7 @@ export async function startJobCreator({
       onNewList: ListWatch.AssumeNew,
       onAddItem: documentTypeAdded(),
       tree: { ...documentTypeTree },
-      persistInterval: PERSIST_INTERVAL
+      persistInterval: PERSIST_INTERVAL,
     });
 
     // eslint-disable-next-line no-inner-declarations
@@ -993,7 +1011,7 @@ export async function startJobCreator({
 
       let count = 0;
       await Promise.all(
-        Object.entries(jobs).map(async ([key, job]) => {
+        Object.entries<Job>(jobs).map(async ([key, job]) => {
           if (key.startsWith('_')) {
             return;
           }
@@ -1014,8 +1032,8 @@ export async function startJobCreator({
     // eslint-disable-next-line no-inner-declarations
     async function watchTp(_tp: unknown, key: string) {
       key = key.replace(/^\//, '');
-      //FOR DEBUGGING:
-      //if (key !== 'd4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e') return
+      // FOR DEBUGGING:
+      // if (key !== 'd4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e') return
       info(`New trading partner detected at key: [${key}]`);
       const documentsPath = `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`;
       await con.ensure({

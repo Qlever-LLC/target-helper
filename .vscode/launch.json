@@ -12,6 +12,7 @@
       "runtimeExecutable": "yarn",
       "runtimeArgs": ["start"],
       "outputCapture": "std",
+      "resolveSourceMapLocations": null,
       "program": "${workspaceFolder}/dist/index.js",
       "preLaunchTask": "${defaultBuildTask}"
     },
