@@ -22,10 +22,11 @@ import debug from 'debug';
 
 import { Service } from '@oada/jobs';
 
-import {
+/*import {
   jobHandler as asnJobHandler,
   startJobCreator as asnStartJobCreator,
-} from './asnJob.js';
+  } from './asnJob.js';
+  */
 import {
   jobHandler as pdfJobHandler,
   startJobCreator as pdfStartJobCreator,
@@ -39,7 +40,7 @@ const warn = debug('target-helper:warn');
 const tokens = config.get('oada.token');
 let domain = config.get('oada.domain');
 if (domain.startsWith('http')) {
-  domain = domain.replace(/^https?:\/\//, '');
+//  domain = domain.replace(/^https?:\/\//, '');
 }
 
 trace('Using token(s) = %s', tokens);
@@ -72,7 +73,7 @@ await Promise.all(
     // --------------------------------------------------
     // Set the job type handlers
     service.on('transcription', config.get('timeouts.pdf'), pdfJobHandler);
-    service.on('asn', config.get('timeouts.asn'), asnJobHandler);
+    //service.on('asn', config.get('timeouts.asn'), asnJobHandler);
 
     // --------------------------------------------------
     // Start the jobs watching service
@@ -82,13 +83,13 @@ await Promise.all(
     const serviceP = service.start();
 
     // Start the things watching to create jobs
-    info('Started pdf and asn job creator processes');
+    info('Started pdf job creator processes');
     const pdfP = pdfStartJobCreator({ domain, token });
-    const asnP = asnStartJobCreator({ domain, token });
+//    const asnP = asnStartJobCreator({ domain, token });
 
     // Catch errors?
     try {
-      await Promise.all([serviceP, pdfP, asnP]);
+      await Promise.all([serviceP, pdfP]);
     } catch (cError: unknown) {
       error(cError);
       // eslint-disable-next-line no-process-exit, unicorn/no-process-exit

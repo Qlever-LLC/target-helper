@@ -181,21 +181,24 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
   // Until oada-jobs adds cross-linking, make sure we are linked under the PDF's jobs
   trace('Linking job under pdf/_meta until oada-jobs can do that natively');
   // TODO: This seems broken when it writes to the target job
+  const jobKey = jobId.replace(/^resources\//, '');
   await oada.put({
-    path: `${pending}/${jobId}/config/pdf/_meta/services/target/jobs`,
+    path: `${pending}/${jobKey}/config/pdf/_meta/services/target/jobs`,
     data: {
-      [jobId]: { _ref: `resources/${jobId}` },
+      [jobKey]: { _ref: `${jobId}` },
     },
   });
 
   // Setup Expand index
   if (!expandIndex) {
     trace('First time through, fetching expandIndex');
-    const { data: holders } = (await oada.get({
+    const { data: holders } = (await oada.ensure({
       path: '/bookmarks/trellisfw/coi-holders/expand-index',
+      data: {},
+      tree,
     })) as { data: Record<string, Record<string, unknown>> };
     const { data: partners } = (await oada.get({
-      path: '/bookmarks/trellisfw/trading-partners/expand-index',
+      path: '/bookmarks/trellisfw/trading-partners/_meta/indexings/expand-index',
     })) as unknown as {
       data: Record<
         string,
@@ -219,8 +222,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         );
 
         // Get the latest copy of job
-        const r = await oada.get({ path: `/resources/${jobId}` });
-        assertJob(r.data);
+        const r = await oada.get({ path: `/${jobId}` });
+        assertJob(r.data); //TODO: This is already done in the jobs library?
         // FIXME: Make a proper type and assert
         // Note the types *should* be okay at runtime becuase these are needed to get to a target success
         const job = r.data as typeof r.data & {
@@ -256,6 +259,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             // If the document type mismatches, move the link to the right place and let the flow start over.
             // Ex: LaserFiche "unidentified" documents, FoodLogiq wrong PDF uploaded, etc.
             // Note: One day we might officially separate "identification" from "transcription". This is almost that.
+            // TODO: Reconsider this as it doesn't really work well with jobs created outside of the helper watches
             if (job.config['oada-doc-type'] !== documentType && !matchesAlternateUrlNames(job.config['oada-doc-type'], documentType)) {
               info(
                 'Document type mismatch. Trellis: [%s], Target: [%s]. Moving tree location and bailing.',
@@ -324,7 +328,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
         // Record the result in the job
         await oada.put({
-          path: `/resources/${jobId}`,
+          path: `/${jobId}`,
           data: {
             result: job.result as Json,
           },
@@ -441,6 +445,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         // HARDCODED UNTIL AINZ IS UPDATED:
         // ------------- 6: lookup shares, post job to shares service
         // Only share for smithfield
+        // why 'trading-partner' here with result
         const result = job['trading-partner'] ? {} : job.result ?? {};
 
         for await (const doctype of Object.keys(result)) {
@@ -667,7 +672,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             // Fix for Target identifying loop
             if (v.status === 'identifying') {
               let otherUpdates = await oada.get({
-                path: `/resources/${jobId}/updates`,
+                path: `/${jobId}/updates`,
               }).then((r: any) => r.data as unknown as JsonObject)
 
               let others = Object.values(otherUpdates).filter((obj:any) => obj.status && obj.status === "identifying");
@@ -717,11 +722,11 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
       // eslint-disable-next-line security/detect-non-literal-fs-filename
       const { changes } = await oada.watch({
-        path: `${pending}/${jobId}`,
+        path: `${pending}/${jobKey}`,
         type: 'single',
       });
       const { data } = await oada.get({
-        path: `${pending}/${jobId}`,
+        path: `${pending}/${jobKey}`,
       });
       // Initially just the original job is the "body" for a synthetic change
       const w = data as Change['body'];
@@ -920,8 +925,8 @@ export async function startJobCreator({
   token: string;
 }) {
   try {
-    info(`Connecting to client with concurrency ${CONCURRENCY}`);
-    const con = await connect({ domain, token, concurrency: CONCURRENCY });
+    info(`Connecting to DOMAIN ${domain} with concurrency ${CONCURRENCY}`);
+    const con = await connect({ domain: 'http://localhost:3002', token, concurrency: CONCURRENCY });
 
     await cleanupBrokenLinks();
     setInterval(cleanupBrokenLinks, 600_000);
@@ -1102,7 +1107,7 @@ export async function startJobCreator({
           //          let docs = Object.entries(meta!.vdoc || {});
 
           const data = {
-            'trading-partner': masterid,
+            'trading-partner': masterid, //just for documentation
             'type': 'transcription',
             'service': 'target',
             'config': {

@@ -20,6 +20,7 @@ import assign from 'assign-deep';
 import cloneDeep from 'clone-deep';
 import debug from 'debug';
 import moment from 'moment';
+import tree from '../dist/tree.js'
 
 import type { OADAClient } from '@oada/client';
 
@@ -29,6 +30,7 @@ const error = debug('target-helper#test:error');
 
 let con: OADAClient; // Set with setConnection function
 
+/*
 const tree = {
   bookmarks: {
     _type: 'application/vnd.oada.bookmarks.1+json',
@@ -64,6 +66,7 @@ const tree = {
     },
   },
 };
+*/
 
 interface Item {
   key?: string;
@@ -211,19 +214,21 @@ const items = Object.fromEntries(
       }
 
       // Add the '*' entry to the list in the tree:
-      const ptr = listPtr.concat('*');
+      const ptr = listPtr.concat('/*');
       if (!ptr.get(tree)) {
         ptr.set(tree, { _type });
       }
 
-      if (data.masterid) {
+      //if (data.masterid) {
+      if (false) {
         // This is masterdata, add the expand-index and masterid-index to the tree
-        const expandPtr = listPtr.concat('expand-index');
+        // trellis-data-manager has done away with these things...
+        const expandPtr = listPtr.concat('/expand-index');
         if (!expandPtr.get(tree)) {
           expandPtr.set(tree, { _type: list_type });
         }
 
-        const masterPtr = listPtr.concat('masterid-index');
+        const masterPtr = listPtr.concat('/masterid-index');
         if (!masterPtr.get(tree)) {
           masterPtr.set(tree, { _type: list_type });
         }
