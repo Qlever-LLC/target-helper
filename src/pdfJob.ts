@@ -255,7 +255,6 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
           job.result[documentType] = {};
 
-          // @ts-expect-error
           for await (const documentData of Object.values(data)) {
             // If the document type mismatches, move the link to the right place and let the flow start over.
             // Ex: LaserFiche "unidentified" documents, FoodLogiq wrong PDF uploaded, etc.
@@ -314,11 +313,9 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
             trace(
               'Merging from %s to %s.',
-              // @ts-expect-error
               documentData._id,
               job.config.document._id
             );
-            // @ts-expect-error
             const { data } = await oada.get({ path: documentData._id });
             await oada.put({
               path: job.config.document._id,
@@ -944,7 +941,7 @@ export async function startJobCreator({
 }) {
   try {
     info(`Connecting to DOMAIN ${domain} with concurrency ${CONCURRENCY}`);
-    const con = await connect({ domain: 'http://localhost:3002', token, concurrency: CONCURRENCY });
+    const con = await connect({ domain, token, concurrency: CONCURRENCY });
 
     await cleanupBrokenLinks();
     setInterval(cleanupBrokenLinks, 600_000);
