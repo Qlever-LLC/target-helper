@@ -680,7 +680,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             if (v.status === 'identifying') {
               const otherUpdates = await oada
                 .get({
-                  path: `/resources/${jobId}/updates`,
+                  path: `/${jobId}/updates`,
                 })
                 .then((r: any) => r.data as unknown as JsonObject);
 
