@@ -261,6 +261,12 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             // Note: One day we might officially separate "identification" from "transcription". This is almost that.
             // TODO: Reconsider this as it doesn't really work well with jobs created outside of the helper watches
             if (
+              // Added the 'unidentified' check to stop doing this flow for misidentified
+              // documents coming through e.g. fl-sync. Theres just too much cross over of
+              // one doc type used to satisfy another doc type. e.g. we may ask a product label to be extract it
+              // and target may recognize it as nutrition information because it contains both. This condition
+              // lets us continue doing this for jobs specifically coming in as unidentified
+              job.config['oada-doc-type'] === 'unidentified' &&
               job.config['oada-doc-type'] !== documentType &&
               !matchesAlternateUrlNames(
                 job.config['oada-doc-type'],

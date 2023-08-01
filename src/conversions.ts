@@ -113,6 +113,7 @@ const conversions: Record<string, Conversion> = {
     name: 'California Prop 65 Statement',
     urlName: 'ca-prop-65-statements',
     type: 'application/vnd.trellisfw.ca-prop-65-statement.1+json',
+    alternativeUrlNames: ['california-proposition-65-statements'],
   },
   'Country of Origin Statement': {
     name: 'Country of Origin Statement',
