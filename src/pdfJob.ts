@@ -34,6 +34,7 @@ import type Job from '@oada/types/oada/service/job.js';
 import type Jobs from '@oada/types/oada/service/jobs.js';
 import type { Link } from '@oada/types/oada/link/v1.js';
 import { ListWatch } from '@oada/list-lib';
+import { Gauge } from '@oada/lib-prom';
 import type Resource from '@oada/types/oada/resource.js';
 import type { Tree } from '@oada/types/oada/tree/v1.js';
 import type Update from '@oada/types/oada/service/job/update.js';
@@ -68,6 +69,16 @@ const info = debug('target-helper:info');
 const trace = debug('target-helper:trace');
 
 const pending = '/bookmarks/services/target/jobs/pending';
+
+const jobs = new Gauge({
+  name: 'target-helper_jobs',
+  help: 'Number of jobs in the pending queue',
+});
+
+const errors = new Gauge({
+  name: 'target-helper_errors',
+  help: 'Number of errored jobs',
+});
 
 type List<T> = Record<string, T>;
 
@@ -178,6 +189,7 @@ function recursiveReplaceLinksWithReferences(object: unknown): unknown {
  * Receive the job from oada-jobs
  */
 export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
+  jobs.inc();
   trace({ job }, 'Received job');
   // Until oada-jobs adds cross-linking, make sure we are linked under the PDF's jobs
   trace('Linking job under pdf/_meta until oada-jobs can do that natively');
@@ -721,6 +733,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               // @ts-expect-error TODO: Why pass stuff to this function with no arguments?
               // eslint-disable-next-line sonarjs/no-extra-arguments
               await targetSuccess({ update: v, key: k, change: c });
+              jobs.dec();
             }
 
             if (v.status === 'error') {
@@ -771,6 +784,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         await jobChange(change);
       }
     } catch (cError: unknown) {
+      jobs.dec();
+      errors.inc();
       reject(cError);
     } // Have to actually reject the promise
   });
@@ -1021,14 +1036,14 @@ export async function startJobCreator({
 
           if (Object.keys(job).length === 1 && job._rev) {
             count++;
-            info(`cleaning up broken job ${pending}/${key}`);
+            info(`cleaning up broken job ${pending}/${key} (total: ${count})`);
             await con.delete({
               path: `${pending}/${key}`,
             });
           }
         })
       );
-      info(`Done cleaning up ${count} target jobs`);
+      //info(`Done cleaning up ${count} target jobs`);
     }
 
     // For each trading partner, watch their documents list
