@@ -49,7 +49,7 @@ try {
   };
 
   const yesOrDie = async (message, eulogy) => {
-    if (!eulogy) eulogy = 'You did not answer "y", stopping';
+    eulogy ||= 'You did not answer "y", stopping';
     if (await askYN(message)) return true;
     console.log(eulogy);
     process.exit(0);
@@ -69,7 +69,7 @@ try {
     path: `/bookmarks/trellisfw/asns`,
   });
   const days = Object.keys(toplist['day-index']).filter((k) =>
-    k.match(/\d{4}-\d{2}-\d{2}/)
+    k.match(/\d{4}-\d{2}-\d{2}/),
   );
   console.log(`Found these ${days.length} days in main list:`, days);
 
@@ -91,7 +91,7 @@ try {
     if (
       monitiskeys.length > 0 &&
       (await askYN(
-        `  ${day}: Of those, ${monitiskeys.length} are monitis.  Delete them?`
+        `  ${day}: Of those, ${monitiskeys.length} are monitis.  Delete them?`,
       ))
     ) {
       for await (const mk of monitiskeys) {
@@ -106,7 +106,7 @@ try {
     }
 
     await yesOrDie(
-      `  ${day}: Have ${regularasnkeys.length} regular ASN keys: retrieve their jobs and hashes to look for success/failure and duplicates?`
+      `  ${day}: Have ${regularasnkeys.length} regular ASN keys: retrieve their jobs and hashes to look for success/failure and duplicates?`,
     );
 
     for await (const key of regularasnkeys) {
@@ -119,9 +119,7 @@ try {
       // Compute the hash to see if we have any duplicates
       const { _id, _rev, _type, _meta, ...cleanasn } = asn;
       const h = hash(cleanasn);
-      if (!asnhashes[h]) {
-        asnhashes[h] = [];
-      }
+      asnhashes[h] ||= [];
 
       asnhashes[h].push({ key, id: resid, hash: h, day });
 
@@ -140,7 +138,7 @@ try {
         id: joblist[index_]._ref,
       }));
       console.log(
-        `  ${day}: Retrieving ${jobrefs.length} jobs for asn ${resid}`
+        `  ${day}: Retrieving ${jobrefs.length} jobs for asn ${resid}`,
       );
       for await (const index_ of jobrefs) {
         const { data: job } = await oada.get({ path: `/${index_.id}` });
@@ -161,7 +159,7 @@ try {
     console.log(`  ${day}: Have ${duplicates.length} duplicates:`, duplicates);
 
     const multijobs = Object.values(asninfo).filter(
-      (a) => Object.keys(a.jobs).length > 1
+      (a) => Object.keys(a.jobs).length > 1,
     );
     console.log(
       `  ${day}: Have ${multijobs.length} asn's with multiple jobs listed:`,
@@ -176,12 +174,12 @@ try {
         numberSuccessJobs: Object.keys(index_.jobs)
           .map((jk) => index_.jobs[jk])
           .filter((job) => job.ISSUCCESS).length,
-      }))
+      })),
     );
 
     const timeouts = Object.values(asninfo).filter(
       (a) =>
-        Object.values(a.jobs).filter((index_) => index_.ISTIMEOUT).length > 1
+        Object.values(a.jobs).filter((index_) => index_.ISTIMEOUT).length > 1,
     );
 
     console.log(
@@ -192,7 +190,7 @@ try {
         looksLegit: index_.looksLegit,
         lastjobIsSuccess: index_.lastjob?.ISSUCCESS,
         lastjobIsTimeout: index_.lastjob?.ISTIMEOUT,
-      }))
+      })),
     );
 
     const errors = Object.values(asninfo).filter((a) => !a.lastjob?.ISSUCCESS);
@@ -204,7 +202,7 @@ try {
         looksLegit: error.looksLegit,
         lastjobIsSuccess: error.lastjob?.ISSUCCESS,
         lastjobIsTimeout: error.lastjob?.ISTIMEOUT,
-      }))
+      })),
     );
   }
 

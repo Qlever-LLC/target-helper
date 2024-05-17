@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG NODE_VER=16-alpine
+ARG NODE_VER=20-alpine
 ARG DIR=/usr/src/app/
 
 FROM node:$NODE_VER AS install

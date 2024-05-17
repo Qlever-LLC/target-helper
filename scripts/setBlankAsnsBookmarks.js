@@ -43,7 +43,7 @@ const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
 
 if (!argv.force) {
   console.log(
-    'ERROR: you must pass --force because this WILL REPLACE THE BOOKMARKS/TRELLISFW/ASNS LINK WITH A BLANK TEST ONE.  It SHOULD restore that one when you hit enter after the script pauses.'
+    'ERROR: you must pass --force because this WILL REPLACE THE BOOKMARKS/TRELLISFW/ASNS LINK WITH A BLANK TEST ONE.  It SHOULD restore that one when you hit enter after the script pauses.',
   );
   process.exit(1);
 }
@@ -137,7 +137,7 @@ do {
   response = await new Promise((resolve, reject) => {
     rl.question(
       `When you press enter, I will put a new dummy ASN to /bookmarks/trellisfw/asns/day-index/${newASNDay}/${newASNid}.  To stop, type stop and then hit enter`,
-      resolve
+      resolve,
     );
   });
   if (response === 'stop') break;
@@ -161,7 +161,7 @@ do {
 await new Promise((resolve, reject) => {
   rl.question(
     `Sitting here until you press enter, then I will put back original /bookmarks/trellisfw/asns from old id.  ${oldID}`,
-    resolve
+    resolve,
   );
 });
 console.log('Putting back original bookmarks/trellisfw/asns from id', oldID);
@@ -186,7 +186,7 @@ for await (const index of ids) {
 }
 
 console.log(
-  '\n\nDO NOT FORGET TO RESTART TARGET-HELPER SO IT PICKS THE OLD BOOKMARKS WATCH UP AGAIn\n\n'
+  '\n\nDO NOT FORGET TO RESTART TARGET-HELPER SO IT PICKS THE OLD BOOKMARKS WATCH UP AGAIn\n\n',
 );
 process.exit(0);
 

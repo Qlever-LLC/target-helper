@@ -1,6 +1,6 @@
 /**
  * @license
- *  Copyright 2021 Qlever LLC
+ * Copyright 2021 Qlever LLC
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
       const targetSuccess = async (_arguments?: Record<string, unknown>) => {
         void log.info(
           'helper-started',
-          'Target returned success, target-helper posting main success status'
+          'Target returned success, target-helper posting main success status',
         );
         // Turn off watches so our own updates don't keep coming to us
         try {
@@ -85,14 +85,14 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         // post to slack if oada-jobs doesn't do that yet
         void log.info(
           'helper-error',
-          'Target returned error, target-helper throwing to oada/jobs'
+          'Target returned error, target-helper throwing to oada/jobs',
         );
-        // eslint-disable-next-line prefer-promise-reject-errors
+
         reject({
           message: `Target returned error: ${JSON.stringify(
             update,
             undefined,
-            '  '
+            '  ',
           )}`,
         });
       };
@@ -121,7 +121,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             trace('#jobChange: change update is: ', v);
             if (v.status === 'success') {
               trace(
-                '#jobChange: unwatching job and moving on with success tasks'
+                '#jobChange: unwatching job and moving on with success tasks',
               );
               // eslint-disable-next-line no-await-in-loop
               await unwatch();
@@ -132,7 +132,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
             if (v.status === 'error') {
               trace(
-                '#jobChange: unwatching job and moving on with error tasks'
+                '#jobChange: unwatching job and moving on with error tasks',
               );
               // eslint-disable-next-line no-await-in-loop
               await unwatch();
@@ -152,7 +152,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
       const watch = async () => {
         if (watchhandle) {
           warn(
-            `WARNING: watchhandle already exists, but watch() was called again`
+            `WARNING: watchhandle already exists, but watch() was called again`,
           );
         }
 
@@ -223,7 +223,7 @@ export async function startJobCreator({
         if (services?.target?.force) {
           info(
             'ASN at key %s has _meta/services/target/force as truthy, so we will send job to target regardless of whether last job was success.',
-            key
+            key,
           );
         } else if (services?.target?.jobs) {
           const refslist = services.target.jobs;
@@ -232,7 +232,7 @@ export async function startJobCreator({
             'ASN at key %s has %d previous target jobs, checking if the last one was success. To force, put true at /%s/_meta/services/target/force',
             key,
             jobEntries.length,
-            item._id
+            item._id,
           );
           // Keys are ksuids, so they sort naturally with latest on bottom
           const [lastJobKey, lastReference] = jobEntries
@@ -253,7 +253,7 @@ export async function startJobCreator({
               info(
                 'Last job for ASN %s at key %s has status "success" and _meta/services/target/force is not set on ASN, so we are NOT posting this to target job queue.',
                 item._id,
-                key
+                key,
               );
               // Return true;
               return;
@@ -261,14 +261,14 @@ export async function startJobCreator({
           } catch (cError: unknown) {
             throw oError.tag(
               cError as Error,
-              `ERROR: failed to retrieve last job ${lastJobID} at key ${lastJobKey} for ASN at key ${key}`
+              `ERROR: failed to retrieve last job ${lastJobID} at key ${lastJobKey} for ASN at key ${key}`,
             );
           }
         }
       } catch (cError: unknown) {
         throw oError.tag(
           cError as Error,
-          `ERROR: failed to retrieve _meta for new ASN ${item._id} at key ${key}`
+          `ERROR: failed to retrieve _meta for new ASN ${item._id} at key ${key}`,
         );
       }
 
@@ -293,7 +293,7 @@ export async function startJobCreator({
       } catch (cError: unknown) {
         throw oError.tag(
           cError as Error,
-          'ERROR: failed to get a valid jobkey from content-location when posting ASN job resource'
+          'ERROR: failed to get a valid jobkey from content-location when posting ASN job resource',
         );
       }
 
@@ -309,7 +309,7 @@ export async function startJobCreator({
       } catch (cError: unknown) {
         throw oError.tag(
           cError as Error,
-          `ERROR: failed to PUT link in jobs queue for new job resources/${jobkey}`
+          `ERROR: failed to PUT link in jobs queue for new job resources/${jobkey}`,
         );
       }
 
@@ -318,7 +318,7 @@ export async function startJobCreator({
         item._id,
         key,
         jobkey,
-        jobkey
+        jobkey,
       );
     }
 

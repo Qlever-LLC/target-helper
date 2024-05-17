@@ -1,6 +1,6 @@
 /**
  * @license
- *  Copyright 2021 Qlever LLC
+ * Copyright 2021 Qlever LLC
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ type List<T> = Record<string, T>;
  */
 function has<T, K extends string>(
   value: T,
-  key: K
+  key: K,
 ): value is T & { [P in K]: unknown } {
   return value && typeof value === 'object' && key in value;
 }
@@ -95,14 +95,14 @@ function has<T, K extends string>(
 // Because OADA resource keys are always in the way
 function stripResource<
   T extends
-    | {
-        _id?: unknown;
-        _rev?: unknown;
-        _meta?: unknown;
-        _type?: unknown;
-        _ref?: unknown;
-      }
-    | undefined
+  | {
+    _id?: unknown;
+    _rev?: unknown;
+    _meta?: unknown;
+    _type?: unknown;
+    _ref?: unknown;
+  }
+  | undefined,
 >(resource: T) {
   if (!resource) {
     return resource;
@@ -164,7 +164,7 @@ function recursiveMakeAllLinksVersioned(object: unknown): unknown {
     Object.entries(object).map(([key, value]) => [
       key,
       recursiveMakeAllLinksVersioned(value),
-    ])
+    ]),
   );
 }
 
@@ -181,7 +181,7 @@ function recursiveReplaceLinksWithReferences(object: unknown): unknown {
     Object.entries(object).map(([key, value]) => [
       key,
       recursiveReplaceLinksWithReferences(value),
-    ])
+    ]),
   );
 }
 
@@ -231,12 +231,12 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
       const targetSuccess = async () => {
         log.info(
           'helper-started',
-          'Target returned success, target-helper picking up'
+          'Target returned success, target-helper picking up',
         );
 
         // Get the latest copy of job
         const r = await oada.get({ path: `/${jobId}` });
-        assertJob(r.data); //TODO: This is already done in the jobs library?
+        assertJob(r.data); // TODO: This is already done in the jobs library?
         // FIXME: Make a proper type and assert
         // Note the types *should* be okay at runtime because these are needed to get to a target success
         const job = r.data as typeof r.data & {
@@ -261,7 +261,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         job.result = {};
 
         for await (const [documentType, data] of Object.entries(
-          job.targetResult
+          job.targetResult,
         )) {
           info('Document identified as %s', documentType);
 
@@ -282,13 +282,13 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               job.config['oada-doc-type'] !== documentType &&
               !matchesAlternateUrlNames(
                 job.config['oada-doc-type'],
-                documentType
+                documentType,
               )
             ) {
               info(
                 'Document type mismatch. Trellis: [%s], Target: [%s]. Moving tree location and bailing.',
                 documentType,
-                job.config['oada-doc-type']
+                job.config['oada-doc-type'],
               );
 
               trace(`Removing from ${job.config['oada-doc-type']} list.`);
@@ -296,7 +296,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 path: join(
                   '/bookmarks/trellisfw/documents',
                   job.config['oada-doc-type'],
-                  job.config.docKey
+                  job.config.docKey,
                 ),
               });
 
@@ -323,7 +323,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
               void log.info(
                 'done',
-                'Document moved for proper doctype for re-processing.'
+                'Document moved for proper doctype for re-processing.',
               );
               resolve(job.result as Json);
               return;
@@ -332,7 +332,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             trace(
               'Merging from %s to %s.',
               documentData._id,
-              job.config.document._id
+              job.config.document._id,
             );
             const { data } = await oada.get({ path: documentData._id });
             await oada.put({
@@ -357,7 +357,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
         });
         void log.info(
           'helper: stored result after processing targetResult',
-          {}
+          {},
         );
 
         /* Target-helper not /expects/ this and does not need to re-create it (wrongly)
@@ -440,21 +440,21 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
         // ------------- 3: put audits/cois/etc. to proper home
         const versionedResult = recursiveMakeAllLinksVersioned(
-          job.result
+          job.result,
         ) as Record<TreeKey, Record<string, unknown>>;
         trace(versionedResult, 'all versioned links to bookmarks');
 
         // ------------- 4: cross link vdoc for pdf <-> audits,cois,letters,etc.
         void log.info(
           'link-refs-pdf',
-          'helper: linking result _refs under <pdf>/_meta/vdoc'
+          'helper: linking result _refs under <pdf>/_meta/vdoc',
         );
 
         const vdoc = recursiveReplaceLinksWithReferences(job.result);
         info(
           "Linking _ref's into pdf/_meta, job.result before: %O, after: %O",
           job.result,
-          vdoc
+          vdoc,
         );
         await oada.put({
           path: `/${pdfID}/_meta`,
@@ -482,7 +482,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               'Fetching lookups for doctype = %s, doc = %O, getting /%s/_meta/lookups',
               doctype,
               document,
-              document._id
+              document._id,
             );
             const { data: lookups } = (await oada.get({
               path: `/${document._id}/_meta/lookups`,
@@ -522,14 +522,14 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 };
                 trace({ holder }, 'Retrieved holder');
                 for await (const tpLink of Object.values(
-                  holder['trading-partners']
+                  holder['trading-partners'],
                 )) {
                   const { data: tp } = await oada.get({
                     path: `/${tpLink._id}`,
                   });
                   if (!has(tp, '_id')) {
                     throw new Error(
-                      `Expected _id on trading partner ${tpLink._id}`
+                      `Expected _id on trading partner ${tpLink._id}`,
                     );
                   }
 
@@ -551,7 +551,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 };
                 trace('Retrieved buyer %O', buyer);
                 for await (const tpLink of Object.values(
-                  buyer['trading-partners']
+                  buyer['trading-partners'],
                 )) {
                   const { data: tp } = (await oada.get({
                     path: `/${tpLink._id}`,
@@ -564,7 +564,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
               default: {
                 throw new Error(
-                  `Unknown document type (${doctype}) when attempting to do lookups`
+                  `Unknown document type (${doctype}) when attempting to do lookups`,
                 );
               }
             }
@@ -572,12 +572,12 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
           void log.info(
             'sharing',
-            `Posting ${shares.length} shares jobs for doctype ${doctype} resulting from this transcription`
+            `Posting ${shares.length} shares jobs for doctype ${doctype} resulting from this transcription`,
           );
           for await (const { dockey, doc, tp } of shares) {
             const tpKey = tp._id.replace(/^resources\//, '');
             const { data: user } = await oada.get({ path: `/${tp._id}/user` });
-            if (Buffer.isBuffer(user)) {
+            if (user instanceof Uint8Array) {
               throw new TypeError('user was not JSON');
             }
 
@@ -589,7 +589,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               info('COPY WILL MASK LOCATIONS FOR REDDYRAW');
               trace(
                 'pdf is only generated for fsqa-audits or cois, doctype is %s',
-                doctype
+                doctype,
               );
               mask = {
                 keys_to_mask: ['location'],
@@ -627,7 +627,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             });
             const resourceID = location?.replace(/^\//, '');
             const reskey = resourceID?.replace(/^resources\//, '');
-            trace('Shares job posted as resid = %s', resourceID);
+            trace('Shares job posted as resId = %s', resourceID);
             const {
               headers: { 'content-location': jobpath },
             } = await oada.put({
@@ -704,11 +704,11 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
               const others = Object.values(otherUpdates).filter(
                 (object: any) =>
-                  object.status && object.status === 'identifying'
+                  object.status && object.status === 'identifying',
               );
               if (others.length > 5) {
                 info(
-                  `Job ${jobId} stuck in 'identifying' loop for more than 5 minutes. Timing out.`
+                  `Job ${jobId} stuck in 'identifying' loop for more than 5 minutes. Timing out.`,
                 );
                 await oada.post({
                   path: `/${jobId}/updates`,
@@ -719,7 +719,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                 });
               } else {
                 trace(
-                  `Job ${jobId} update status 'identifying' happened less than 10 times.`
+                  `Job ${jobId} update status 'identifying' happened less than 10 times.`,
                 );
               }
             }
@@ -727,18 +727,18 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
             trace(v, '#jobChange: change update');
             if (v.status === 'success') {
               trace(
-                '#jobChange: unwatching job and moving on with success tasks'
+                '#jobChange: unwatching job and moving on with success tasks',
               );
               await unwatch();
               // @ts-expect-error TODO: Why pass stuff to this function with no arguments?
-              // eslint-disable-next-line sonarjs/no-extra-arguments
+
               await targetSuccess({ update: v, key: k, change: c });
               jobs.dec();
             }
 
             if (v.status === 'error') {
               error(
-                '#jobChange: unwatching job and moving on with error tasks'
+                '#jobChange: unwatching job and moving on with error tasks',
               );
               await unwatch();
               if (v.information) {
@@ -746,7 +746,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
               }
 
               throw new Error(
-                `Target returned error: ${JSON.stringify(v, undefined, '  ')}`
+                `Target returned error: ${JSON.stringify(v, undefined, '  ')}`,
               );
             }
           }
@@ -807,7 +807,7 @@ async function pushSharesForFacility({
   trace(
     'Looking for facility %s in %d trading partners',
     facilityid,
-    values.length
+    values.length,
   );
   for (const tpv of values) {
     if (!tpv.facilities) {
@@ -861,7 +861,7 @@ async function signResourceForTarget({
         trusted,
         valid,
         unchanged,
-        payload
+        payload,
       );
       if (payload?.type === signatureType) {
         return true; // Found one!
@@ -877,14 +877,14 @@ async function signResourceForTarget({
     if (await hasTranscriptionSignature(data)) {
       void log.error(
         `#signResourceForTarget: Item ${_id} already has a transcription signature on it, choose to skip it and not apply a new one`,
-        {}
+        {},
       );
       return true;
     }
 
     trace(
       '#signResourceForTarget: Did not find existing %s signature, signing...',
-      signatureType
+      signatureType,
     );
 
     // Otherwise, go ahead and apply the signature
@@ -922,14 +922,14 @@ function treeForDocumentType(doctype: string) {
       parts[0] = parts[0].replace(/s$/, '');
     } else {
       throw new Error(
-        `ERROR: doctype ${doctype} has dashes, but is not easily convertible to singular word for _type`
+        `ERROR: doctype ${doctype} has dashes, but is not easily convertible to singular word for _type`,
       );
     }
 
     singularType = parts.join('-');
   } else {
     throw new Error(
-      `ERROR: doctype ${doctype} is not easily convertible to singular word for _type`
+      `ERROR: doctype ${doctype} is not easily convertible to singular word for _type`,
     );
   }
 
@@ -1041,9 +1041,9 @@ export async function startJobCreator({
               path: `${pending}/${key}`,
             });
           }
-        })
+        }),
       );
-      //info(`Done cleaning up ${count} target jobs`);
+      // Info(`Done cleaning up ${count} target jobs`);
     }
 
     // For each trading partner, watch their documents list
@@ -1119,7 +1119,7 @@ export async function startJobCreator({
           if (meta?.services?.['target-helper']) {
             info(
               'target-helper has already been here. %s. Skipping this document',
-              meta.services['target-helper']
+              meta.services['target-helper'],
             );
             return;
           }
@@ -1133,9 +1133,8 @@ export async function startJobCreator({
           const pdfs = Object.values(meta.vdoc.pdf);
           const pdf = pdfs[0];
           info(
-            `New Document was for ${
-              masterid ? `tp with masterid=${masterid}` : 'Non-Trading Partner'
-            }`
+            `New Document was for ${masterid ? `tp with masterid=${masterid}` : 'Non-Trading Partner'
+            }`,
           );
           info('New Document posted at %s/%s', typePath, key);
 
@@ -1143,7 +1142,7 @@ export async function startJobCreator({
           //          let docs = Object.entries(meta!.vdoc || {});
 
           const data = {
-            'trading-partner': masterid, //just for documentation
+            'trading-partner': masterid, // Just for documentation
             'type': 'transcription',
             'service': 'target',
             'config': {
@@ -1165,7 +1164,7 @@ export async function startJobCreator({
             });
             const jobkey = headers['content-location']!.replace(
               /^\/resources\//,
-              ''
+              '',
             );
 
             info('Posted job resource, jobkey = %s', jobkey);
@@ -1185,14 +1184,14 @@ export async function startJobCreator({
               throw oError.tag(
                 cError as Error,
                 'Failed to PUT job link under target job queue for job key ',
-                jobkey
+                jobkey,
               );
             }
           } catch (cError: unknown) {
             throw oError.tag(
               cError as Error,
               'Failed to create new job resource for item ',
-              _id
+              _id,
             );
           }
         } catch (cError: unknown) {

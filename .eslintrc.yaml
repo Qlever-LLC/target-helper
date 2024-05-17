@@ -1,17 +1,17 @@
 root: true
 
 extends:
-  - 'plugin:@typescript-eslint/recommended'
+  - plugin:@typescript-eslint/recommended
   - plugin:node/recommended
   - plugin:github/recommended
   - plugin:promise/recommended
   - plugin:regexp/recommended
-  - plugin:array-func/recommended
+  #- plugin:array-func/recommended
   - plugin:optimize-regex/recommended
   - plugin:import/recommended
   - plugin:unicorn/recommended
-  - plugin:security/recommended
-  - plugin:sonarjs/recommended
+  #- plugin:security/recommended
+  #- plugin:sonarjs/recommended
   - plugin:ava/recommended
   - xo
   - prettier
@@ -22,7 +22,7 @@ plugins:
   - github
   - promise
   - regexp
-  - array-func
+  #- array-func
   - optimize-regex
   - no-constructor-bind
   - import
@@ -37,7 +37,7 @@ parser: '@typescript-eslint/parser'
 
 parserOptions:
   ecmaVersion: 2020
-  project: './**/tsconfig.*'
+  project: ./**/tsconfig.*
 
 overrides:
   - files: '*.ts'
@@ -48,8 +48,9 @@ overrides:
       - prettier
     parserOptions:
       ecmaVersion: 2020
-      project: './**/tsconfig.*'
+      project: ./**/tsconfig.*
     rules:
+      prettier/prettier: off
       '@typescript-eslint/naming-convention':
         [
           error,
@@ -78,7 +79,7 @@ overrides:
 
           { selector: typeLike, format: [PascalCase] },
         ]
-      '@typescript-eslint/restrict-template-expressions': off
+      '@typescript-eslint/restrict-template-expressions': 0
       '@typescript-eslint/no-shadow': warn
       '@typescript-eslint/no-unused-vars':
         [
@@ -86,13 +87,14 @@ overrides:
           {
             args: after-used,
             ignoreRestSiblings: true,
-            varsIgnorePattern: '^_',
-            argsIgnorePattern: '^_',
+            varsIgnorePattern: ^_',
+            argsIgnorePattern: ^_,
           },
         ]
       '@typescript-eslint/consistent-type-definitions': [warn, interface]
 
 rules:
+  prettier/prettier: off
   notice/notice:
     - error
     - template: |
@@ -114,7 +116,7 @@ rules:
          */
       onNonMatchingHeader: append
       nonMatchingTolerance: 0.7
-  sonarjs/no-duplicate-string: [warn, 5]
+  sonarjs/no-duplicate-string: [warn, { threshold: 5 }]
   sonarjs/cognitive-complexity: warn
   eslint-comments/no-unused-disable: off
   import/extensions: off
@@ -126,7 +128,7 @@ rules:
   eslint-comments/no-use: off
   no-secrets/no-secrets: [error, { tolerance: 5 }]
   no-empty-label: off
-  no-warning-comments: off
+  no-warning-comments: 0
   node/no-missing-import: off
   import/no-unresolved: off
   unicorn/prefer-spread: off

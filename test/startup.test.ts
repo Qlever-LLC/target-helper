@@ -35,7 +35,7 @@ const contentType = 'application/vnd.trellisfw.asns.1+json';
 
 const con = await connect({
   domain: config.get('oada.domain'),
-  token: config.get('oada.token')[0]!,
+  token: config.get('oada.token')[0],
 });
 
 test.beforeEach(async () => {
@@ -109,7 +109,7 @@ test.failing(
       },
       contentType,
     });
-  }
+  },
 );
 
 async function cleanup() {
@@ -122,7 +122,7 @@ async function cleanup() {
       `/bookmarks/services/target/jobs/success/day-index/${dayIndex}/${jobkey}`,
       `/bookmarks/services/target/jobs/failure/day-index/${dayIndex}/${jobkey}`,
       `/${jobID}`,
-    ].map(async (path) => deleteIfExists(path))
+    ].map(async (path) => deleteIfExists(path)),
   );
 }
 
