@@ -33,31 +33,22 @@ import type { JWK } from '@trellisfw/signatures';
 import type Job from '@oada/types/oada/service/job.js';
 import type Jobs from '@oada/types/oada/service/jobs.js';
 import type { Link } from '@oada/types/oada/link/v1.js';
-import { ListWatch } from '@oada/list-lib';
+import { AssumeState, ChangeType, ListWatch } from '@oada/list-lib';
 import { Gauge } from '@oada/lib-prom';
-import type Resource from '@oada/types/oada/resource.js';
 import type { Tree } from '@oada/types/oada/tree/v1.js';
 import type Update from '@oada/types/oada/service/job/update.js';
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
 import { connect } from '@oada/client';
 import tSignatures from '@trellisfw/signatures';
+import {
+  type default as Resource
+} from '@oada/types/oada/resource.js';
 
 import { fromOadaType, matchesAlternateUrlNames } from './conversions.js';
 import type { TreeKey } from './tree.js';
 import tree from './tree.js';
 
 const PERSIST_INTERVAL = config.get('oada.listWatch.persistInterval');
-
-const tpTree: Tree = JSON.parse(JSON.stringify(tree));
-delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['masterid-index']?.[
-  '*'
-]?.shared;
-delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['masterid-index']?.[
-  '*'
-]?.bookmarks;
-
-const documentTypeTree: Tree = JSON.parse(JSON.stringify(tree));
-delete documentTypeTree.bookmarks!.trellisfw!.documents!['*'];
 
 const tpDocumentTypeTree: Tree = JSON.parse(JSON.stringify(tree));
 delete tpDocumentTypeTree.bookmarks!.trellisfw!['trading-partners']![
@@ -71,12 +62,12 @@ const trace = debug('target-helper:trace');
 const pending = '/bookmarks/services/target/jobs/pending';
 
 const jobs = new Gauge({
-  name: 'target-helper_jobs',
+  name: 'target_helper_jobs',
   help: 'Number of jobs in the pending queue',
 });
 
 const errors = new Gauge({
-  name: 'target-helper_errors',
+  name: 'target_helper_errors',
   help: 'Number of errored jobs',
 });
 
@@ -619,7 +610,7 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
                   },
                   doctype, // Fsqa-audits, cois, fsqa-certificates, letters-of-guarantee
                   dest: `/bookmarks/trellisfw/${doctype}/${dockey}`, // This doubles-up bookmarks, but I think it's the most understandable to look at
-                  user, // { id, bookmarks }
+                  user: user as unknown as any, // { id, bookmarks }
                   chroot: `/bookmarks/trellisfw/trading-partners/${tpKey}/user/bookmarks`,
                   tree: treeForDocumentType(doctype),
                 },
@@ -983,16 +974,15 @@ export async function startJobCreator({
     trace('Trading partners enabled %s', tradingPartnersEnabled);
     if (tradingPartnersEnabled) {
       // eslint-disable-next-line no-new
-      new ListWatch({
+      const tpWatch = new ListWatch({
         path: TP_MASTER_PATH,
         name: `target-helper-trading-partners`,
         conn: con,
         resume: false,
-        onAddItem: watchTp,
-        onNewList: ListWatch.AssumeNew,
-        tree: { ...tpTree },
-        persistInterval: PERSIST_INTERVAL,
+        onNewList: AssumeState.New,
       });
+      tpWatch.on(ChangeType.ItemAdded, watchTp);
+      process.on('beforeExit', async () => tpWatch.stop());
     }
 
     // Ensure the documents endpoint exists because Target is an enabler of that endpoint
@@ -1005,16 +995,16 @@ export async function startJobCreator({
 
     // Watch primary user's documents
     // eslint-disable-next-line no-new
-    new ListWatch({
+    const selfDocTypesWatch = new ListWatch<Resource>({
       path,
       name: `TARGET-SF-docs`,
       conn: con,
       resume: false,
-      onNewList: ListWatch.AssumeNew,
-      onAddItem: documentTypeAdded(),
-      tree: { ...documentTypeTree },
-      persistInterval: PERSIST_INTERVAL,
+      onNewList: AssumeState.New,
+      //persistInterval: PERSIST_INTERVAL,
     });
+    selfDocTypesWatch.on(ChangeType.ItemAdded, documentTypeAdded());
+    process.on('beforeExit', async () => selfDocTypesWatch.stop());
 
     // eslint-disable-next-line no-inner-declarations
     async function cleanupBrokenLinks() {
@@ -1048,12 +1038,16 @@ export async function startJobCreator({
 
     // For each trading partner, watch their documents list
     // eslint-disable-next-line no-inner-declarations
-    async function watchTp(_tp: unknown, key: string) {
-      key = key.replace(/^\//, '');
+    async function watchTp({ pointer: masterId }: { pointer: string }) {
+      masterId = masterId.replace(/^\//, '');
       // FOR DEBUGGING:
-      // if (key !== 'd4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e') return
-      info(`New trading partner detected at key: [${key}]`);
-      const documentsPath = `${TP_MASTER_PATH}/${key}/shared/trellisfw/documents`;
+      // if (masterId!== 'd4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e') return
+      info(`New trading partner detected at key: [${masterId}]`);
+      const documentsPath = join(
+        TP_MASTER_PATH,
+        masterId,
+        '/shared/trellisfw/documents/'
+      );
       await con.ensure({
         path: documentsPath,
         data: {},
@@ -1061,47 +1055,80 @@ export async function startJobCreator({
       });
       info('Starting listwatch on %s', documentsPath);
       // eslint-disable-next-line no-new
-      new ListWatch({
+      const docsWatch = new ListWatch<Resource>({
         path: documentsPath,
         name: `target-helper-tp-doctypes`,
-        onNewList: ListWatch.AssumeNew,
+        onNewList: AssumeState.New,
         conn: con,
         resume: false,
-        onAddItem: documentTypeAdded(key),
-        tree: tpDocumentTypeTree,
-        persistInterval: PERSIST_INTERVAL,
+        //persistInterval: PERSIST_INTERVAL,
       });
+      docsWatch.on(ChangeType.ItemAdded, documentTypeAdded(masterId));
+      process.on('beforeExit', async () => docsWatch.stop());
     }
 
     // Now watch documents of that type
     // eslint-disable-next-line no-inner-declarations
     function documentTypeAdded(masterid?: string) {
-      return async function (item: { _id: string }, key: string) {
-        trace({ item, key }, 'documentTypeAdded');
+      return async function ({
+        item: itProm,
+        pointer: docType,
+      }: {
+        item: Promise<Resource>;
+        pointer: string;
+      }) {
+        const item = await itProm;
+        trace({ item, docType }, 'documentTypeAdded');
         const documentPath = masterid
-          ? `${TP_MASTER_PATH}/${masterid}/shared/trellisfw/documents${key}`
-          : `/bookmarks/trellisfw/documents${key}`;
-        const documentType = key.replace(/^\//, '');
+          ? join(
+              TP_MASTER_PATH,
+              masterid,
+              '/shared/trellisfw/documents',
+              docType
+            )
+          : join('/bookmarks/trellisfw/documents', docType);
+        docType = docType.replace(/^\//, '');
         info('Starting trading partner doc type listwatch on %s', documentPath);
         // Register new watch on
         // eslint-disable-next-line no-new
-        new ListWatch({
+        const docTypeWatch = new ListWatch<Resource>({
           path: documentPath,
           name: `target-helper-tp-docs`,
-          onNewList: ListWatch.AssumeNew,
+          onNewList: AssumeState.Handled,
           conn: con,
           resume: true,
-          onAddItem: documentAdded(documentType, masterid),
           tree: tpDocumentTypeTree,
-          persistInterval: PERSIST_INTERVAL,
+          //persistInterval: PERSIST_INTERVAL,
         });
+        docTypeWatch.on(ChangeType.ItemAdded, documentAdded(docType, masterid));
+        docTypeWatch.on(
+          ChangeType.ItemChanged,
+          documentAdded(docType, masterid)
+        );
+        process.on('beforeExit', async () => docTypeWatch.stop());
       };
     }
 
     // eslint-disable-next-line no-inner-declarations
     function documentAdded(documentType: string, masterid?: string) {
-      return async function (item: { _id: string }, key: string) {
+      return async function ({
+        item: itProm,
+        pointer: key,
+        change,
+      }: {
+        item: Promise<Resource>;
+        pointer: string;
+        change?: Change;
+      }) {
         try {
+          let item: Resource;
+          if (change) {
+            const resp = await con.get({ path: change.resource_id });
+            item = resp.data as Resource;
+          } else {
+            item = await itProm;
+          }
+
           const { _id } = item;
           const typePath = masterid
             ? `${TP_MASTER_PATH}/${masterid}/shared/trellisfw/documents/${documentType}`

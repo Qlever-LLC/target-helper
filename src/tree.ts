@@ -17,7 +17,7 @@
 
 /* eslint-disable sonarjs/no-duplicate-string */
 
-import type Tree from '@oada/types/oada/tree/v1.js';
+import type { Tree } from '@oada/types/oada/tree/v1.js';
 
 const documents: Tree = {
   '_type': 'application/vnd.trellisfw.documents.1+json',
