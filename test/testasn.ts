@@ -586,4 +586,4 @@ export default {
       _BEGIN: '1',
     },
   },
-};
+} as const;

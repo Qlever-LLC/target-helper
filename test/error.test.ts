@@ -41,7 +41,7 @@ const REALISTIC_TIMING = true;
 
 const con = await connect({
   domain: config.get('oada.domain'),
-  token: config.get('oada.token')[0]!,
+  token: config.get('oada.token')[0],
 });
 
 test.before(async () => {
@@ -117,7 +117,7 @@ for (const doctype of doctypes) {
     const error1 = await t.throwsAsync(
       con.get({ path: `/resources/${index.key}/_meta/vdoc/pdf` }),
       {},
-      `should NOT _ref the PDF at _meta/vdoc/pdf in the ${doctype} resource`
+      `should NOT _ref the PDF at _meta/vdoc/pdf in the ${doctype} resource`,
     );
     // @ts-expect-error dumb errors
     t.is(error1?.status, 403);
@@ -127,7 +127,7 @@ for (const doctype of doctypes) {
         path: `/resources/${items.pdf?.key}/_meta/vdoc/${index.name.plural}/${index.key}`,
       }),
       {},
-      `should NOT _ref the PDF at _meta/vdoc/${index.name.plural}/<id> in the PDF resource`
+      `should NOT _ref the PDF at _meta/vdoc/${index.name.plural}/<id> in the PDF resource`,
     );
     // @ts-expect-error dumb errors
     t.is(error2?.status, 404);
@@ -135,7 +135,7 @@ for (const doctype of doctypes) {
     const error3 = await t.throwsAsync(
       con.get({ path: `${index.list}/${index.key}` }),
       {},
-      `should NOT put ${doctype} up at ${index.list}/<key>`
+      `should NOT put ${doctype} up at ${index.list}/<key>`,
     );
     // @ts-expect-error dumb errors
     t.is(error3?.status, 404);
@@ -143,7 +143,7 @@ for (const doctype of doctypes) {
     const error4 = await t.throwsAsync(
       con.get({ path: `/resources/${index.key}/signatures` }),
       {},
-      `should NOT have a signature on the ${doctype}`
+      `should NOT have a signature on the ${doctype}`,
     );
     // @ts-expect-error dumb errors
     t.is(error4?.status, 403); // Unauthorized on /resources that don't exist
@@ -154,13 +154,13 @@ for (const doctype of doctypes) {
     t.is(
       result1,
       'failure',
-      'should have status of failure on the job when completed'
+      'should have status of failure on the job when completed',
     );
 
     const error5 = await t.throwsAsync(
       con.get({ path: `${jobIndex.list}/${jobIndex.key}` }),
       {},
-      `should delete the job from jobs`
+      `should delete the job from jobs`,
     );
     // @ts-expect-error dumb errors
     t.is(error5?.status, 404);
@@ -173,8 +173,8 @@ for (const doctype of doctypes) {
       (result2 as JsonObject)?._id,
       `resources/${jobIndex.key}`,
       `should put the job under today's day-index ${moment().format(
-        'YYYY-MM-DD'
-      )} within jobs-failure`
+        'YYYY-MM-DD',
+      )} within jobs-failure`,
     );
   });
 }

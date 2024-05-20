@@ -19,16 +19,16 @@ export function fromOadaType(type: string) {
   const values = Object.values(conversions);
 
   return values.find(
-    (v) => v.urlName === type || (v.alternativeUrlNames ?? []).includes(type)
+    (v) => v.urlName === type || (v.alternativeUrlNames ?? []).includes(type),
   );
 }
 
 export function matchesAlternateUrlNames(urlName: string, alternate: string) {
   const values = Object.values(conversions);
 
-  const conv = values.find((v) => v.urlName === urlName);
-  if (!conv) return false;
-  return (conv.alternativeUrlNames ?? []).includes(alternate);
+  const conversion = values.find((v) => v.urlName === urlName);
+  if (!conversion) return false;
+  return (conversion.alternativeUrlNames ?? []).includes(alternate);
 }
 
 interface Conversion {

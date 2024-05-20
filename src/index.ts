@@ -26,7 +26,7 @@ import debug from 'debug';
 import '@oada/lib-prom';
 import { Service } from '@oada/jobs';
 
-/*import {
+/* Import {
   jobHandler as asnJobHandler,
   startJobCreator as asnStartJobCreator,
   } from './asnJob.js';
@@ -42,9 +42,9 @@ const trace = debug('target-helper:trace');
 const warn = debug('target-helper:warn');
 
 const tokens = config.get('oada.token');
-let domain = config.get('oada.domain');
+const domain = config.get('oada.domain');
 if (domain.startsWith('http')) {
-//  domain = domain.replace(/^https?:\/\//, '');
+  //  Domain = domain.replace(/^https?:\/\//, '');
 }
 
 trace('Using token(s) = %s', tokens);
@@ -77,19 +77,19 @@ await Promise.all(
     // --------------------------------------------------
     // Set the job type handlers
     service.on('transcription', config.get('timeouts.pdf'), pdfJobHandler);
-    //service.on('asn', config.get('timeouts.asn'), asnJobHandler);
+    // Service.on('asn', config.get('timeouts.asn'), asnJobHandler);
 
     // --------------------------------------------------
     // Start the jobs watching service
     info(
-      `Initializing target-helper service. Version: ${process.env.npm_package_version}`
+      `Initializing target-helper service. Version: ${process.env.npm_package_version}`,
     );
     const serviceP = service.start();
 
     // Start the things watching to create jobs
     info('Started pdf job creator processes');
     const pdfP = pdfStartJobCreator({ domain, token });
-//    const asnP = asnStartJobCreator({ domain, token });
+    //    Const asnP = asnStartJobCreator({ domain, token });
 
     // Catch errors?
     try {
@@ -101,5 +101,5 @@ await Promise.all(
     }
 
     info('Ready');
-  })
+  }),
 );

@@ -1,4 +1,5 @@
 /**
+ * @license
  * Copyright 2021 Qlever LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +37,7 @@ declare module '@oada/oada-certs' {
 
   declare namespace OADACerts {
     async function pubFromPriv<K extends JWK>(
-      key: K
+      key: K,
     ): Promise<Omit<K, JWKPrivate>>;
   }
   export = OADACerts;
@@ -52,13 +53,13 @@ declare module '@trellisfw/signatures' {
     async function sign<T>(
       jsonObject: T,
       privateJWK: JWK,
-      headers: Record<string, unknown>
+      headers: Record<string, unknown>,
     ): Promise<T & { signatures: string[] }>;
 
     async function verify<T extends { signatures?: string[] }>(
       jsonObject: T,
       // TODO: what is this?
-      options?: unknown
+      options?: unknown,
     ): Promise<{
       valid: boolean;
       trusted: boolean;

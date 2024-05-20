@@ -42,7 +42,7 @@ const doctypes = ['audit', 'cert', 'coi', 'log'];
 
 const con = await connect({
   domain: config.get('oada.domain'),
-  token: config.get('oada.token')[0]!,
+  token: config.get('oada.token')[0],
 });
 
 test.before(async () => {
@@ -179,7 +179,7 @@ for (const doctype of doctypes) {
     t.is(
       (result1 as JsonObject)?._ref,
       `resources/${jobIndex.key}`,
-      `should _ref the ${jobtype} under pdf/_meta/services/target/jobs`
+      `should _ref the ${jobtype} under pdf/_meta/services/target/jobs`,
     );
 
     const { data: result2 } = await con.get({
@@ -190,7 +190,7 @@ for (const doctype of doctypes) {
       {
         pdf: { _id: `resources/${items.pdf?.key}` },
       },
-      `should link to the PDF at _meta/vdoc/pdf in the ${doctype} resource`
+      `should link to the PDF at _meta/vdoc/pdf in the ${doctype} resource`,
     );
 
     const { data: result3 } = await con.get({
@@ -199,7 +199,7 @@ for (const doctype of doctypes) {
     t.deepEqual(
       result3,
       { _ref: `resources/${index.key}` },
-      `should _ref the ${doctype} from _meta/vdoc/${index.name.plural}/<id> in PDF resource`
+      `should _ref the ${doctype} from _meta/vdoc/${index.name.plural}/<id> in PDF resource`,
     );
 
     const { data: result4 } = await con.get({
@@ -208,7 +208,7 @@ for (const doctype of doctypes) {
     t.is(
       (result4 as JsonObject)?._id,
       `resources/${index.key}`,
-      `should put ${doctype} up at ${index.list}/<key>`
+      `should put ${doctype} up at ${index.list}/<key>`,
     );
 
     const { data: result5 } = await con.get({
@@ -218,7 +218,7 @@ for (const doctype of doctypes) {
       t.is(
         (result5 as unknown[]).length,
         1,
-        `should have a signature on the ${doctype}`
+        `should have a signature on the ${doctype}`,
       );
     }
 
@@ -228,17 +228,17 @@ for (const doctype of doctypes) {
     t.is(
       result6,
       'success',
-      `should have status of success on the ${jobtype} when completed`
+      `should have status of success on the ${jobtype} when completed`,
     );
 
     const error = await t.throwsAsync(
-      con.get({ path: `${jobIndex.list}/${jobIndex.key}` })
+      con.get({ path: `${jobIndex.list}/${jobIndex.key}` }),
     );
     t.is(
       // @ts-expect-error stupid errors
       error?.status,
       404,
-      `should delete the ${jobtype} from ${jobIndex.list}}`
+      `should delete the ${jobtype} from ${jobIndex.list}}`,
     );
 
     const day = moment().format('YYYY-MM-DD');
@@ -249,8 +249,8 @@ for (const doctype of doctypes) {
       (result7 as JsonObject)?._id,
       `resources/${jobIndex.key}`,
       `should put the ${jobtype} under today's day-index ${moment().format(
-        'YYYY-MM-DD'
-      )} within jobs-success`
+        'YYYY-MM-DD',
+      )} within jobs-success`,
     );
   });
 }

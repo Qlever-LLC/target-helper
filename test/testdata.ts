@@ -20,7 +20,7 @@ import assign from 'assign-deep';
 import cloneDeep from 'clone-deep';
 import debug from 'debug';
 import moment from 'moment';
-import tree from '../dist/tree.js'
+import tree from '../dist/tree.js';
 
 import type { OADAClient } from '@oada/client';
 
@@ -219,7 +219,7 @@ const items = Object.fromEntries(
         ptr.set(tree, { _type });
       }
 
-      //if (data.masterid) {
+      // If (data.masterid) {
       if (false) {
         // This is masterdata, add the expand-index and masterid-index to the tree
         // trellis-data-manager has done away with these things...
@@ -247,8 +247,8 @@ const items = Object.fromEntries(
           key,
         },
       ];
-    }
-  )
+    },
+  ),
 );
 // And finally, any inter-item relationships between master data:
 items.tp!.data.facilities = {
@@ -265,13 +265,13 @@ async function cleanup(keyOrKeys?: string | readonly string[]) {
   const keys = Array.isArray(keyOrKeys)
     ? keyOrKeys
     : keyOrKeys
-    ? [keyOrKeys]
-    : (Object.keys(items) as Array<keyof typeof items>);
+      ? [keyOrKeys]
+      : (Object.keys(items) as Array<keyof typeof items>);
   info('cleanup: removing any lingering test resources');
 
   for await (const k of keys) {
     trace('cleanup: removing resources+links if they exist for key %s', k);
-    const index = items[k as keyof typeof items]!;
+    const index = items[k]!;
     let path;
     // Delete the link path from the list:
     path = `${index.list}/${index.key}`;
@@ -317,7 +317,7 @@ async function cleanup(keyOrKeys?: string | readonly string[]) {
 
 async function putData(
   keyOrKeys: string | readonly string[],
-  merges?: unknown
+  merges?: unknown,
 ) {
   let keys = Object.keys(items);
   let dataMerges: unknown[] = [];
@@ -325,13 +325,13 @@ async function putData(
     keys = keyOrKeys as string[];
     dataMerges = (merges as unknown[]) ?? [];
   } else if (keyOrKeys) {
-    keys = [keyOrKeys as string];
+    keys = [keyOrKeys];
     dataMerges = [merges];
   }
 
   for await (const [ki, k] of Object.entries(keys)) {
     trace('putData: adding test data for key: %s', k);
-    // eslint-disable-next-line security/detect-object-injection
+
     const index = items[k]!;
     let data: unknown;
 
@@ -361,7 +361,7 @@ async function putData(
         ', _type = ',
         index._type,
         ', error = ',
-        error_
+        error_,
       );
       throw error_ as Error;
     }
@@ -379,7 +379,7 @@ async function putData(
           'Failed to make bookmarks for i.data.user. path = /',
           index.data.user.bookmarks._id,
           ', error = ',
-          error_
+          error_,
         );
         throw error_ as Error;
       }
@@ -391,17 +391,16 @@ async function putLink(keyOrKeys?: string | readonly string[]) {
   const keys = Array.isArray(keyOrKeys)
     ? keyOrKeys
     : keyOrKeys
-    ? [keyOrKeys]
-    : (Object.keys(items) as Array<keyof typeof items>);
+      ? [keyOrKeys]
+      : (Object.keys(items) as Array<keyof typeof items>);
 
   for await (const k of keys) {
-    // eslint-disable-next-line security/detect-object-injection
     const index = items[k]!;
     trace(
       'putLink: linking test data for key: ',
       k,
       ', under list ',
-      index.list
+      index.list,
     );
     let path;
 
@@ -423,7 +422,7 @@ async function putLink(keyOrKeys?: string | readonly string[]) {
         ', data = ',
         data,
         ', error = ',
-        error_
+        error_,
       );
       throw error_ as Error;
     }
@@ -465,7 +464,7 @@ async function putLink(keyOrKeys?: string | readonly string[]) {
 
 async function putAndLinkData(
   keyOrKeys: string | readonly string[],
-  merges?: unknown
+  merges?: unknown,
 ) {
   await putData(keyOrKeys, merges);
   await putLink(keyOrKeys);
@@ -475,12 +474,6 @@ function setConnection(theconnection: OADAClient) {
   con = theconnection;
 }
 
-export {
-  tree,
-  items,
-  cleanup,
-  putData,
-  putLink,
-  putAndLinkData,
-  setConnection,
-};
+export { items, cleanup, putData, putLink, putAndLinkData, setConnection };
+
+export { default as tree } from '../dist/tree.js';
