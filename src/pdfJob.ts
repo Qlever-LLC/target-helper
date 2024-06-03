@@ -35,7 +35,6 @@ import type Jobs from '@oada/types/oada/service/jobs.js';
 import type { Link } from '@oada/types/oada/link/v1.js';
 import { AssumeState, ChangeType, ListWatch } from '@oada/list-lib';
 import { Gauge } from '@oada/lib-prom';
-import type { Tree } from '@oada/types/oada/tree/v1.js';
 import type Update from '@oada/types/oada/service/job/update.js';
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
 import { connect } from '@oada/client';
@@ -46,14 +45,9 @@ import {
 
 import { fromOadaType, matchesAlternateUrlNames } from './conversions.js';
 import type { TreeKey } from './tree.js';
-import tree from './tree.js';
+import { tree, tpTree, documentTypeTree, tpDocsTree, tpDocumentTypeTree } from './tree.js';
 
-const PERSIST_INTERVAL = config.get('oada.listWatch.persistInterval');
-
-const tpDocumentTypeTree: Tree = JSON.parse(JSON.stringify(tree));
-delete tpDocumentTypeTree.bookmarks!.trellisfw!['trading-partners']![
-  'masterid-index'
-]!['*']!.shared!.trellisfw!.documents!['*']!['*'];
+//const PERSIST_INTERVAL = config.get('oada.listWatch.persistInterval');
 
 const error = debug('target-helper:error');
 const info = debug('target-helper:info');
@@ -980,6 +974,7 @@ export async function startJobCreator({
         conn: con,
         resume: false,
         onNewList: AssumeState.New,
+        tree: tpTree
       });
       tpWatch.on(ChangeType.ItemAdded, watchTp);
       process.on('beforeExit', async () => tpWatch.stop());
@@ -1001,6 +996,7 @@ export async function startJobCreator({
       conn: con,
       resume: false,
       onNewList: AssumeState.New,
+      tree: documentTypeTree
       //persistInterval: PERSIST_INTERVAL,
     });
     selfDocTypesWatch.on(ChangeType.ItemAdded, documentTypeAdded());
@@ -1061,6 +1057,7 @@ export async function startJobCreator({
         onNewList: AssumeState.New,
         conn: con,
         resume: false,
+        tree: tpDocsTree,
         //persistInterval: PERSIST_INTERVAL,
       });
       docsWatch.on(ChangeType.ItemAdded, documentTypeAdded(masterId));

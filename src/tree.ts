@@ -142,6 +142,35 @@ const tree: Tree = {
     },
   },
 };
+export { tree };
+
+const documentTypeTree: Tree = JSON.parse(JSON.stringify(tree));
+delete documentTypeTree.bookmarks!.trellisfw!.documents!['*'];
+export { documentTypeTree }
+
+const tpTree: Tree = JSON.parse(JSON.stringify(tree));
+delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['masterid-index']?.[
+  '*'
+]?.shared;
+delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['masterid-index']?.[
+  '*'
+]?.bookmarks;
+export { tpTree };
+
+const tpDocsTree: Tree = JSON.parse(JSON.stringify(tree));
+delete tpDocsTree.bookmarks!.trellisfw!['trading-partners']![
+  'masterid-index'
+]!['*']!.shared!.trellisfw!.documents!['*']!['*'];
+export { tpDocsTree };
+
+
+const tpDocumentTypeTree: Tree = JSON.parse(JSON.stringify(tree));
+delete tpDocumentTypeTree.bookmarks!.trellisfw!['trading-partners']![
+  'masterid-index'
+]!['*']!.shared!.trellisfw!.documents!['*']!['*'];
+delete tpDocumentTypeTree.bookmarks!.trellisfw!.documents!['*']!['*'];
+export { tpDocumentTypeTree };
+
 
 export default tree;
 export { type TreeKey } from '@oada/types/oada/tree/v1.js';
