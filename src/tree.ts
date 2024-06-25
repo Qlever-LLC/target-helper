@@ -44,6 +44,7 @@ const tree: Tree = {
         '_type': 'application/vnd.trellisfw.trading-partners.1+json',
         '*': {
           _type: 'application/vnd.trellisfw.trading-partner.1+json',
+          /*
           bookmarks: {
             _type: 'application/vnd.oada.bookmarks.1+json',
             trellisfw: {
@@ -55,8 +56,15 @@ const tree: Tree = {
               'cois': {
                 _type: 'application/vnd.trellisfw.cois.1+json',
               },
+              '*': {
+                '_type': 'application/vnd.trellisfw.doctype.1+json',
+                '*': {
+                  _type: 'application/vnd.trellisfw.document.1+json',
+                },
+              },
             },
           },
+          */
           shared: {
             _type: 'application/vnd.oada.bookmarks.1+json',
             trellisfw: {
@@ -67,44 +75,6 @@ const tree: Tree = {
               },
               'cois': {
                 _type: 'application/vnd.trellisfw.cois.1+json',
-              },
-            },
-          },
-        },
-        'masterid-index': {
-          '_type': 'application/vnd.trellisfw.trading-partners.1+json',
-          '*': {
-            _type: 'application/vnd.trellisfw.trading-partner.1+json',
-            bookmarks: {
-              _type: 'application/vnd.oada.bookmarks.1+json',
-              trellisfw: {
-                '_type': 'application/vnd.trellisfw.1+json',
-                documents,
-                'fsqa-audits': {
-                  _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
-                },
-                'cois': {
-                  _type: 'application/vnd.trellisfw.cois.1+json',
-                },
-                '*': {
-                  '_type': 'application/vnd.trellisfw.doctype.1+json',
-                  '*': {
-                    _type: 'application/vnd.trellisfw.document.1+json',
-                  },
-                },
-              },
-            },
-            shared: {
-              _type: 'application/vnd.oada.bookmarks.1+json',
-              trellisfw: {
-                '_type': 'application/vnd.trellisfw.1+json',
-                documents,
-                'fsqa-audits': {
-                  _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
-                },
-                'cois': {
-                  _type: 'application/vnd.trellisfw.cois.1+json',
-                },
               },
             },
           },
@@ -144,31 +114,27 @@ const tree: Tree = {
 };
 export { tree };
 
-const documentTypeTree: Tree = JSON.parse(JSON.stringify(tree));
-delete documentTypeTree.bookmarks!.trellisfw!.documents!['*'];
+const documentTypeTree: Tree = structuredClone(tree);
+delete documentTypeTree.bookmarks!.trellisfw!.documents!['*']!['*'];
+delete documentTypeTree.bookmarks!.trellisfw!['trading-partners'];
 export { documentTypeTree }
 
-const tpTree: Tree = JSON.parse(JSON.stringify(tree));
-delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['masterid-index']?.[
-  '*'
-]?.shared;
-delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['masterid-index']?.[
-  '*'
-]?.bookmarks;
+const tpTree: Tree = structuredClone(tree);
+delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['*']?.shared;
+delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['*']?.bookmarks;
+delete tpTree.bookmarks!.services;
 export { tpTree };
 
-const tpDocsTree: Tree = JSON.parse(JSON.stringify(tree));
-delete tpDocsTree.bookmarks!.trellisfw!['trading-partners']![
-  'masterid-index'
-]!['*']!.shared!.trellisfw!.documents!['*']!['*'];
+const tpDocsTree: Tree = structuredClone(tree);
+delete tpDocsTree.bookmarks!.trellisfw!['trading-partners']!['*']!.shared!.trellisfw!.documents!['*']!['*'];
+delete tpDocsTree.bookmarks!.services;
 export { tpDocsTree };
 
 
-const tpDocumentTypeTree: Tree = JSON.parse(JSON.stringify(tree));
-delete tpDocumentTypeTree.bookmarks!.trellisfw!['trading-partners']![
-  'masterid-index'
-]!['*']!.shared!.trellisfw!.documents!['*']!['*'];
+const tpDocumentTypeTree: Tree = structuredClone(tree);
+delete tpDocumentTypeTree.bookmarks!.trellisfw!['trading-partners']!['*']!.shared!.trellisfw!.documents!['*']!['*'];
 delete tpDocumentTypeTree.bookmarks!.trellisfw!.documents!['*']!['*'];
+delete tpDocumentTypeTree.bookmarks!.services;
 export { tpDocumentTypeTree };
 
 

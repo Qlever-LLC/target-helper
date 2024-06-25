@@ -1,6 +1,6 @@
 {
   "name": "@qlever-llc/target-helper",
-  "version": "1.6.5",
+  "version": "1.6.6",
   "description": "A Trellis microservice to fill in around Target integration",
   "author": "Andrew Balmos <andrew@qlever.io>",
   "license": "Apache-2.0",
@@ -115,5 +115,8 @@
   "packageManager": "yarn@4.2.2",
   "volta": {
     "node": "20.13.1"
+  },
+  "resolutions": {
+    "@oada/jobs": "portal:/home/sanoel/jobs"
   }
 }

@@ -279,9 +279,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/jobs@npm:^4.5.1":
-  version: 4.5.1
-  resolution: "@oada/jobs@npm:4.5.1"
+"@oada/jobs@portal:/home/sanoel/jobs::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@oada/jobs@portal:/home/sanoel/jobs::locator=%40qlever-llc%2Ftarget-helper%40workspace%3A."
   dependencies:
     "@ava/typescript": "npm:^4.1.0"
     "@oada/list-lib": "npm:^4.3.0"
@@ -314,9 +314,8 @@ __metadata:
       optional: true
   bin:
     oada-jobs: ./dist/cli.mjs
-  checksum: 10/798d4f07ea64956b978a9ef9c4d2c615262d1eb0234a68788989fc5cd2e0a7f92c5a985d9ddd5a6448b00563642456c9d2d82c60001b40a27e4d082a86a01d35
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "@oada/lib-config@npm:^3.7.0":
   version: 3.9.1

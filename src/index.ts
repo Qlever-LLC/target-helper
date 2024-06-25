@@ -72,6 +72,7 @@ await Promise.all(
           },
         ],
       },
+      concurrency: 10,
     }); // 1 concurrent job
 
     // --------------------------------------------------
