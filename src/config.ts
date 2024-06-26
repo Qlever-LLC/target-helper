@@ -59,6 +59,14 @@ const config = convict({
     },
   },
   timeouts: {
+    simx: {
+      doc: 'Timeout duration for Target themselves',
+      format: 'duration',
+      // The types for duration suck
+      default: 3_600_000 as unknown as number,
+      env: 'SIMX_TIMEOUT',
+      arg: 'simx-timeout',
+    },
     pdf: {
       doc: 'Timeout duration for PDF jobs',
       format: 'duration',
