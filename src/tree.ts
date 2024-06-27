@@ -45,7 +45,7 @@ const tree: Tree = {
         '*': {
           _type: 'application/vnd.trellisfw.trading-partner.1+json',
           /*
-          bookmarks: {
+          Bookmarks: {
             _type: 'application/vnd.oada.bookmarks.1+json',
             trellisfw: {
               '_type': 'application/vnd.trellisfw.1+json',
@@ -117,7 +117,7 @@ export { tree };
 const documentTypeTree: Tree = structuredClone(tree);
 delete documentTypeTree.bookmarks!.trellisfw!.documents!['*']!['*'];
 delete documentTypeTree.bookmarks!.trellisfw!['trading-partners'];
-export { documentTypeTree }
+export { documentTypeTree };
 
 const tpTree: Tree = structuredClone(tree);
 delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['*']?.shared;
@@ -126,17 +126,17 @@ delete tpTree.bookmarks!.services;
 export { tpTree };
 
 const tpDocsTree: Tree = structuredClone(tree);
-delete tpDocsTree.bookmarks!.trellisfw!['trading-partners']!['*']!.shared!.trellisfw!.documents!['*']!['*'];
+delete tpDocsTree.bookmarks!.trellisfw!['trading-partners']!['*']!.shared!
+  .trellisfw!.documents!['*']!['*'];
 delete tpDocsTree.bookmarks!.services;
 export { tpDocsTree };
 
-
 const tpDocumentTypeTree: Tree = structuredClone(tree);
-delete tpDocumentTypeTree.bookmarks!.trellisfw!['trading-partners']!['*']!.shared!.trellisfw!.documents!['*']!['*'];
+delete tpDocumentTypeTree.bookmarks!.trellisfw!['trading-partners']!['*']!
+  .shared!.trellisfw!.documents!['*']!['*'];
 delete tpDocumentTypeTree.bookmarks!.trellisfw!.documents!['*']!['*'];
 delete tpDocumentTypeTree.bookmarks!.services;
 export { tpDocumentTypeTree };
-
 
 export default tree;
 export { type TreeKey } from '@oada/types/oada/tree/v1.js';

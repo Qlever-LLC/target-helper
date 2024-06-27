@@ -200,7 +200,7 @@ const items = Object.fromEntries(
         source = 'trellisfw',
         list = `/bookmarks/${source}/${plural}`,
         _type = `application/vnd.${source}.${singular}.1+json`,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
+
         list_type = `application/vnd.${source}.${plural}.1+json`,
         data = { iam: k },
         ...rest

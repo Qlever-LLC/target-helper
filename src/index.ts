@@ -77,7 +77,11 @@ await Promise.all(
 
     // --------------------------------------------------
     // Set the job type handlers; timeout the job 2 minutes longer than target
-    service.on('transcription', config.get('timeouts.pdf') + 120_000, pdfJobHandler);
+    service.on(
+      'transcription',
+      config.get('timeouts.pdf') + 120_000,
+      pdfJobHandler,
+    );
     // Service.on('asn', config.get('timeouts.asn'), asnJobHandler);
 
     // --------------------------------------------------
