@@ -43,6 +43,7 @@ const warn = debug('target-helper:warn');
 
 const tokens = config.get('oada.token');
 const domain = config.get('oada.domain');
+const jobsConcurrency = config.get('oada.jobsConcurrency');
 if (domain.startsWith('http')) {
   //  Domain = domain.replace(/^https?:\/\//, '');
 }
@@ -72,12 +73,12 @@ await Promise.all(
           },
         ],
       },
-      concurrency: 10,
-    }); // 1 concurrent job
+      concurrency: jobsConcurrency,
+    });
 
     // --------------------------------------------------
-    // Set the job type handlers; timeout the job 2 minutes longer than target
-    service.on('transcription', config.get('timeouts.pdf') + 120_000, pdfJobHandler);
+    // Set the job type handlers; don't timeout jobs due to other jobs taking too long
+    service.on('transcription', config.get('timeouts.pdf')*jobsConcurrency, pdfJobHandler);
     // Service.on('asn', config.get('timeouts.asn'), asnJobHandler);
 
     // --------------------------------------------------

@@ -29,22 +29,20 @@ import oError from '@overleaf/o-error';
 
 import type { Change, JsonObject, OADAClient } from '@oada/client';
 import type { Job, Json, Logger, WorkerFunction } from '@oada/jobs'; import type { JWK } from '@trellisfw/signatures';
-//import type Job from '@oada/types/oada/service/job.js';
-//import type Jobs from '@oada/types/oada/service/jobs.js';
 import type { Link } from '@oada/types/oada/link/v1.js';
 import { AssumeState, ChangeType, ListWatch } from '@oada/list-lib';
 import { Gauge } from '@oada/lib-prom';
 import type Update from '@oada/types/oada/service/job/update.js';
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
 import { connect } from '@oada/client';
-import tSignatures from '@trellisfw/signatures';
 import {
   type default as Resource
 } from '@oada/types/oada/resource.js';
+import tSignatures from '@trellisfw/signatures';
 
 import { fromOadaType, matchesAlternateUrlNames } from './conversions.js';
+import { tree, tpTree, selfDocumentTypeTree, tpDocsTree, tpDocumentTypeTree } from './tree.js';
 import type { TreeKey } from './tree.js';
-import { tree, tpTree, documentTypeTree, tpDocsTree, tpDocumentTypeTree } from './tree.js';
 
 //const PERSIST_INTERVAL = config.get('oada.listWatch.persistInterval');
 
@@ -54,7 +52,7 @@ const trace = debug('target-helper:trace');
 
 const pending = '/bookmarks/services/target/jobs/pending';
 
-const targetTimeout = config.get('timeouts.simx');
+const targetTimeout = config.get('timeouts.pdf');
 const jobs = new Gauge({
   name: 'target_helper_jobs',
   help: 'Number of jobs in the pending queue',
@@ -296,11 +294,11 @@ async function targetSuccess({
 
         trace(`Updating resource type to ${newType}`);
         await oada.put({
-          path: job.config.document._id,
+          path: `/${job.config.document._id}`,
           data: { _type: newType },
         });
         await oada.put({
-          path: join(job.config.document._id, '_meta'),
+          path: join('/', job.config.document._id, '_meta'),
           data: { _type: newType },
         });
 
@@ -326,10 +324,10 @@ async function targetSuccess({
         documentData._id,
         job.config.document._id,
       );
-      const { data } = await oada.get({ path: documentData._id });
+      const { data: documentResource } = await oada.get({ path: `/${documentData._id }`});
       await oada.put({
         path: job.config.document._id,
-        data: stripResource(data as JsonObject),
+        data: stripResource(documentResource as JsonObject),
       });
 
       job.result[documentType] = {
@@ -599,6 +597,7 @@ async function handleTargetTimeout({
       data: {
         status: 'error',
         information: 'TimeoutError',
+        meta: 'Target took too long'
       },
     });
     // You can also throw an error or perform any other necessary actions
@@ -987,7 +986,7 @@ export async function startJobCreator({
       conn: con,
       resume: false,
       onNewList: AssumeState.New,
-      tree: documentTypeTree
+      tree: selfDocumentTypeTree
     });
     selfDocumentsTypesWatch.on(ChangeType.ItemAdded, documentTypeAdded());
     process.on('beforeExit', async () => selfDocumentsTypesWatch.stop());

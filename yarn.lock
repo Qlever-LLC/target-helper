@@ -199,6 +199,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jsep-plugin/assignment@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "@jsep-plugin/assignment@npm:1.2.1"
+  peerDependencies:
+    jsep: ^0.4.0||^1.0.0
+  checksum: 10/d8db45f052fd95b33207ded7f49af9ae48ff5ce10cb898e28a6fca722863f4a3330892c3a2c355a1a8c94fd230eef3db9be0c45324cb526e5edff7085c1f7a37
+  languageName: node
+  linkType: hard
+
+"@jsep-plugin/regex@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "@jsep-plugin/regex@npm:1.0.3"
+  peerDependencies:
+    jsep: ^0.4.0||^1.0.0
+  checksum: 10/c08c7bd79a164995923ea799949b9f6b18dcf2bd314522ed0dcfc669fd249a06fea200606086c7d54b12d39ce3cfa61d910229e5184c667ead135f6da6997532
+  languageName: node
+  linkType: hard
+
 "@mapbox/node-pre-gyp@npm:^1.0.5":
   version: 1.0.11
   resolution: "@mapbox/node-pre-gyp@npm:1.0.11"
@@ -370,26 +388,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/list-lib@npm:^5.0.4":
-  version: 5.0.4
-  resolution: "@oada/list-lib@npm:5.0.4"
+"@oada/list-lib@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "@oada/list-lib@npm:6.0.2"
   dependencies:
     "@oada/types": "npm:^3.5.3"
     abort-controller: "npm:^3.0.0"
-    debug: "npm:^4.3.4"
+    debug: "npm:^4.3.5"
     eventemitter3: "npm:^5.0.1"
     isomorphic-timers-promises: "npm:^1.0.1"
     json-ptr: "npm:^3.1.1"
-    jsonpath-plus: "npm:^8.0.0"
+    jsonpath-plus: "npm:^9.0.0"
     object-assign-deep: "npm:^0.4.0"
-    tslib: "npm:^2.6.2"
-    xksuid: "https://github.com/g12i/xksuid.git#fix-crypto-polyfill"
+    tslib: "npm:^2.6.3"
+    xksuid: "https://github.com/g12i/xksuid.git#commit=22a21eb01331191feb62ea0a4e67d96d2e80f396"
   peerDependencies:
     "@oada/client": ^5.0.0
   peerDependenciesMeta:
     "@oada/client":
       optional: true
-  checksum: 10/2131a0045c6c748f537ffdc96991ed820ec5c6e9289cca483600dbaecca6011ec3034e9d84982ffe6ed4b09b3f1c5d585d054fcf1ef964bd987a905e4c7093c1
+  checksum: 10/f7f07be6d7ff310d903f4e7a9c50b619bc2f22082950e9d244e967b0955ba8d0d1c0085a2dd9e1a675a11a507f1f30ee5a653e82ad658565fddcd3307374e23e
   languageName: node
   linkType: hard
 
@@ -474,9 +492,9 @@ __metadata:
   dependencies:
     "@ava/typescript": "npm:^5.0.0"
     "@oada/client": "npm:^5.1.0"
-    "@oada/jobs": "npm:^4.5.1"
+    "@oada/jobs": "npm:^4.5.2"
     "@oada/lib-prom": "npm:^3.8.0"
-    "@oada/list-lib": "npm:^5.0.4"
+    "@oada/list-lib": "npm:^6.0.2"
     "@oada/pino-debug": "npm:^3.10.0"
     "@oada/types": "npm:^3.4.5"
     "@overleaf/o-error": "npm:^3.4.0"
@@ -2156,6 +2174,18 @@ __metadata:
   dependencies:
     ms: "npm:^2.1.1"
   checksum: 10/d86fd7be2b85462297ea16f1934dc219335e802f629ca9a69b63ed8ed041dda492389bb2ee039217c02e5b54792b1c51aa96ae954cf28634d363a2360c7a1639
+  languageName: node
+  linkType: hard
+
+"debug@npm:^4.3.5":
+  version: 4.3.5
+  resolution: "debug@npm:4.3.5"
+  dependencies:
+    ms: "npm:2.1.2"
+  peerDependenciesMeta:
+    supports-color:
+      optional: true
+  checksum: 10/cb6eab424c410e07813ca1392888589972ce9a32b8829c6508f5e1f25f3c3e70a76731610ae55b4bbe58d1a2fffa1424b30e97fa8d394e49cd2656a9643aedd2
   languageName: node
   linkType: hard
 
@@ -4347,6 +4377,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jsep@npm:^1.3.8":
+  version: 1.3.8
+  resolution: "jsep@npm:1.3.8"
+  checksum: 10/ffbb24a01270139bb18886d235374110e35951a0e8b06b97b2a0ddd3b6d5fb68e696fdf18d444f1bc3a4db2fab418b354e077cdf6b36644e11ff08f069ad2b1c
+  languageName: node
+  linkType: hard
+
 "jsesc@npm:^3.0.2":
   version: 3.0.2
   resolution: "jsesc@npm:3.0.2"
@@ -4443,6 +4480,20 @@ __metadata:
     jsonpath: bin/jsonpath-cli.js
     jsonpath-plus: bin/jsonpath-cli.js
   checksum: 10/1954bbf0f9b2b8b749d0ed22cb84e0f475efe66c6cd186cbe0f97c1c8350ac68d156053ac690629cf9ad8ff00aa0fc8e2e97100a5cdd5ee7610074f5f7151650
+  languageName: node
+  linkType: hard
+
+"jsonpath-plus@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "jsonpath-plus@npm:9.0.0"
+  dependencies:
+    "@jsep-plugin/assignment": "npm:^1.2.1"
+    "@jsep-plugin/regex": "npm:^1.0.3"
+    jsep: "npm:^1.3.8"
+  bin:
+    jsonpath: bin/jsonpath-cli.js
+    jsonpath-plus: bin/jsonpath-cli.js
+  checksum: 10/a7b8099e92a8d11896857e55c48ce898180b6b2fa6a1db819dcdacf9741ae03a8b4263ae844b40d6a8e171c2d54e37d8ee3d206777e90ee0127246bae2102ee5
   languageName: node
   linkType: hard
 
@@ -6625,6 +6676,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tslib@npm:^2.6.3":
+  version: 2.6.3
+  resolution: "tslib@npm:2.6.3"
+  checksum: 10/52109bb681f8133a2e58142f11a50e05476de4f075ca906d13b596ae5f7f12d30c482feb0bff167ae01cfc84c5803e575a307d47938999246f5a49d174fc558c
+  languageName: node
+  linkType: hard
+
 "tunnel@npm:^0.0.6":
   version: 0.0.6
   resolution: "tunnel@npm:0.0.6"
@@ -7017,7 +7075,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xksuid@https://github.com/g12i/xksuid.git#fix-crypto-polyfill":
+"xksuid@https://github.com/g12i/xksuid.git#commit=22a21eb01331191feb62ea0a4e67d96d2e80f396, xksuid@https://github.com/g12i/xksuid.git#fix-crypto-polyfill":
   version: 0.0.3
   resolution: "xksuid@https://github.com/g12i/xksuid.git#commit=22a21eb01331191feb62ea0a4e67d96d2e80f396"
   checksum: 10/68c9ef072192b9ab7850da373036447de847b87828dec8b554a26200b0120c78c4be668e16eb52c21bdba6566bf66b5396a0a0e79c0fe265ffef1b22ed812327

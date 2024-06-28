@@ -48,9 +48,9 @@
   },
   "dependencies": {
     "@oada/client": "^5.1.0",
-    "@oada/jobs": "^4.5.1",
+    "@oada/jobs": "^4.5.2",
     "@oada/lib-prom": "^3.8.0",
-    "@oada/list-lib": "^5.0.4",
+    "@oada/list-lib": "^6.0.2",
     "@oada/pino-debug": "^3.10.0",
     "@oada/types": "^3.4.5",
     "@overleaf/o-error": "^3.4.0",

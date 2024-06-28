@@ -23,9 +23,6 @@ const documents: Tree = {
   '_type': 'application/vnd.trellisfw.documents.1+json',
   '*': {
     '_type': 'application/vnd.trellisfw.documents.1+json',
-    '*': {
-      _type: 'application/vnd.trellisfw.document.1+json',
-    },
   },
 };
 
@@ -70,12 +67,14 @@ const tree: Tree = {
             trellisfw: {
               '_type': 'application/vnd.trellisfw.1+json',
               documents,
+              /*
               'fsqa-audits': {
                 _type: 'application/vnd.trellisfw.fsqa-audits.1+json',
               },
               'cois': {
                 _type: 'application/vnd.trellisfw.cois.1+json',
               },
+              */
             },
           },
         },
@@ -114,20 +113,22 @@ const tree: Tree = {
 };
 export { tree };
 
-const documentTypeTree: Tree = structuredClone(tree);
-delete documentTypeTree.bookmarks!.trellisfw!.documents!['*']!['*'];
-delete documentTypeTree.bookmarks!.trellisfw!['trading-partners'];
-export { documentTypeTree }
+const selfDocumentTypeTree: Tree = structuredClone(tree);
+delete selfDocumentTypeTree.bookmarks!.trellisfw!.documents!['*']!['*'];
+delete selfDocumentTypeTree.bookmarks!.trellisfw!['trading-partners'];
+export { selfDocumentTypeTree }
 
 const tpTree: Tree = structuredClone(tree);
 delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['*']?.shared;
 delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['*']?.bookmarks;
 delete tpTree.bookmarks!.services;
+delete tpTree.bookmarks!.trellisfw!.documents;;
 export { tpTree };
 
 const tpDocsTree: Tree = structuredClone(tree);
 delete tpDocsTree.bookmarks!.trellisfw!['trading-partners']!['*']!.shared!.trellisfw!.documents!['*']!['*'];
 delete tpDocsTree.bookmarks!.services;
+delete tpDocsTree.bookmarks!.trellisfw!.documents;;
 export { tpDocsTree };
 
 

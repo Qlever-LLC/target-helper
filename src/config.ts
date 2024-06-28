@@ -48,6 +48,13 @@ const config = convict({
       env: 'CONCURRENCY',
       arg: 'concurrency',
     },
+    jobsConcurrency: {
+      doc: 'jobs concurrency',
+      format: Number,
+      default: 1,
+      env: 'JOBS_CONCURRENCY',
+      arg: 'jobs-concurrency',
+    },
     listWatch: {
       persistInterval: {
         doc: 'ListWatch frequency for updating rev (ms)',
