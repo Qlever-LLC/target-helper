@@ -14,7 +14,7 @@ extends:
   #- plugin:sonarjs/recommended
   - plugin:ava/recommended
   - xo
-  - prettier
+  - plugin:prettier/recommended
 
 plugins:
   - '@typescript-eslint'
@@ -37,7 +37,7 @@ parser: '@typescript-eslint/parser'
 
 parserOptions:
   ecmaVersion: 2020
-  project: ./**/tsconfig.*
+  project: ./tsconfig*.json
 
 overrides:
   - files: '*.ts'
@@ -45,16 +45,17 @@ overrides:
       - plugin:github/typescript
       - plugin:import/typescript
       - xo-typescript
-      - prettier
+      - plugin:prettier/recommended
     parserOptions:
       ecmaVersion: 2020
-      project: ./**/tsconfig.*
+      project: ./tsconfig*.json
     rules:
       prettier/prettier: off
       '@typescript-eslint/naming-convention':
         [
           error,
           { selector: default, format: [camelCase] },
+          { selector: import, modifiers: [default], format: null },
           { selector: objectLiteralProperty, format: null },
           { selector: enumMember, format: [PascalCase] },
           { selector: typeProperty, format: null },
@@ -64,6 +65,7 @@ overrides:
             format: [camelCase, UPPER_CASE],
             leadingUnderscore: allow,
           },
+          { selector: variable, modifiers: [destructured], format: null },
           {
             selector: parameter,
             format: [camelCase],
@@ -78,6 +80,7 @@ overrides:
           },
 
           { selector: typeLike, format: [PascalCase] },
+          { selector: parameter, modifiers: [destructured], format: null },
         ]
       '@typescript-eslint/restrict-template-expressions': 0
       '@typescript-eslint/no-shadow': warn
@@ -87,7 +90,7 @@ overrides:
           {
             args: after-used,
             ignoreRestSiblings: true,
-            varsIgnorePattern: ^_',
+            varsIgnorePattern: ^_,
             argsIgnorePattern: ^_,
           },
         ]
@@ -116,6 +119,7 @@ rules:
          */
       onNonMatchingHeader: append
       nonMatchingTolerance: 0.7
+  '@typescript-eslint/no-shadow': [warn, { allow: [_] }]
   sonarjs/no-duplicate-string: [warn, { threshold: 5 }]
   sonarjs/cognitive-complexity: warn
   eslint-comments/no-unused-disable: off
@@ -128,10 +132,20 @@ rules:
   eslint-comments/no-use: off
   no-secrets/no-secrets: [error, { tolerance: 5 }]
   no-empty-label: off
+  no-return-await: 0
   no-warning-comments: 0
   node/no-missing-import: off
   import/no-unresolved: off
   unicorn/prefer-spread: off
+  unicorn/prevent-abbreviations:
+    - warn
+    - replacements:
+        db: false
+        req: false
+        res: false
+        err: false
+        doc: false
+        docs: false
   no-constructor-bind/no-constructor-bind: error
   no-constructor-bind/no-constructor-state: error
   sort-imports: [warn, { allowSeparatedGroups: true }]
@@ -139,3 +153,4 @@ rules:
   ava/no-import-test-files: off
   ava/no-skip-test: warn
   ava/no-skip-assert: warn
+  ava/use-test: off

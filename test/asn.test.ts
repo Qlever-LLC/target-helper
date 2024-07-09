@@ -55,7 +55,7 @@ test.beforeEach(async () => {
 
 test('Should create a job to handle the test ASN when posted to /bookmarks/trellisfw/asns', async (t) => {
   // Get the initial job queue so we can figure out which job was created as a result of our posted test doc
-  const { data: oldJobs } = await con.get({
+  const { document: oldJobs } = await con.get({
     path: pending,
   });
 
@@ -69,7 +69,7 @@ test('Should create a job to handle the test ASN when posted to /bookmarks/trell
   await setTimeout(500); // Give it a second to make the job
 
   // get the new job list, find the new key
-  const { data: newJobs } = await con.get({
+  const { document: newJobs } = await con.get({
     path: pending,
   });
   jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]!; // Assume first difference is new one
@@ -95,7 +95,7 @@ test('Should create a job to handle the test ASN when posted to /bookmarks/trell
   });
   await setTimeout(1500); // Wait for oada-jobs to move it to jobs-success
   try {
-    const { data: doesnotexist } = await con.get({
+    const { document: doesnotexist } = await con.get({
       path: `${pending}/${jobkey}`,
     });
     t.true(doesnotexist);
@@ -107,7 +107,7 @@ test('Should create a job to handle the test ASN when posted to /bookmarks/trell
 
 test('Should error on an ASN job which posts an invalid update (i.e. update is a string)', async (t) => {
   // Get the initial job queue so we can figure out which job was created as a result of our posted test doc
-  const { data: oldJobs } = await con.get({
+  const { document: oldJobs } = await con.get({
     path: `${pending}`,
   });
 
@@ -122,7 +122,7 @@ test('Should error on an ASN job which posts an invalid update (i.e. update is a
   const day = moment().format('YYYY-MM-DD'); // Keep this for the day-index below
 
   // get the new job list, find the new key
-  const { data: newJobs } = await con.get({
+  const { document: newJobs } = await con.get({
     path: `${pending}`,
   });
   jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]!; // Assume first difference is new one
@@ -149,13 +149,13 @@ test('Should error on an ASN job which posts an invalid update (i.e. update is a
   await setTimeout(1500); // Wait for oada-jobs to move it to jobs-error
   const doesnotexist = await con
     .get({ path: `${pending}/${jobkey}` })
-    .then((r) => r.data)
+    .then((r) => r.document)
     .catch((error) => error.status === 404);
   const errorexists = await con
     .get({
       path: `/bookmarks/services/target/jobs/failure/day-index/${day}/${jobkey}`,
     })
-    .then((r) => Boolean(r.data))
+    .then((r) => Boolean(r.document))
     .catch(() => false);
   t.true(doesnotexist);
   t.true(errorexists);

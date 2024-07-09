@@ -47,5 +47,5 @@ test.only('Should process jobs created outside of the trading-partners lists', a
     },
   });
   t.truthy(jobResult);
-  console.log(jobResult);
+  t.log(jobResult);
 });

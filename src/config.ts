@@ -55,15 +55,6 @@ const config = convict({
       env: 'JOBS_CONCURRENCY',
       arg: 'jobs-concurrency',
     },
-    listWatch: {
-      persistInterval: {
-        doc: 'ListWatch frequency for updating rev (ms)',
-        format: Number,
-        default: 2000,
-        env: 'PERSIST_INTERVAL',
-        arg: 'persistInterval',
-      },
-    },
   },
   timeouts: {
     simx: {

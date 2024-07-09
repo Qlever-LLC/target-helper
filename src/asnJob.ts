@@ -26,7 +26,6 @@ import {
 import type { Json, WorkerFunction } from '@oada/jobs';
 import { ListWatch } from '@oada/list-lib';
 import type Update from '@oada/types/oada/service/job/update.js';
-import config from './config.js';
 
 import tree from './tree.js';
 
@@ -35,7 +34,6 @@ const warn = debug('target-helper#asn:warn');
 const info = debug('target-helper#asn:info');
 const trace = debug('target-helper#asn:trace');
 
-const PERSIST_INTERVAL = config.get('oada.listWatch.persistInterval');
 const pending = '/bookmarks/services/target/jobs/pending';
 
 // ------------------------------------------------------------------------------------------------------------
@@ -334,7 +332,6 @@ export async function startJobCreator({
       // TODO: actually check if each thing has a target job in its _meta?
       onNewList: ListWatch.AssumeHandled,
       // TODO: onDeleteList
-      persistInterval: PERSIST_INTERVAL,
     });
   } catch (cError: unknown) {
     error(cError, 'uncaught exception in watching /bookmarks/trellisfw/asns');

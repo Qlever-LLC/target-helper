@@ -175,14 +175,14 @@ for (const doctype of doctypes) {
     const jobIndex = items[jobtype]!;
 
     const path = `/resources/${items.pdf?.key}/_meta/services/target/jobs/${jobIndex.key}`;
-    const { data: result1 } = await con.get({ path });
+    const { document: result1 } = await con.get({ path });
     t.is(
       (result1 as JsonObject)?._ref,
       `resources/${jobIndex.key}`,
       `should _ref the ${jobtype} under pdf/_meta/services/target/jobs`,
     );
 
-    const { data: result2 } = await con.get({
+    const { document: result2 } = await con.get({
       path: `/resources/${index.key}/_meta/vdoc`,
     });
     t.deepEqual(
@@ -193,7 +193,7 @@ for (const doctype of doctypes) {
       `should link to the PDF at _meta/vdoc/pdf in the ${doctype} resource`,
     );
 
-    const { data: result3 } = await con.get({
+    const { document: result3 } = await con.get({
       path: `/resources/${items.pdf?.key}/_meta/vdoc/${index.name.plural}/${index.key}`,
     });
     t.deepEqual(
@@ -202,7 +202,7 @@ for (const doctype of doctypes) {
       `should _ref the ${doctype} from _meta/vdoc/${index.name.plural}/<id> in PDF resource`,
     );
 
-    const { data: result4 } = await con.get({
+    const { document: result4 } = await con.get({
       path: `${index.list}/${index.key}`,
     });
     t.is(
@@ -211,7 +211,7 @@ for (const doctype of doctypes) {
       `should put ${doctype} up at ${index.list}/<key>`,
     );
 
-    const { data: result5 } = await con.get({
+    const { document: result5 } = await con.get({
       path: `/resources/${index.key}/signatures`,
     });
     if (t.assert(Array.isArray(result5))) {
@@ -222,7 +222,7 @@ for (const doctype of doctypes) {
       );
     }
 
-    const { data: result6 } = await con.get({
+    const { document: result6 } = await con.get({
       path: `/resources/${jobIndex.key}/status`,
     });
     t.is(
@@ -242,7 +242,7 @@ for (const doctype of doctypes) {
     );
 
     const day = moment().format('YYYY-MM-DD');
-    const { data: result7 } = await con.get({
+    const { document: result7 } = await con.get({
       path: `/bookmarks/services/target/jobs/success/day-index/${day}/${jobIndex.key}`,
     });
     t.is(
