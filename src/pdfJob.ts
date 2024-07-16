@@ -237,8 +237,6 @@ export async function composeResult(
   return job.result;
 }
 
-
-
 async function handleTargetTimeout({
   jobId,
   oada,

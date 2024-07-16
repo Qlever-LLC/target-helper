@@ -30,11 +30,15 @@ import { Service } from '@oada/jobs';
   jobHandler as asnJobHandler,
   startJobCreator as asnStartJobCreator,
   } from './asnJob.js';
-  */
+*/
 import {
   jobHandler as pdfJobHandler,
   startJobCreator as pdfStartJobCreator,
 } from './pdfJob.js';
+
+import {
+  jobHandler as transcriptionOnlyJobHandler,
+} from './transcriptionOnly.js';
 
 const error = debug('target-helper:error');
 const info = debug('target-helper:info');
@@ -83,10 +87,11 @@ await Promise.all(
       config.get('timeouts.pdf')*jobsConcurrency,
       pdfJobHandler,
     );
+
     service.on(
       'transcription-only',
       config.get('timeouts.pdf')*jobsConcurrency,
-      pdfJobHandler,
+      transcriptionOnlyJobHandler,
     );
     // Service.on('asn', config.get('timeouts.asn'), asnJobHandler);
 
