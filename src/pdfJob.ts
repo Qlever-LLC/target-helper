@@ -20,29 +20,27 @@ import config from './config.js';
 // eslint-disable-next-line unicorn/import-style
 import { join } from 'node:path';
 
+import debug from 'debug';
+import moment from 'moment';
+import oError from '@overleaf/o-error';
+
 import { AssumeState, ChangeType, ListWatch } from '@oada/list-lib';
 import type { Change, JsonObject, OADAClient } from '@oada/client';
 import type { Job, Json, Logger, WorkerFunction } from '@oada/jobs';
+
+import { Gauge } from '@oada/lib-prom';
+import type { Link } from '@oada/types/oada/link/v1.js';
+import type Resource from '@oada/types/oada/resource.js';
+import type Update from '@oada/types/oada/service/job/update.js';
+import { assert as assertJob } from '@oada/types/oada/service/job.js';
+import { connect } from '@oada/client';
+
 import { handleShares, recursiveSignLinks } from './pdfJobPostProc.js';
 import {
   recursiveMakeAllLinksVersioned,
   recursiveReplaceLinksWithReferences,
   stripResource,
 } from './utils.js';
-
-import { assert as assertJob } from '@oada/types/oada/service/job.js';
-import clone from 'clone-deep';
-import { connect } from '@oada/client';
-import debug from 'debug';
-import { fromOadaType } from './conversions.js';
-import { Gauge } from '@oada/lib-prom';
-import type { Link } from '@oada/types/oada/link/v1.js';
-import moment from 'moment';
-import oError from '@overleaf/o-error';
-import type Resource from '@oada/types/oada/resource.js';
-import type { TreeKey } from './tree.js';
-import type Update from '@oada/types/oada/service/job/update.js';
-
 import {
   selfDocumentTypeTree,
   tpDocsTree,
@@ -50,6 +48,8 @@ import {
   tpTree,
   tree,
 } from './tree.js';
+import type { TreeKey } from './tree.js';
+import { fromOadaType } from './conversions.js';
 
 const error = debug('target-helper:error');
 const info = debug('target-helper:info');
@@ -311,7 +311,7 @@ async function jobChange({
       v.time = moment(Number.parseInt(v.time, 10) * 1000).toISOString();
     }
 
-    const t = clone(v.time);
+    const t = structuredClone(v.time);
     v.time = moment(v.time).toISOString();
     if (v.time === null) {
       // @ts-expect-error --- ?
