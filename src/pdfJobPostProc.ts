@@ -15,21 +15,21 @@
  * limitations under the License.
  */
 
-import type {
-  ExpandIndex,
-  TargetJob
-} from './pdfJob.js';
-import { has, treeForDocumentType } from './utils.js';
-import type { Json, Logger } from '@oada/jobs';
-import clone from 'clone-deep';
 import config from './config.js';
+
+import { readFile } from 'node:fs/promises';
+
 import debug from 'debug';
+
+import type { Json, Logger } from '@oada/jobs';
 import type { JWK } from '@trellisfw/signatures';
 import type { Link } from '@oada/types/oada/link/v1.js';
 import type { OADAClient } from '@oada/client';
-import { readFile } from 'node:fs/promises';
-import { tree } from './tree.js';
 import tSignatures from '@trellisfw/signatures';
+
+import type { ExpandIndex, TargetJob } from './pdfJob.js';
+import { has, treeForDocumentType } from './utils.js';
+import { tree } from './tree.js';
 
 const error = debug('target-helper:error');
 const info = debug('target-helper:info');
@@ -88,7 +88,7 @@ export async function handleShares(
             doc: document,
             dockey,
             shares,
-            expandIndex
+            expandIndex,
           });
           break;
         }
@@ -100,7 +100,7 @@ export async function handleShares(
             doc: document,
             dockey,
             shares,
-            expandIndex
+            expandIndex,
           });
           break;
         }
@@ -163,14 +163,15 @@ export async function handleShares(
     );
     for await (const { dockey, doc, tp } of shares) {
       const tpKey = tp._id.replace(/^resources\//, '');
-      const { data: user } = await oada.get({ path: `/${tp._id}/user` }) as unknown as { data: Link };
+      const { data: user } = (await oada.get({
+        path: `/${tp._id}/user`,
+      })) as unknown as { data: Link };
       if (user instanceof Uint8Array) {
         throw new TypeError('user was not JSON');
       }
 
       // HACK FOR DEMO UNTIL WE GET MASKING SETTINGS:
-      let mask: Mask | boolean =
-        false;
+      let mask: Mask | boolean = false;
       if (tpKey.includes('REDDYRAW')) {
         info('COPY WILL MASK LOCATIONS FOR REDDYRAW');
         trace(
@@ -184,10 +185,9 @@ export async function handleShares(
       }
       // END HACK FOR DEMO
 
-      await postSharesJob({doc, doctype, dockey, tpKey, user, mask, oada});
+      await postSharesJob({ doc, doctype, dockey, tpKey, user, mask, oada });
     }
   }
-
 }
 
 async function postSharesJob({
@@ -198,14 +198,14 @@ async function postSharesJob({
   user,
   mask,
   oada,
-} : {
-  doc: Link,
-  doctype: string,
-  dockey: string,
-  tpKey: string,
-  user: Link,
-  mask: Mask | boolean,
-  oada: OADAClient,
+}: {
+  doc: Link;
+  doctype: string;
+  dockey: string;
+  tpKey: string;
+  user: Link;
+  mask: Mask | boolean;
+  oada: OADAClient;
 }) {
   const {
     headers: { 'content-location': location },
@@ -246,10 +246,13 @@ async function postSharesJob({
   });
   const jobkey = jobpath?.replace(/^\/resources\/[^/]+\//, '');
   trace('Posted jobkey %s for shares', jobkey);
-
 }
 
-export async function recursiveSignLinks(object: unknown, oada: OADAClient, log: Logger): Promise<void> {
+export async function recursiveSignLinks(
+  object: unknown,
+  oada: OADAClient,
+  log: Logger,
+): Promise<void> {
   if (typeof object !== 'object' || !object) {
     return;
   }
@@ -274,7 +277,7 @@ async function pushSharesForFacility({
   doc,
   dockey,
   shares,
-  expandIndex
+  expandIndex,
 }: {
   facilityid: string;
   doc: { _id: string };
@@ -301,7 +304,7 @@ async function pushSharesForFacility({
     }
 
     // Do we need this cloneDeep?
-    const { id, ...tp } = clone(tpv);
+    const { id, ...tp } = structuredClone(tpv);
     const s = { tp: { _id: id, ...tp }, doc, dockey };
     shares.push(s);
     trace('Added share to running list: %O', s);
@@ -392,8 +395,8 @@ async function signResourceForTarget({
 
 interface Mask {
   keys_to_mask: string[];
-  generate_pdf: boolean
-};
+  generate_pdf: boolean;
+}
 
 type Shares = Array<{
   dockey: string;
@@ -480,4 +483,3 @@ async function handleResultMismatch(
   return job.result;
 }
 */
-

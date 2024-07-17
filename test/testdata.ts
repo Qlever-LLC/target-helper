@@ -17,10 +17,10 @@
 
 import { JsonPointer } from 'json-ptr';
 import assign from 'assign-deep';
-import cloneDeep from 'clone-deep';
 import debug from 'debug';
 import moment from 'moment';
-import tree from '../dist/tree.js';
+
+import { tree } from '../dist/tree.js';
 
 import type { OADAClient } from '@oada/client';
 
@@ -108,10 +108,10 @@ const jobtemplate: Item = {
 };
 
 const baseItems: Record<string, Item> = {
-  coijob: cloneDeep(jobtemplate),
-  auditjob: cloneDeep(jobtemplate),
-  certjob: cloneDeep(jobtemplate),
-  logjob: cloneDeep(jobtemplate),
+  coijob: structuredClone(jobtemplate),
+  auditjob: structuredClone(jobtemplate),
+  certjob: structuredClone(jobtemplate),
+  logjob: structuredClone(jobtemplate),
 
   // -------------------------------------
   // Documents:
@@ -429,7 +429,7 @@ async function putLink(keyOrKeys?: string | readonly string[]) {
 
     if (index.data.masterid) {
       // This is master data, so put it into the expand-index and masterid-index
-      const masterMada = cloneDeep(index.data);
+      const masterMada = structuredClone(index.data);
       masterMada.id = `resources/${index.key}`;
       // Put the expand-index:
       path = `${index.list}/expand-index`;

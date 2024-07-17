@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-
-
 /**
  * Helper because TS is dumb and doesn't realize `in` means the key definitely exists.
  */
@@ -30,14 +28,14 @@ export function has<T, K extends string>(
 // Because OADA resource keys are always in the way
 export function stripResource<
   T extends
-  | {
-    _id?: unknown;
-    _rev?: unknown;
-    _meta?: unknown;
-    _type?: unknown;
-    _ref?: unknown;
-  }
-  | undefined,
+    | {
+        _id?: unknown;
+        _rev?: unknown;
+        _meta?: unknown;
+        _type?: unknown;
+        _ref?: unknown;
+      }
+    | undefined,
 >(resource: T) {
   if (!resource) {
     return resource;
@@ -124,4 +122,3 @@ export function treeForDocumentType(doctype: string) {
     },
   };
 }
-

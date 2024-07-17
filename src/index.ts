@@ -35,10 +35,7 @@ import {
   jobHandler as pdfJobHandler,
   startJobCreator as pdfStartJobCreator,
 } from './pdfJob.js';
-
-import {
-  jobHandler as transcriptionOnlyJobHandler,
-} from './transcriptionOnly.js';
+import { jobHandler as transcriptionOnlyJobHandler } from './transcriptionOnly.js';
 
 const error = debug('target-helper:error');
 const info = debug('target-helper:info');
@@ -84,13 +81,13 @@ await Promise.all(
     // Set the job type handlers; don't timeout jobs due to other jobs taking too long
     service.on(
       'transcription',
-      config.get('timeouts.pdf')*jobsConcurrency,
+      config.get('timeouts.pdf') * jobsConcurrency,
       pdfJobHandler,
     );
 
     service.on(
       'transcription-only',
-      config.get('timeouts.pdf')*jobsConcurrency,
+      config.get('timeouts.pdf') * jobsConcurrency,
       transcriptionOnlyJobHandler,
     );
     // Service.on('asn', config.get('timeouts.asn'), asnJobHandler);

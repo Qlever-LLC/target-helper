@@ -148,7 +148,7 @@ for (const doctype of doctypes) {
     // @ts-expect-error dumb errors
     t.is(error4?.status, 403); // Unauthorized on /resources that don't exist
 
-    const { document: result1 } = await con.get({
+    const { data: result1 } = await con.get({
       path: `resources/${jobIndex.key}/status`,
     });
     t.is(
@@ -166,7 +166,7 @@ for (const doctype of doctypes) {
     t.is(error5?.status, 404);
 
     const day = moment().format('YYYY-MM-DD');
-    const { document: result2 } = await con.get({
+    const { data: result2 } = await con.get({
       path: `/bookmarks/services/target/jobs/failure/day-index/${day}/${jobIndex.key}`,
     });
     t.is(

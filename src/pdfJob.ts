@@ -20,7 +20,6 @@ import config from './config.js';
 // eslint-disable-next-line unicorn/import-style
 import { join } from 'node:path';
 
-
 import { AssumeState, ChangeType, ListWatch } from '@oada/list-lib';
 import type { Change, JsonObject, OADAClient } from '@oada/client';
 import type { Job, Json, Logger, WorkerFunction } from '@oada/jobs';
@@ -28,7 +27,7 @@ import { handleShares, recursiveSignLinks } from './pdfJobPostProc.js';
 import {
   recursiveMakeAllLinksVersioned,
   recursiveReplaceLinksWithReferences,
-  stripResource
+  stripResource,
 } from './utils.js';
 
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
@@ -139,9 +138,8 @@ async function targetSuccess({
   const job = r.data as unknown as TargetJob;
   const pdfId = job.config.pdf._id;
 
-
   // ------------- 1: get result from targetResult
-  job.result = await composeResult(jobId, job, oada, log)
+  job.result = await composeResult(jobId, job, oada, log);
 
   // ------------- 2: sign audit/coi/etc.
   void log.info('helper: signing all links in result', {});
@@ -196,7 +194,7 @@ export async function composeResult(
   jobId: string,
   job: TargetJob,
   oada: OADAClient,
-  log: Logger
+  log: Logger,
 ) {
   job.result = {};
 
@@ -211,7 +209,9 @@ export async function composeResult(
         documentData._id,
         job.config.document._id,
       );
-      const { data: documentResource } = await oada.get({ path: `/${documentData._id }`});
+      const { data: documentResource } = await oada.get({
+        path: `/${documentData._id}`,
+      });
       await oada.put({
         path: `/${job.config.document._id}`,
         data: stripResource(documentResource as JsonObject),
@@ -254,7 +254,7 @@ async function handleTargetTimeout({
       data: {
         status: 'error',
         information: 'TimeoutError',
-        meta: 'Target took too long'
+        meta: 'Target took too long',
       },
     });
     // You can also throw an error or perform any other necessary actions
@@ -274,7 +274,15 @@ async function jobChange({
   oada: OADAClient;
   c: Omit<Change, 'resource_id'>;
   unwatch: () => Promise<void>;
-  onTargetSuccess: ({jobId, oada, log} : {jobId: string, oada: OADAClient, log: Logger }) => Promise<Json>;
+  onTargetSuccess: ({
+    jobId,
+    oada,
+    log,
+  }: {
+    jobId: string;
+    oada: OADAClient;
+    log: Logger;
+  }) => Promise<Json>;
 }) {
   trace('#jobChange: received change, c = %O ', c);
   if (c.path !== '') {
@@ -340,10 +348,7 @@ async function jobChange({
           error('Target job [%s] failed: %O', jobId, v.information);
         }
 
-        throw new Error(
-          `Target job ${jobId} returned an error`,
-          { cause: v }
-        );
+        throw new Error(`Target job ${jobId} returned an error`, { cause: v });
       }
 
       default:
@@ -359,12 +364,20 @@ export async function handleJob({
   jobId,
   log,
   oada,
-  onTargetSuccess
+  onTargetSuccess,
 }: {
   jobId: string;
   log: Logger;
   oada: OADAClient;
-  onTargetSuccess: ({jobId, oada, log} : {jobId: string, oada: OADAClient, log: Logger }) => Promise<Json>;
+  onTargetSuccess: ({
+    jobId,
+    oada,
+    log,
+  }: {
+    jobId: string;
+    oada: OADAClient;
+    log: Logger;
+  }) => Promise<Json>;
   // @ts-expect-error rewrite differently?
 }): Promise<Json> {
   try {
@@ -383,7 +396,7 @@ export async function handleJob({
       log,
       oada,
       unwatch,
-      onTargetSuccess
+      onTargetSuccess,
     });
 
     for await (const change of changes) {
@@ -393,7 +406,7 @@ export async function handleJob({
         oada,
         c: change,
         unwatch,
-        onTargetSuccess
+        onTargetSuccess,
       });
       if (result !== undefined) {
         return result;
@@ -411,13 +424,21 @@ async function makeSyntheticChange({
   log,
   oada,
   unwatch,
-  onTargetSuccess
+  onTargetSuccess,
 }: {
   jobId: string;
   log: Logger;
   oada: OADAClient;
   unwatch: () => Promise<void>;
-  onTargetSuccess: ({jobId, oada, log} : {jobId: string, oada: OADAClient, log: Logger }) => Promise<Json>;
+  onTargetSuccess: ({
+    jobId,
+    oada,
+    log,
+  }: {
+    jobId: string;
+    oada: OADAClient;
+    log: Logger;
+  }) => Promise<Json>;
 }): Promise<void> {
   const { data } = await oada.get({
     path: `/${jobId}`,
@@ -439,7 +460,7 @@ async function makeSyntheticChange({
       type: 'merge',
     },
     unwatch,
-    onTargetSuccess
+    onTargetSuccess,
   });
 }
 
@@ -499,7 +520,7 @@ export async function startJobCreator({
       conn: con,
       resume: false,
       onNewList: AssumeState.New,
-      tree: selfDocumentTypeTree
+      tree: selfDocumentTypeTree,
     });
     selfDocumentsTypesWatch.on(ChangeType.ItemAdded, documentTypeAdded());
     process.on('beforeExit', async () => selfDocumentsTypesWatch.stop());
@@ -517,19 +538,23 @@ export async function startJobCreator({
 
       let count = 0;
       await Promise.all(
-        Object.entries<Job & { _rev: string }>(pendingJobs).map(async ([key, job]) => {
-          if (key.startsWith('_')) {
-            return;
-          }
+        Object.entries<Job & { _rev: string }>(pendingJobs).map(
+          async ([key, job]) => {
+            if (key.startsWith('_')) {
+              return;
+            }
 
-          if (Object.keys(job).length === 1 && job._rev) {
-            count++;
-            info(`cleaning up broken job ${pending}/${key} (total: ${count})`);
-            await con.delete({
-              path: `${pending}/${key}`,
-            });
-          }
-        }),
+            if (Object.keys(job).length === 1 && job._rev) {
+              count++;
+              info(
+                `cleaning up broken job ${pending}/${key} (total: ${count})`,
+              );
+              await con.delete({
+                path: `${pending}/${key}`,
+              });
+            }
+          },
+        ),
       );
       // Info(`Done cleaning up ${count} target jobs`);
     }
@@ -654,7 +679,8 @@ export async function startJobCreator({
           const pdfs = Object.values(meta.vdoc.pdf);
           const pdf = pdfs[0];
           info(
-            `New Document was for ${masterid ? `tp with masterid=${masterid}` : 'Non-Trading Partner'
+            `New Document was for ${
+              masterid ? `tp with masterid=${masterid}` : 'Non-Trading Partner'
             }`,
           );
           info('New Document posted at %s/%s', typePath, key);
@@ -728,29 +754,29 @@ export async function startJobCreator({
 
 interface ExpandIndexItem {
   id: string;
-  facilities?: Record<string, { _id: string}>
+  facilities?: Record<string, { _id: string }>;
 }
 export interface ExpandIndex {
   'trading-partners': Record<string, ExpandIndexItem>;
   'coi-holders': Record<string, Record<string, unknown>>;
-};
+}
 
 export interface TargetJobConfig {
-  type: 'pdf';
-  pdf: {
+  'type': 'pdf';
+  'pdf': {
     _id: string;
   };
-  document: {
+  'document': {
     _id: string;
   };
-  docKey: string;
+  'docKey': string;
   'document-type': string;
   'oada-doc-type': string;
 }
 
-export interface TargetJob{
-  config: TargetJobConfig;
+export interface TargetJob {
+  'config': TargetJobConfig;
   'trading-partner'?: string;
-  targetResult: List<List<Link>>;
-  result: List<List<Link>>;
+  'targetResult': List<List<Link>>;
+  'result': List<List<Link>>;
 }

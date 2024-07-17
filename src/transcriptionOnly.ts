@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-import { handleJob, jobs } from './pdfJob.js';
-import type { Json, Logger, WorkerFunction } from '@oada/jobs';
-import { assert as assertJob } from '@oada/types/oada/service/job.js';
 import debug from 'debug';
+
+import type { Json, Logger, WorkerFunction } from '@oada/jobs';
 import type { Link } from '@oada/types/oada/link/v1.js';
 import type { OADAClient } from '@oada/client';
+import { assert as assertJob } from '@oada/types/oada/service/job.js';
+
+import { handleJob, jobs } from './pdfJob.js';
 import { recursiveReplaceLinksWithReferences } from './utils.js';
 import { recursiveSignLinks } from './pdfJobPostProc.js';
 
@@ -70,7 +72,6 @@ async function targetSuccess({
   assertJob(r.data);
   const job = r.data as unknown as TranscriptionOnlyJob;
   const pdfId = job.config.pdf._id;
-
 
   // ------------- 1: get result from targetResult
   job.result = job.targetResult;
@@ -124,8 +125,8 @@ interface TranscriptionOnlyJobConfig {
 }
 
 interface TranscriptionOnlyJob {
-  config: TranscriptionOnlyJobConfig;
+  'config': TranscriptionOnlyJobConfig;
   'trading-partner': string;
-  targetResult: List<List<Link>>;
-  result: List<List<Link>>;
+  'targetResult': List<List<Link>>;
+  'result': List<List<Link>>;
 }

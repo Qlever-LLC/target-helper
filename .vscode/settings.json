@@ -18,7 +18,7 @@
     "**/.pnp.*": true,
     "tags.*": true
   },
-  "prettier.prettierPath": ".yarn/sdks/prettier/index.js",
+  "prettier.prettierPath": ".yarn/sdks/prettier/index.cjs",
   "typescript.tsdk": ".yarn/sdks/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "eslint.nodePath": ".yarn/sdks",
@@ -48,6 +48,7 @@
     "Buildx",
     "codeql",
     "coiholder",
+    "coijob",
     "cois",
     "copack",
     "ecoli",

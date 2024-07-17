@@ -35,7 +35,6 @@ To add this service to the services run with an OADA v3 server,
 simply add a snippet like the one in the previous section
 to your `docker-compose.override.yml`.
 
-
 ###Jobs
 
 The service provides the following job handlers:
@@ -76,6 +75,7 @@ let { target } = jobResult;
 ```
 
 ### `transcription`
+
 Sorry about the poor naming; this should eventually be deprecated and renamed...
 This job type is intended for specific workflows utilizing the startJobCreator in src/pdfJob to create jobs when
 docs show up in the trading-partner's or smithfield's `/bookmarks/services/trellisfw/documents` endpoints.
