@@ -9,9 +9,9 @@ A microservice to simplify Target interaction with Trellis. Target will:
 
 - watch a job queue,
 - receiving a job (PDF to scrape in config/pdf, ASN to read in config/asn)
-- post status updates (/bookmarks/services/target/jobs/<jobid>/updates),
+- post status updates (/bookmarks/services/target/jobs/\<jobid\>/updates),
 - put back link to resulting scraped JSON or successful ASN processing,
-- post final status update wtih status: success
+- post final status update with status: success
 
 `target-helper` will fill in around this
 
@@ -35,7 +35,7 @@ To add this service to the services run with an OADA v3 server,
 simply add a snippet like the one in the previous section
 to your `docker-compose.override.yml`.
 
-###Jobs
+### Jobs
 
 The service provides the following job handlers:
 

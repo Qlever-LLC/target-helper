@@ -21,7 +21,7 @@ import test from 'ava';
 
 import { setTimeout } from 'isomorphic-timers-promises';
 
-import _ from 'lodash';
+import { difference } from 'lodash-es';
 import moment from 'moment';
 
 import { connect } from '@oada/client';
@@ -72,7 +72,10 @@ test('Should create a job to handle the test ASN when posted to /bookmarks/trell
   const { data: newJobs } = await con.get({
     path: pending,
   });
-  jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]!; // Assume first difference is new one
+  jobkey = difference(
+    Object.keys(newJobs ?? {}),
+    Object.keys(oldJobs ?? {}),
+  )[0]!; // Assume first difference is new one
   t.is(jobkey, 'string');
   t.assert(jobkey.length > 0);
   if (!jobkey || jobkey.length === 0) {
@@ -125,7 +128,10 @@ test('Should error on an ASN job which posts an invalid update (i.e. update is a
   const { data: newJobs } = await con.get({
     path: `${pending}`,
   });
-  jobkey = _.difference(_.keys(newJobs), _.keys(oldJobs))[0]!; // Assume first difference is new one
+  jobkey = difference(
+    Object.keys(newJobs ?? {}),
+    Object.keys(oldJobs ?? {}),
+  )[0]!; // Assume first difference is new one
   t.is(typeof jobkey, 'string');
   t.assert(jobkey.length > 0);
   if (!jobkey || jobkey.length === 0) {
