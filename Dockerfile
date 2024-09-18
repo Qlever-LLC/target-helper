@@ -21,7 +21,7 @@ ARG DIR
 WORKDIR ${DIR}
 
 COPY ./.yarn ${DIR}.yarn
-COPY ./package.json ./yarn.lock ./.yarnrc.yml ${DIR}
+COPY ./package.json ./yarn.lock ./.yarnrc.yml ${DIR}/
 
 RUN yarn workspaces focus --all --production
 
