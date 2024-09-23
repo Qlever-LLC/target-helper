@@ -28,7 +28,6 @@ import { AssumeState, ChangeType, ListWatch } from '@oada/list-lib';
 import type { Change, JsonObject, OADAClient } from '@oada/client';
 import type { Job, Json, Logger, WorkerFunction } from '@oada/jobs';
 
-import { Gauge } from '@oada/lib-prom';
 import type { Link } from '@oada/types/oada/link/v1.js';
 import type Resource from '@oada/types/oada/resource.js';
 import type Update from '@oada/types/oada/service/job/update.js';
@@ -58,14 +57,6 @@ const trace = debug('target-helper:trace');
 const pending = '/bookmarks/services/target/jobs/pending';
 
 const targetTimeout = config.get('timeouts.pdf');
-export const jobs = new Gauge({
-  name: 'target_helper_jobs',
-  help: 'Number of jobs in the pending queue',
-});
-export const errors = new Gauge({
-  name: 'target_helper_errors',
-  help: 'Number of errored jobs',
-});
 
 type List<T> = Record<string, T>;
 
@@ -80,7 +71,6 @@ let expandIndex: ExpandIndex;
  * Receive the job from oada-jobs
  */
 export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
-  jobs.inc();
   trace({ job }, 'Received job');
   // Until oada-jobs adds cross-linking, make sure we are linked under the PDF's jobs
   trace('Linking job under pdf/_meta until oada-jobs can do that natively');
@@ -182,7 +172,6 @@ async function targetSuccess({
 
   void log.info('done', 'Completed all helper tasks');
 
-  jobs.dec();
   return job.result as Json;
 }
 
@@ -413,8 +402,6 @@ export async function handleJob({
       }
     }
   } catch (cError: unknown) {
-    jobs.dec();
-    errors.inc();
     throw new Error(`Error handling job ${jobId}`, { cause: cError });
   }
 }

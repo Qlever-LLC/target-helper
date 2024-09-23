@@ -22,7 +22,7 @@ import type { Link } from '@oada/types/oada/link/v1.js';
 import type { OADAClient } from '@oada/client';
 import { assert as assertJob } from '@oada/types/oada/service/job.js';
 
-import { handleJob, jobs } from './pdfJob.js';
+import { handleJob } from './pdfJob.js';
 import { recursiveReplaceLinksWithReferences } from './utils.js';
 import { recursiveSignLinks } from './pdfJobPostProc.js';
 
@@ -37,7 +37,6 @@ type List<T> = Record<string, T>;
  * Receive the job from oada-jobs
  */
 export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
-  jobs.inc();
   trace({ job }, 'Received job');
   // Until oada-jobs adds cross-linking, make sure we are linked under the PDF's jobs
   trace('Linking job under pdf/_meta until oada-jobs can do that natively');
@@ -111,7 +110,6 @@ async function targetSuccess({
 
   void log.info('done', 'Completed all helper tasks');
 
-  jobs.dec();
   return job.result as Json;
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "@qlever-llc/target-helper",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A Trellis microservice to fill in around Target integration",
   "author": "Andrew Balmos <andrew@qlever.io>",
   "license": "Apache-2.0",
@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "@oada/client": "^5.1.0",
-    "@oada/jobs": "^4.5.2",
+    "@oada/jobs": "^4.6.0",
     "@oada/lib-prom": "^3.8.0",
     "@oada/list-lib": "^6.0.2",
     "@oada/pino-debug": "^3.10.0",
