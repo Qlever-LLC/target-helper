@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
+// Needs to be imported _before_ debug
+import '@oada/pino-debug';
 // Load config first so it can set up env
 import config from './config.js';
 
-// Needs to be imported _before_ debug
-import '@oada/pino-debug';
+import { pino } from '@oada/pino-debug';
 
-import debug from 'debug';
-
-import '@oada/lib-prom';
 import { Service } from '@oada/jobs';
 
 /* Import {
@@ -37,10 +35,7 @@ import {
 } from './pdfJob.js';
 import { jobHandler as transcriptionOnlyJobHandler } from './transcriptionOnly.js';
 
-const error = debug('target-helper:error');
-const info = debug('target-helper:info');
-const trace = debug('target-helper:trace');
-const warn = debug('target-helper:warn');
+const log = pino({base: {service: 'target-helper'}});
 
 const tokens = config.get('oada.token');
 const domain = config.get('oada.domain');
@@ -49,11 +44,11 @@ if (domain.startsWith('http')) {
   //  Domain = domain.replace(/^https?:\/\//, '');
 }
 
-trace('Using token(s) = %s', tokens);
-info('Using domain = %s', domain);
+log.trace('Using token(s) = %s', tokens);
+log.info('Using domain = %s', domain);
 
 process.on('unhandledRejection', (reason, promise) => {
-  warn({ promise, reason }, 'Unhandled Rejection');
+  log.warn({ promise, reason }, 'Unhandled Rejection');
   // Application specific logging, throwing an error, or other logic here
 });
 
@@ -66,6 +61,7 @@ await Promise.all(
       name: 'target',
       oada: { domain, token },
       opts: {
+        /*
         finishReporters: [
           {
             type: 'slack',
@@ -73,8 +69,10 @@ await Promise.all(
             posturl: config.get('slack.posturl'),
           },
         ],
+        */
       },
       concurrency: jobsConcurrency,
+      log
     });
 
     // --------------------------------------------------
@@ -94,13 +92,13 @@ await Promise.all(
 
     // --------------------------------------------------
     // Start the jobs watching service
-    info(
+    log.info(
       `Initializing target-helper service. Version: ${process.env.npm_package_version}`,
     );
     const serviceP = service.start();
 
     // Start the things watching to create jobs
-    info('Started pdf job creator processes');
+    log.info('Started pdf job creator processes');
     const pdfP = pdfStartJobCreator({ domain, token });
     //    Const asnP = asnStartJobCreator({ domain, token });
 
@@ -108,11 +106,11 @@ await Promise.all(
     try {
       await Promise.all([serviceP, pdfP]);
     } catch (cError: unknown) {
-      error(cError);
+      log.error(cError);
       // eslint-disable-next-line no-process-exit, unicorn/no-process-exit
       process.exit(1);
     }
 
-    info('Ready');
+    log.info('Ready');
   }),
 );

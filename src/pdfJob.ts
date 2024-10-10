@@ -26,7 +26,8 @@ import oError from '@overleaf/o-error';
 
 import { AssumeState, ChangeType, ListWatch } from '@oada/list-lib';
 import type { Change, JsonObject, OADAClient } from '@oada/client';
-import type { Job, Json, Logger, WorkerFunction } from '@oada/jobs';
+import type { Job, Json, WorkerFunction } from '@oada/jobs';
+import type { Logger } from '@oada/pino-debug';
 
 import type { Link } from '@oada/types/oada/link/v1.js';
 import type Resource from '@oada/types/oada/resource.js';

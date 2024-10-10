@@ -33,6 +33,7 @@ test.only('Should process jobs created outside of the trading-partners lists', a
     'service': 'target',
     'type': 'transcription',
     'trading-partner': 'resources/2QZVLGtY7o2F4txRXTTWtseb6Fx',
+    //status: 'success',
     'config': {
       'type': 'pdf',
       'pdf': {
