@@ -35,7 +35,7 @@ import {
 } from './pdfJob.js';
 import { jobHandler as transcriptionOnlyJobHandler } from './transcriptionOnly.js';
 
-const log = pino({base: {service: 'target-helper'}});
+const log = pino({ base: { service: 'target-helper' } });
 
 const tokens = config.get('oada.token');
 const domain = config.get('oada.domain');
@@ -72,7 +72,7 @@ await Promise.all(
         */
       },
       concurrency: jobsConcurrency,
-      log
+      log,
     });
 
     // --------------------------------------------------

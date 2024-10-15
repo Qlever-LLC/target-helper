@@ -51,7 +51,7 @@ async function main() {
   await conn.put({
     path: `/bookmarks/trellisfw/trading-partners/masterid-index/d4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e/shared/trellisfw/documents/gfsi-certificates`,
     data: {
-      'a45717de48be4a5ab6d61af7cfeb8d55': {
+      a45717de48be4a5ab6d61af7cfeb8d55: {
         _id: 'resources/2HxK1NmfiFaWVFdDw8e1GIdh2Ua',
         _rev: 0,
       },

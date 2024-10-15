@@ -182,7 +182,16 @@ export async function handleShares(
       }
       // END HACK FOR DEMO
 
-      await postSharesJob({ log, doc, doctype, dockey, tpKey, user, mask, oada });
+      await postSharesJob({
+        log,
+        doc,
+        doctype,
+        dockey,
+        tpKey,
+        user,
+        mask,
+        oada,
+      });
     }
   }
 }
