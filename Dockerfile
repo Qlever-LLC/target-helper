@@ -20,21 +20,20 @@ ARG DIR
 
 WORKDIR ${DIR}
 
-COPY ./.yarn ${DIR}.yarn
 COPY ./package.json ./yarn.lock ./.yarnrc.yml ${DIR}/
 
-RUN yarn workspaces focus --all --production
+RUN corepack yarn workspaces focus --all --production
 
 FROM install AS build
 ARG DIR
 
 # Install dev deps too
-RUN yarn install --immutable
+RUN corepack yarn install --immutable
 
 COPY . ${DIR}
 
 # Build code and remove dev deps
-RUN yarn build --verbose && rm -rfv .yarn .pnp*
+RUN corepack yarn build --verbose && rm -rfv .yarn .pnp*
 
 FROM node:$NODE_VER AS production
 ARG DIR
@@ -53,5 +52,5 @@ COPY --from=build ${DIR} ${DIR}
 
 # Launch entrypoint with dumb-init
 # Remap SIGTERM to SIGINT https://github.com/Yelp/dumb-init#signal-rewriting
-ENTRYPOINT ["/usr/bin/dumb-init", "--rewrite", "15:2", "--", "yarn", "run"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--rewrite", "15:2", "--", "corepack", "yarn", "run"]
 CMD ["start"]

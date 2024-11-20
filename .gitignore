@@ -151,7 +151,6 @@ dist
 
 # yarn v2
 .yarn/*
-!.yarn/releases
 !.yarn/plugins
 !.yarn/patches
 !.yarn/versions
