@@ -269,9 +269,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/client@npm:^5.2.4":
-  version: 5.2.4
-  resolution: "@oada/client@npm:5.2.4"
+"@oada/client@npm:^5.2.6":
+  version: 5.2.6
+  resolution: "@oada/client@npm:5.2.6"
   dependencies:
     "@oada/types": "npm:^3.5.3"
     debug: "npm:^4.3.7"
@@ -298,7 +298,7 @@ __metadata:
   peerDependenciesMeta:
     "@oada/jobs":
       optional: true
-  checksum: 10/2eb92efdd666aa77c206f8bf9c7be8f52fe32cf249e89cb70dc9c470675cd3b543364db0ed4a14a927274182e038c5fc4046801d9647deab55d7b2342c7daa16
+  checksum: 10/b83b9b41f17aea3a9f3b180e9f6685efb4a22b568bd37283b596ad79dfb7d05efb970f41ce782a08afe1a6f18112b151eb4a0517ae4936095d0c3c2b10dffa2f
   languageName: node
   linkType: hard
 
@@ -549,7 +549,7 @@ __metadata:
   resolution: "@qlever-llc/target-helper@workspace:."
   dependencies:
     "@ava/typescript": "npm:^5.0.0"
-    "@oada/client": "npm:^5.2.4"
+    "@oada/client": "npm:^5.2.6"
     "@oada/jobs": "npm:^4.7.1"
     "@oada/lib-prom": "npm:^4.0.1"
     "@oada/list-lib": "npm:^6.1.0"
