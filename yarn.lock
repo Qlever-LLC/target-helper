@@ -302,9 +302,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oada/jobs@npm:^4.7.1":
-  version: 4.7.1
-  resolution: "@oada/jobs@npm:4.7.1"
+"@oada/jobs@npm:^4.7.4":
+  version: 4.7.4
+  resolution: "@oada/jobs@npm:4.7.4"
   dependencies:
     "@ava/typescript": "npm:^5.0.0"
     "@oada/lib-prom": "npm:^3.8.0"
@@ -328,6 +328,7 @@ __metadata:
     moment: "npm:^2.30.1"
     p-queue: "npm:^8.0.1"
     p-timeout: "npm:^6.1.2"
+    perf_hooks: "npm:^0.0.1"
     serialize-error: "npm:^11.0.3"
     tiny-json-http: "npm:^7.5.1"
     tslib: "npm:^2.7.0"
@@ -339,22 +340,7 @@ __metadata:
       optional: true
   bin:
     oada-jobs: ./dist/cli.mjs
-  checksum: 10/55486df06803534942051bca0384dde98f4faa8c09219b55a6d6038a3871cf2911de2904092b9f9471c54dd68a5c86c71aa1f6946f789d8141f73aa071a0ab08
-  languageName: node
-  linkType: hard
-
-"@oada/lib-config@npm:^3.7.0":
-  version: 3.9.1
-  resolution: "@oada/lib-config@npm:3.9.1"
-  dependencies:
-    convict: "npm:^6.2.4"
-    convict-format-with-moment: "npm:^6.2.0"
-    convict-format-with-validator: "npm:^6.2.0"
-    dotenv: "npm:^16.0.3"
-    json5: "npm:^2.2.3"
-    tslib: "npm:^2.5.0"
-    yaml: "npm:^2.2.1"
-  checksum: 10/596fde472e08c1444cd241d85d927673e11b801edb205cb30194e7b85b2eef124a25c0a41c4a4e9a12b6d083569c148922e0728ed2e6464fc9b213fa26514821
+  checksum: 10/ec60a30a4810d1abbf0bc25fd247ea63a3d802a4a170324b2ad2c445eab5f1cace63035a89495df250e4d11b79d69fbb093ebd570e658019d61e39938eff45b0
   languageName: node
   linkType: hard
 
@@ -375,21 +361,6 @@ __metadata:
     jose:
       optional: true
   checksum: 10/d0b80bc2cc1559783bc0f349a3870b482af03f9d8d63aad8c0dc9b434e2046ac07df56b0f9ec12bb5e95bb97dfab3f32a1bd324c2c72a320c17f15b060e28101
-  languageName: node
-  linkType: hard
-
-"@oada/lib-prom@npm:^3.8.0":
-  version: 3.8.0
-  resolution: "@oada/lib-prom@npm:3.8.0"
-  dependencies:
-    "@oada/lib-config": "npm:^3.7.0"
-    nstats: "npm:^5.0.0"
-    prom-client: "npm:^14.2.0"
-    tslib: "npm:^2.5.0"
-  dependenciesMeta:
-    nstats:
-      optional: true
-  checksum: 10/2f265f4bdbae6d57165a91cf9868e56a01c7d8a89c432f9e0044045b74eff39699b77aef786646b52e9a2dc5d70d5b74d8e74d2b2b26894e682afa3863ad5e91
   languageName: node
   linkType: hard
 
@@ -550,7 +521,7 @@ __metadata:
   dependencies:
     "@ava/typescript": "npm:^5.0.0"
     "@oada/client": "npm:^5.2.6"
-    "@oada/jobs": "npm:^4.7.1"
+    "@oada/jobs": "npm:^4.7.4"
     "@oada/lib-prom": "npm:^4.0.1"
     "@oada/list-lib": "npm:^6.1.0"
     "@oada/pino-debug": "npm:^4.0.1"
@@ -2494,7 +2465,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^16.0.3, dotenv@npm:^16.3.1, dotenv@npm:^16.4.5":
+"dotenv@npm:^16.3.1, dotenv@npm:^16.4.5":
   version: 16.4.5
   resolution: "dotenv@npm:16.4.5"
   checksum: 10/55a3134601115194ae0f924e54473459ed0d9fc340ae610b676e248cca45aa7c680d86365318ea964e6da4e2ea80c4514c1adab5adb43d6867fb57ff068f95c8
@@ -5620,6 +5591,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"perf_hooks@npm:^0.0.1":
+  version: 0.0.1
+  resolution: "perf_hooks@npm:0.0.1"
+  checksum: 10/a38f6397943cd55b7780e1ae504f187d218a4c986afcdd674a68fc4937aa415f29e3e007c26e498b55e277052f1bee3028b348ce7509ad1a47c2e8d0d381bd87
+  languageName: node
+  linkType: hard
+
 "picocolors@npm:^1.0.0, picocolors@npm:^1.0.1":
   version: 1.0.1
   resolution: "picocolors@npm:1.0.1"
@@ -5846,15 +5824,6 @@ __metadata:
   version: 0.11.10
   resolution: "process@npm:0.11.10"
   checksum: 10/dbaa7e8d1d5cf375c36963ff43116772a989ef2bb47c9bdee20f38fd8fc061119cf38140631cf90c781aca4d3f0f0d2c834711952b728953f04fd7d238f59f5b
-  languageName: node
-  linkType: hard
-
-"prom-client@npm:^14.2.0":
-  version: 14.2.0
-  resolution: "prom-client@npm:14.2.0"
-  dependencies:
-    tdigest: "npm:^0.1.1"
-  checksum: 10/892eb83eb860945f3ee55bc19bb73e4a64cb63d95e28336141f49fb90a05354765b4ac4a8ba046fd895690f0bf231de1289caf180647cefdfd0d767f34725d97
   languageName: node
   linkType: hard
 
@@ -7349,7 +7318,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yaml@npm:^2.2.1, yaml@npm:^2.5.1":
+"yaml@npm:^2.5.1":
   version: 2.5.1
   resolution: "yaml@npm:2.5.1"
   bin:
