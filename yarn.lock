@@ -7222,12 +7222,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xlsx@https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz":
-  version: 0.20.2
-  resolution: "xlsx@https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
+"xlsx@https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz":
+  version: 0.20.3
+  resolution: "xlsx@https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   bin:
     xlsx: ./bin/xlsx.njs
-  checksum: 10/2d8e0644888f90fa9145ea74ed90b844154ce89c4f0e4f92fcce3f224fa71654da99aa48d99d65ba86eb0632a4858ba2dea7eef8b54fd8bd23954a09d1884aa1
+  checksum: 10/895c589c5f6ffc665184165b5aa5d337de0e2ee24ccd53d517d2378f3a8a7df82405b023fdcfde9f49d7de3d4ef1622cf2ef145316c9732c634a86ee313bad4f
   languageName: node
   linkType: hard
 
