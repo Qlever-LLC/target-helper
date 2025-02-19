@@ -1,4 +1,6 @@
-# Copyright 2022 Qlever LLC
+# syntax=docker/dockerfile:1
+
+# Copyright 2024 Qlever LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,42 +17,50 @@
 ARG NODE_VER=22-alpine
 ARG DIR=/usr/src/app/
 
-FROM node:$NODE_VER AS install
-ARG DIR
-
-WORKDIR ${DIR}
-
-COPY ./package.json ./yarn.lock ./.yarnrc.yml ${DIR}/
-
-RUN corepack yarn workspaces focus --all --production
-
-FROM install AS build
-ARG DIR
-
-# Install dev deps too
-RUN corepack yarn install --immutable
-
-COPY . ${DIR}
-
-# Build code and remove dev deps
-RUN corepack yarn build --verbose && rm -rfv .yarn .pnp*
-
-FROM node:$NODE_VER AS production
+FROM node:${NODE_VER} AS base
 ARG DIR
 
 # Install needed packages
 RUN apk add --no-cache \
   dumb-init
 
-# Do not run service as root
-USER node
-
 WORKDIR ${DIR}
 
-COPY --from=install ${DIR} ${DIR}
-COPY --from=build ${DIR} ${DIR}
+# Copy in code
+COPY . ${DIR}/
+
+RUN corepack yarn workspaces focus --all --production
 
 # Launch entrypoint with dumb-init
 # Remap SIGTERM to SIGINT https://github.com/Yelp/dumb-init#signal-rewriting
 ENTRYPOINT ["/usr/bin/dumb-init", "--rewrite", "15:2", "--", "corepack", "yarn", "run"]
 CMD ["start"]
+
+FROM base AS build
+ARG DIR
+
+# Install build-only packages
+RUN apk add --no-cache \
+  git
+
+# Install dev deps too
+RUN corepack yarn install --immutable
+
+# Build code
+RUN corepack yarn build --verbose
+
+FROM base AS production
+ARG DIR
+
+ENV COREPACK_HOME=/home/node/.cache/node/corepack
+RUN corepack enable
+
+# Copy in built code
+COPY --from=build ${DIR}/dist ${DIR}/dist
+
+RUN chown -R node:node ${DIR}
+# Do not run service as root
+USER node
+
+# Have corepack download yarn
+RUN corepack install
