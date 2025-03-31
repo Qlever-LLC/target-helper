@@ -23,6 +23,7 @@ permissions:
   contents: read
   deployments: read
   issues: read
+  models: read
   discussions: read
   pages: read
   pull-requests: read
