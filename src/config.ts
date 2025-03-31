@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-import 'dotenv/config';
+import "dotenv/config";
 
-import convict from 'convict';
+import convict from "convict";
 // @ts-expect-error has no types
-import convictMoment from 'convict-format-with-moment';
-import convictValidator from 'convict-format-with-validator';
+import convictMoment from "convict-format-with-moment";
+import convictValidator from "convict-format-with-validator";
 
 convict.addFormats(convictMoment);
 convict.addFormats(convictValidator);
@@ -28,105 +28,105 @@ convict.addFormats(convictValidator);
 const config = convict({
   oada: {
     domain: {
-      doc: 'OADA API domain',
+      doc: "OADA API domain",
       format: String,
-      default: 'proxy',
-      env: 'DOMAIN',
-      arg: 'domain',
+      default: "proxy",
+      env: "DOMAIN",
+      arg: "domain",
     },
     token: {
-      doc: 'OADA API token',
+      doc: "OADA API token",
       format: Array,
-      default: ['god-proxy'],
-      env: 'TOKEN',
-      arg: 'token',
+      default: ["god-proxy"],
+      env: "TOKEN",
+      arg: "token",
     },
     concurrency: {
-      doc: 'OADA client concurrency',
+      doc: "OADA client concurrency",
       format: Number,
       default: 1,
-      env: 'CONCURRENCY',
-      arg: 'concurrency',
+      env: "CONCURRENCY",
+      arg: "concurrency",
     },
     jobsConcurrency: {
-      doc: 'jobs concurrency',
+      doc: "jobs concurrency",
       format: Number,
       default: 1,
-      env: 'JOBS_CONCURRENCY',
-      arg: 'jobs-concurrency',
+      env: "JOBS_CONCURRENCY",
+      arg: "jobs-concurrency",
     },
   },
   timeouts: {
     simx: {
-      doc: 'Timeout duration for Target themselves',
-      format: 'duration',
+      doc: "Timeout duration for Target themselves",
+      format: "duration",
       // The types for duration suck
       default: 3_600_000 as unknown as number,
-      env: 'SIMX_TIMEOUT',
-      arg: 'simx-timeout',
+      env: "SIMX_TIMEOUT",
+      arg: "simx-timeout",
     },
     pdf: {
-      doc: 'Timeout duration for PDF jobs',
-      format: 'duration',
+      doc: "Timeout duration for PDF jobs",
+      format: "duration",
       // The types for duration suck
       default: 3_600_000 as unknown as number,
-      env: 'PDF_TIMEOUT',
-      arg: 'pdf-timeout',
+      env: "PDF_TIMEOUT",
+      arg: "pdf-timeout",
     },
     asn: {
-      doc: 'Timeout duration for ASN jobs',
-      format: 'duration',
+      doc: "Timeout duration for ASN jobs",
+      format: "duration",
       // The types for duration suck
       default: 3_600_000 as unknown as number,
-      env: 'ASN_TIMEOUT',
-      arg: 'asn-timeout',
+      env: "ASN_TIMEOUT",
+      arg: "asn-timeout",
     },
   },
   slack: {
     posturl: {
-      format: 'url',
+      format: "url",
       // Use a real slack webhook URL
-      default: 'https://localhost',
-      env: 'SLACK_WEBHOOK',
-      arg: 'slack-webhook',
+      default: "https://localhost",
+      env: "SLACK_WEBHOOK",
+      arg: "slack-webhook",
     },
   },
   signing: {
     signatureType: {
       format: String,
-      default: 'transcription',
-      env: 'SIGNATURE_TYPE',
-      arg: 'signature-type',
+      default: "transcription",
+      env: "SIGNATURE_TYPE",
+      arg: "signature-type",
     },
     privateJWK: {
       format: String,
-      default: './keys/private_key.jwk',
-      env: 'SIGNATURE_JWK',
-      arg: 'signature-jwk',
+      default: "./keys/private_key.jwk",
+      env: "SIGNATURE_JWK",
+      arg: "signature-jwk",
     },
     signer: {
       name: {
         format: String,
-        default: 'Test signer',
-        env: 'SIGNER_NAME',
-        arg: 'signer-name',
+        default: "Test signer",
+        env: "SIGNER_NAME",
+        arg: "signer-name",
       },
       url: {
-        format: 'url',
-        default: 'https://oatscenter.org',
-        env: 'SIGNER_URL',
-        arg: 'signer-ul',
+        format: "url",
+        default: "https://oatscenter.org",
+        env: "SIGNER_URL",
+        arg: "signer-ul",
       },
     },
   },
   tradingPartnersEnabled: {
     format: Boolean,
     default: true,
-    env: 'ENABLE_TRADING_PARTNERS',
-    arg: 'enable-trading-partners',
+    env: "ENABLE_TRADING_PARTNERS",
+    arg: "enable-trading-partners",
   },
 });
 
-config.validate({ allowed: 'warn' });
+config.validate({ allowed: "warn" });
 
 export default config;

@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 
-import config from '../dist/config.js';
+import config from "../dist/config.js";
 
-import test from 'ava';
+import test from "ava";
 
-import { setTimeout } from 'isomorphic-timers-promises';
+import { setTimeout } from "isomorphic-timers-promises";
 
-import debug from 'debug';
-import moment from 'moment';
+import debug from "debug";
+import moment from "moment";
 
-import { type JsonObject, connect } from '@oada/client';
+import { type JsonObject, connect } from "@oada/client";
 
 import {
   cleanup,
@@ -32,42 +32,42 @@ import {
   putAndLinkData,
   putData,
   setConnection,
-} from './testdata.js';
+} from "./testdata.js";
 
-const trace = debug('target-helper#test:trace');
+const trace = debug("target-helper#test:trace");
 
-const doctypes = ['audit', 'cert', 'coi', 'log'] as const;
+const doctypes = ["audit", "cert", "coi", "log"] as const;
 const REALISTIC_TIMING = true;
 
 const con = await connect({
-  domain: config.get('oada.domain'),
-  token: config.get('oada.token')[0],
+  domain: config.get("oada.domain"),
+  token: config.get("oada.token")[0],
 });
 
 test.before(async () => {
   setConnection(con);
 
   // Clear out any old stuff:
-  trace('before: cleanup');
+  trace("before: cleanup");
   await cleanup();
 
-  trace('before: putData');
+  trace("before: putData");
   // Build the tree with all the initial data:
-  await putAndLinkData(['tp', 'fac', 'logbuyer', 'coiholder']);
-  await putData(['pdf']); // Don't link into job tree since that would trigger target-helper to make a job for it
+  await putAndLinkData(["tp", "fac", "logbuyer", "coiholder"]);
+  await putData(["pdf"]); // Don't link into job tree since that would trigger target-helper to make a job for it
 
   // All 4 kinds of jobs: coi, audit, cert, log
   // --------------------------------------------------------
   for await (const doctype of doctypes) {
-    trace('before: create job for doctype: ', doctype);
+    trace("before: create job for doctype: ", doctype);
     const jobtype: `${typeof doctype}job` = `${doctype}job`; // Coijob, auditjob, etc...
     const index = items[jobtype]!;
     // Example of a successful normal job: go ahead and put that up, tests will check results later
     await putAndLinkData(jobtype, {
-      service: 'target',
-      type: 'transcription',
+      service: "target",
+      type: "transcription",
       config: {
-        type: 'pdf',
+        type: "pdf",
         pdf: { _id: `resources/${items.pdf?.key}` },
       },
     });
@@ -80,7 +80,7 @@ test.before(async () => {
       path: `${index.list}/${index.key}/updates`,
       contentType: index._type,
       data: {
-        status: 'identifying',
+        status: "identifying",
         time: moment().format(),
       },
     });
@@ -89,8 +89,8 @@ test.before(async () => {
     await con.post({
       path: `${index.list}/${index.key}/updates`,
       data: {
-        status: 'error',
-        information: 'Could not identify document',
+        status: "error",
+        information: "Could not identify document",
         time: moment().format(),
       },
     });
@@ -153,19 +153,19 @@ for (const doctype of doctypes) {
     });
     t.is(
       result1,
-      'failure',
-      'should have status of failure on the job when completed',
+      "failure",
+      "should have status of failure on the job when completed",
     );
 
     const error5 = await t.throwsAsync(
       con.get({ path: `${jobIndex.list}/${jobIndex.key}` }),
       {},
-      `should delete the job from jobs`,
+      "should delete the job from jobs",
     );
     // @ts-expect-error dumb errors
     t.is(error5?.status, 404);
 
-    const day = moment().format('YYYY-MM-DD');
+    const day = moment().format("YYYY-MM-DD");
     const { data: result2 } = await con.get({
       path: `/bookmarks/services/target/jobs/failure/day-index/${day}/${jobIndex.key}`,
     });
@@ -173,7 +173,7 @@ for (const doctype of doctypes) {
       (result2 as JsonObject)?._id,
       `resources/${jobIndex.key}`,
       `should put the job under today's day-index ${moment().format(
-        'YYYY-MM-DD',
+        "YYYY-MM-DD",
       )} within jobs-failure`,
     );
   });

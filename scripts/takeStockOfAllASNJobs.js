@@ -19,13 +19,13 @@
 /* eslint-disable no-process-exit */
 /* eslint-disable unicorn/no-process-exit */
 
-import readline from 'node:readline';
-import { setTimeout } from 'node:timers/promises';
+import readline from "node:readline";
+import { setTimeout } from "node:timers/promises";
 
-import chalk from 'chalk';
-import { connect } from '@oada/client';
-import hash from 'object-hash';
-import minimist from 'minimist';
+import { connect } from "@oada/client";
+import chalk from "chalk";
+import minimist from "minimist";
+import hash from "object-hash";
 
 try {
   const argv = minimist(process.argv.slice(2));
@@ -40,12 +40,12 @@ try {
     });
   const askYN = async (message) => {
     if (argv.y) {
-      console.log(chalk.yellow(message), '- argv.y defaults to yes for all');
+      console.log(chalk.yellow(message), "- argv.y defaults to yes for all");
       return true;
     }
 
     const resp = (await ask(`${message} [Yn] `)).toUpperCase();
-    return resp === 'Y' || resp === '';
+    return resp === "Y" || resp === "";
   };
 
   const yesOrDie = async (message, eulogy) => {
@@ -55,20 +55,20 @@ try {
     process.exit(0);
   };
 
-  const domain = argv.domain || argv.d || 'localhost';
-  const token = argv.token || argv.t || 'god';
+  const domain = argv.domain || argv.d || "localhost";
+  const token = argv.token || argv.t || "god";
 
   const asnhashes = {};
   const asninfo = {};
 
   await yesOrDie(`About to connect to ${domain}: proceed?`);
-  const oada = await connect({ domain, token, connection: 'http' });
+  const oada = await connect({ domain, token, connection: "http" });
 
-  console.log(`Connected: working through asn list to find jobs`);
+  console.log("Connected: working through asn list to find jobs");
   const { data: toplist } = await oada.get({
-    path: `/bookmarks/trellisfw/asns`,
+    path: "/bookmarks/trellisfw/asns",
   });
-  const days = Object.keys(toplist['day-index']).filter((k) =>
+  const days = Object.keys(toplist["day-index"]).filter((k) =>
     k.match(/\d{4}-\d{2}-\d{2}/),
   );
   console.log(`Found these ${days.length} days in main list:`, days);
@@ -83,11 +83,11 @@ try {
     const { data: index } = await oada.get({
       path: `/bookmarks/trellisfw/asns/day-index/${day}`,
     });
-    const asnkeys = Object.keys(index).filter((k) => !k.startsWith('_'));
+    const asnkeys = Object.keys(index).filter((k) => !k.startsWith("_"));
     console.log(`  ${day}: Found ${asnkeys.length}`);
 
     const monitiskeys = asnkeys.filter((k) => k.match(/^MONITIS/));
-    const regularasnkeys = asnkeys.filter((k) => !k.startsWith('MONITIS'));
+    const regularasnkeys = asnkeys.filter((k) => !k.startsWith("MONITIS"));
     if (
       monitiskeys.length > 0 &&
       (await askYN(
@@ -143,7 +143,7 @@ try {
       for await (const index_ of jobrefs) {
         const { data: job } = await oada.get({ path: `/${index_.id}` });
         job.ISTIMEOUT = JSON.stringify(job).match(/timeout/i);
-        job.ISSUCCESS = job.status === 'success';
+        job.ISSUCCESS = job.status === "success";
         info.jobs[index_.key] = job;
         await setTimeout(100);
       }
@@ -208,6 +208,6 @@ try {
 
   process.exit(0);
 } catch (error) {
-  console.log('ERROR:', error);
+  console.log("ERROR:", error);
   process.exit(1);
 }

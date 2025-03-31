@@ -15,36 +15,36 @@
  * limitations under the License.
  */
 
-import config from '../dist/config.js';
+import config from "../dist/config.js";
 
-import test from 'ava';
+import test from "ava";
 
-import { connect } from '@oada/client';
-import { doJob } from '@oada/client/jobs';
+import { connect } from "@oada/client";
+import { doJob } from "@oada/client/jobs";
 
 const con = await connect({
-  domain: config.get('oada.domain'),
-  token: config.get('oada.token')[0],
+  domain: config.get("oada.domain"),
+  token: config.get("oada.token")[0],
 });
 
-test.only('Should process jobs created outside of the trading-partners lists', async (t) => {
+test("Should process jobs created outside of the trading-partners lists", async (t) => {
   t.timeout(3_000_000);
   const jobResult = await doJob(con, {
-    'service': 'target',
-    'type': 'transcription',
-    'trading-partner': 'resources/2QZVLGtY7o2F4txRXTTWtseb6Fx',
+    service: "target",
+    type: "transcription",
+    "trading-partner": "resources/2QZVLGtY7o2F4txRXTTWtseb6Fx",
     //status: 'success',
-    'config': {
-      'type': 'pdf',
-      'pdf': {
-        _id: 'resources/57fa585a6c69a0c48904c5ed8586786bcef1db58ace58f1f9c2c59ea2279650c-pdf',
+    config: {
+      type: "pdf",
+      pdf: {
+        _id: "resources/57fa585a6c69a0c48904c5ed8586786bcef1db58ace58f1f9c2c59ea2279650c-pdf",
       },
-      'document': {
-        _id: 'resources/2QtQ9oRFcn8SC03pIVwNoDxEVvu',
+      document: {
+        _id: "resources/2QtQ9oRFcn8SC03pIVwNoDxEVvu",
       },
-      'docKey': '11d5d18fee6c9b3d923763cc28542084',
-      'document-type': 'application/vnd.trellisfw.coi.accord.1+json',
-      'oada-doc-type': 'cois',
+      docKey: "11d5d18fee6c9b3d923763cc28542084",
+      "document-type": "application/vnd.trellisfw.coi.accord.1+json",
+      "oada-doc-type": "cois",
     },
   });
   t.truthy(jobResult);

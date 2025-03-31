@@ -15,18 +15,18 @@
  * limitations under the License.
  */
 
-import { JsonPointer } from 'json-ptr';
-import assign from 'assign-deep';
-import debug from 'debug';
-import moment from 'moment';
+import assign from "assign-deep";
+import debug from "debug";
+import { JsonPointer } from "json-ptr";
+import moment from "moment";
 
-import { tree } from '../dist/tree.js';
+import { tree } from "../dist/tree.js";
 
-import type { OADAClient } from '@oada/client';
+import type { OADAClient } from "@oada/client";
 
-const trace = debug('target-helper#test:trace');
-const info = debug('target-helper#test:info');
-const error = debug('target-helper#test:error');
+const trace = debug("target-helper#test:trace");
+const info = debug("target-helper#test:info");
+const error = debug("target-helper#test:error");
 
 let con: OADAClient; // Set with setConnection function
 
@@ -78,14 +78,14 @@ interface Item {
   list_type?: string;
   data?: {
     [k: string]: unknown;
-    'iam'?: string;
-    'masterid'?: string;
-    'name'?: string;
-    'user'?: { id: string; bookmarks: { _id: string } };
-    'holder'?: { name: string };
-    'organization'?: { location: { name: string } };
-    'facilities'?: Record<string, { _id: string }>;
-    'trading-partners'?: Record<string, { _id: string }>;
+    iam?: string;
+    masterid?: string;
+    name?: string;
+    user?: { id: string; bookmarks: { _id: string } };
+    holder?: { name: string };
+    organization?: { location: { name: string } };
+    facilities?: Record<string, { _id: string }>;
+    "trading-partners"?: Record<string, { _id: string }>;
   };
   cleanup?: { lists?: readonly string[] };
 }
@@ -93,11 +93,11 @@ interface Item {
 // Fill out tree, and let code fill in any "defaults" later.
 // One "item" will have:
 // name.singular, name.plural, data, source (oada|trellisfw), list, _type, list_type, and key.
-const day = moment().format('YYYY-MM-DD');
+const day = moment().format("YYYY-MM-DD");
 const jobtemplate: Item = {
-  source: 'oada',
-  name: { singular: 'job' },
-  list: '/bookmarks/services/target/jobs/pending',
+  source: "oada",
+  name: { singular: "job" },
+  list: "/bookmarks/services/target/jobs/pending",
   notversioned: true, // Do not make this a versioned link in it's list
   cleanup: {
     lists: [
@@ -116,76 +116,76 @@ const baseItems: Record<string, Item> = {
   // -------------------------------------
   // Documents:
   pdf: {
-    name: { singular: 'document' },
+    name: { singular: "document" },
   },
   coi: {
-    name: { singular: 'coi' },
+    name: { singular: "coi" },
     data: {
-      holder: { name: 'a test coi holder' },
+      holder: { name: "a test coi holder" },
     },
   },
   audit: {
-    name: { singular: 'fsqa-audit' },
+    name: { singular: "fsqa-audit" },
     data: {
       organization: {
         location: {
-          name: 'a test facility',
+          name: "a test facility",
         },
       },
     },
   },
   cert: {
-    name: { singular: 'fsqa-certificate' },
+    name: { singular: "fsqa-certificate" },
     data: {
       organization: {
         location: {
-          name: 'a test facility',
+          name: "a test facility",
         },
       },
     },
   },
   log: {
-    name: { singular: 'letter-of-guarantee', plural: 'letters-of-guarantee' },
+    name: { singular: "letter-of-guarantee", plural: "letters-of-guarantee" },
     data: {
-      buyer: { name: 'a test log buyer' },
+      buyer: { name: "a test log buyer" },
     },
   },
 
   // -------------------------------------
   // Master Data:
   tp: {
-    name: { singular: 'trading-partner' },
+    name: { singular: "trading-partner" },
     data: {
-      masterid: 'test-master-tp-1', // Triggers an expand-index and masterid-index
-      name: 'a test trading partner',
+      masterid: "test-master-tp-1", // Triggers an expand-index and masterid-index
+      name: "a test trading partner",
       // Note: this user doesn't actually exist
       user: {
-        id: 'users/TEST-TARGETHELPER-TPUSER',
-        bookmarks: { _id: 'resources/TEST-TARGETHELPER-TPUSERBOOKMARKS' },
+        id: "users/TEST-TARGETHELPER-TPUSER",
+        bookmarks: { _id: "resources/TEST-TARGETHELPER-TPUSERBOOKMARKS" },
       },
     },
   },
   fac: {
-    name: { singular: 'facility', plural: 'facilities' },
+    name: { singular: "facility", plural: "facilities" },
     data: {
-      masterid: 'test-master-fac-1', // Triggers an expand-index and masterid-index
-      name: 'a test facility',
+      masterid: "test-master-fac-1", // Triggers an expand-index and masterid-index
+      name: "a test facility",
     },
   },
   coiholder: {
-    name: { singular: 'coi-holder' },
+    name: { singular: "coi-holder" },
     data: {
-      masterid: 'test-master-coiholder-1', // Triggers an expand-index and masterid-index
-      name: 'a test coi holder',
+      masterid: "test-master-coiholder-1", // Triggers an expand-index and masterid-index
+      name: "a test coi holder",
     },
   },
   logbuyer: {
     name: {
-      singular: 'letter-of-guarantee-buyer',
+      singular: "letter-of-guarantee-buyer",
     },
     data: {
-      masterid: 'test-master-logbuyer-1', // Triggers an expand-index and masterid-index
-      name: 'a test logbuyer',
+      masterid: "test-master-logbuyer-1", // Triggers an expand-index and masterid-index
+      name: "a test logbuyer",
     },
   },
 };
@@ -197,7 +197,7 @@ const items = Object.fromEntries(
       k,
       {
         name: { singular, plural = `${singular}s` },
-        source = 'trellisfw',
+        source = "trellisfw",
         list = `/bookmarks/${source}/${plural}`,
         _type = `application/vnd.${source}.${singular}.1+json`,
 
@@ -214,7 +214,7 @@ const items = Object.fromEntries(
       }
 
       // Add the '*' entry to the list in the tree:
-      const ptr = listPtr.concat('/*');
+      const ptr = listPtr.concat("/*");
       if (!ptr.get(tree)) {
         ptr.set(tree, { _type });
       }
@@ -223,12 +223,12 @@ const items = Object.fromEntries(
       if (false) {
         // This is masterdata, add the expand-index and masterid-index to the tree
         // trellis-data-manager has done away with these things...
-        const expandPtr = listPtr.concat('/expand-index');
+        const expandPtr = listPtr.concat("/expand-index");
         if (!expandPtr.get(tree)) {
           expandPtr.set(tree, { _type: list_type });
         }
 
-        const masterPtr = listPtr.concat('/masterid-index');
+        const masterPtr = listPtr.concat("/masterid-index");
         if (!masterPtr.get(tree)) {
           masterPtr.set(tree, { _type: list_type });
         }
@@ -251,14 +251,14 @@ const items = Object.fromEntries(
   ),
 );
 // And finally, any inter-item relationships between master data:
-items.tp!.data.facilities = {
-  [items.fac!.key]: { _id: `resources/${items.fac!.key}` },
+items.tp?.data.facilities = {
+  [items.fac?.key]: { _id: `resources/${items.fac?.key}` },
 };
-items.coiholder!.data['trading-partners'] = {
-  [items.tp!.key]: { _id: `resources/${items.tp!.key}` },
+items.coiholder?.data["trading-partners"] = {
+  [items.tp?.key]: { _id: `resources/${items.tp?.key}` },
 };
-items.logbuyer!.data['trading-partners'] = {
-  [items.tp!.key]: { _id: `resources/${items.tp!.key}` },
+items.logbuyer?.data["trading-partners"] = {
+  [items.tp?.key]: { _id: `resources/${items.tp?.key}` },
 };
 
 async function cleanup(keyOrKeys?: string | readonly string[]) {
@@ -267,10 +267,10 @@ async function cleanup(keyOrKeys?: string | readonly string[]) {
     : keyOrKeys
       ? [keyOrKeys]
       : (Object.keys(items) as Array<keyof typeof items>);
-  info('cleanup: removing any lingering test resources');
+  info("cleanup: removing any lingering test resources");
 
   for await (const k of keys) {
-    trace('cleanup: removing resources+links if they exist for key %s', k);
+    trace("cleanup: removing resources+links if they exist for key %s", k);
     const index = items[k]!;
     let path;
     // Delete the link path from the list:
@@ -330,7 +330,7 @@ async function putData(
   }
 
   for await (const [ki, k] of Object.entries(keys)) {
-    trace('putData: adding test data for key: %s', k);
+    trace("putData: adding test data for key: %s", k);
 
     const index = items[k]!;
     let data: unknown;
@@ -344,7 +344,7 @@ async function putData(
     }
 
     // Do the put:
-    trace('putData: path: ', path, ', data = ', data);
+    trace("putData: path: ", path, ", data = ", data);
     try {
       await con.put({
         path,
@@ -354,13 +354,13 @@ async function putData(
       });
     } catch (error_: unknown) {
       error(
-        'Failed to make the resource. path = ',
+        "Failed to make the resource. path = ",
         path,
-        ', data = ',
+        ", data = ",
         index.data,
-        ', _type = ',
+        ", _type = ",
         index._type,
-        ', error = ',
+        ", error = ",
         error_,
       );
       throw error_ as Error;
@@ -372,13 +372,13 @@ async function putData(
         await con.put({
           path: `/${index.data.user.bookmarks._id}`,
           // FIXME: contentType: tree.bookmarks,
-          data: { iam: 'userbookmarks' },
+          data: { iam: "userbookmarks" },
         });
       } catch (error_: unknown) {
         error(
-          'Failed to make bookmarks for i.data.user. path = /',
+          "Failed to make bookmarks for i.data.user. path = /",
           index.data.user.bookmarks._id,
-          ', error = ',
+          ", error = ",
           error_,
         );
         throw error_ as Error;
@@ -397,9 +397,9 @@ async function putLink(keyOrKeys?: string | readonly string[]) {
   for await (const k of keys) {
     const index = items[k]!;
     trace(
-      'putLink: linking test data for key: ',
+      "putLink: linking test data for key: ",
       k,
-      ', under list ',
+      ", under list ",
       index.list,
     );
     let path;
@@ -417,11 +417,11 @@ async function putLink(keyOrKeys?: string | readonly string[]) {
       await con.put({ path, data, tree });
     } catch (error_: unknown) {
       error(
-        'Failed to link the resource. path = ',
+        "Failed to link the resource. path = ",
         path,
-        ', data = ',
+        ", data = ",
         data,
-        ', error = ',
+        ", error = ",
         error_,
       );
       throw error_ as Error;
@@ -441,7 +441,7 @@ async function putLink(keyOrKeys?: string | readonly string[]) {
           tree,
         });
       } catch (error_: unknown) {
-        error(error_, 'Failed to put the expand-index');
+        error(error_, "Failed to put the expand-index");
         throw error_ as Error;
       }
 
@@ -455,7 +455,7 @@ async function putLink(keyOrKeys?: string | readonly string[]) {
           tree,
         });
       } catch (error_: unknown) {
-        error(error_, 'Failed to put the masterid-index');
+        error(error_, "Failed to put the masterid-index");
         throw error_ as Error;
       }
     }
@@ -476,4 +476,4 @@ function setConnection(theconnection: OADAClient) {
 
 export { items, cleanup, putData, putLink, putAndLinkData, setConnection };
 
-export { default as tree } from '../dist/tree.js';
+export { default as tree } from "../dist/tree.js";

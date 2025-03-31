@@ -15,55 +15,55 @@
  * limitations under the License.
  */
 
-import config from './config.js';
+import config from "./config.js";
 
 // eslint-disable-next-line unicorn/import-style
-import { join } from 'node:path';
+import { join } from "node:path";
 
-import debug from 'debug';
-import moment from 'moment';
-import oError from '@overleaf/o-error';
+import oError from "@overleaf/o-error";
+import debug from "debug";
+import moment from "moment";
 
-import { AssumeState, ChangeType, ListWatch } from '@oada/list-lib';
-import type { Change, JsonObject, OADAClient } from '@oada/client';
-import type { Job, Json, WorkerFunction } from '@oada/jobs';
-import type { Logger } from '@oada/pino-debug';
+import type { Change, JsonObject, OADAClient } from "@oada/client";
+import type { Job, Json, WorkerFunction } from "@oada/jobs";
+import { AssumeState, ChangeType, ListWatch } from "@oada/list-lib";
+import type { Logger } from "@oada/pino-debug";
 
-import type { Link } from '@oada/types/oada/link/v1.js';
-import type Resource from '@oada/types/oada/resource.js';
-import type Update from '@oada/types/oada/service/job/update.js';
-import { assert as assertJob } from '@oada/types/oada/service/job.js';
-import { connect } from '@oada/client';
+import { connect } from "@oada/client";
+import type { Link } from "@oada/types/oada/link/v1.js";
+import type Resource from "@oada/types/oada/resource.js";
+import { assert as assertJob } from "@oada/types/oada/service/job.js";
+import type Update from "@oada/types/oada/service/job/update.js";
 
-import { handleShares, recursiveSignLinks } from './pdfJobPostProc.js';
-import {
-  recursiveMakeAllLinksVersioned,
-  recursiveReplaceLinksWithReferences,
-  stripResource,
-} from './utils.js';
+import { fromOadaType } from "./conversions.js";
+import { handleShares, recursiveSignLinks } from "./pdfJobPostProc.js";
 import {
   selfDocumentTypeTree,
   tpDocsTree,
   tpDocumentTypeTree,
   tpTree,
   tree,
-} from './tree.js';
-import type { TreeKey } from './tree.js';
-import { fromOadaType } from './conversions.js';
+} from "./tree.js";
+import type { TreeKey } from "./tree.js";
+import {
+  recursiveMakeAllLinksVersioned,
+  recursiveReplaceLinksWithReferences,
+  stripResource,
+} from "./utils.js";
 
-const error = debug('target-helper:error');
-const info = debug('target-helper:info');
-const trace = debug('target-helper:trace');
+const error = debug("target-helper:error");
+const info = debug("target-helper:info");
+const trace = debug("target-helper:trace");
 
-const pending = '/bookmarks/services/target/jobs/pending';
+const pending = "/bookmarks/services/target/jobs/pending";
 
-const targetTimeout = config.get('timeouts.pdf');
+const targetTimeout = config.get("timeouts.pdf");
 
 type List<T> = Record<string, T>;
 
-const tradingPartnersEnabled = config.get('tradingPartnersEnabled');
-const CONCURRENCY = config.get('oada.concurrency');
-const TP_PATH = '/bookmarks/trellisfw/trading-partners';
+const tradingPartnersEnabled = config.get("tradingPartnersEnabled");
+const CONCURRENCY = config.get("oada.concurrency");
+const TP_PATH = "/bookmarks/trellisfw/trading-partners";
 
 // Will fill in expandIndex on first job to handle
 let expandIndex: ExpandIndex;
@@ -72,11 +72,11 @@ let expandIndex: ExpandIndex;
  * Receive the job from oada-jobs
  */
 export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
-  trace({ job }, 'Received job');
+  trace({ job }, "Received job");
   // Until oada-jobs adds cross-linking, make sure we are linked under the PDF's jobs
-  trace('Linking job under pdf/_meta until oada-jobs can do that natively');
+  trace("Linking job under pdf/_meta until oada-jobs can do that natively");
   // TODO: This seems broken when it writes to the target job
-  const jobKey = jobId.replace(/^resources\//, '');
+  const jobKey = jobId.replace(/^resources\//, "");
   await oada.put({
     path: `${pending}/${jobKey}/config/pdf/_meta/services/target/jobs`,
     data: {
@@ -86,14 +86,14 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
 
   // Setup Expand index
   if (!expandIndex) {
-    trace('First time through, fetching expandIndex');
+    trace("First time through, fetching expandIndex");
     const { data: holders } = (await oada.ensure({
-      path: '/bookmarks/trellisfw/coi-holders/expand-index',
+      path: "/bookmarks/trellisfw/coi-holders/expand-index",
       data: {},
       tree,
     })) as { data: Record<string, Record<string, unknown>> };
     const { data: partners } = (await oada.get({
-      path: '/bookmarks/trellisfw/trading-partners/_meta/indexings/expand-index',
+      path: "/bookmarks/trellisfw/trading-partners/_meta/indexings/expand-index",
     })) as unknown as {
       data: Record<
         string,
@@ -101,8 +101,8 @@ export const jobHandler: WorkerFunction = async (job, { jobId, log, oada }) => {
       >;
     };
     expandIndex = {
-      'coi-holders': holders,
-      'trading-partners': partners,
+      "coi-holders": holders,
+      "trading-partners": partners,
     };
   }
 
@@ -119,8 +119,8 @@ async function targetSuccess({
   oada: OADAClient;
 }): Promise<Json> {
   void log.info(
-    'helper-started',
-    'Target returned success, target-helper picking up',
+    "helper-started",
+    "Target returned success, target-helper picking up",
   );
 
   // Get the latest copy of job
@@ -133,7 +133,7 @@ async function targetSuccess({
   job.result = await composeResult(jobId, job, oada, log);
 
   // ------------- 2: sign audit/coi/etc.
-  void log.info('helper: signing all links in result', {});
+  void log.info("helper: signing all links in result", {});
   await recursiveSignLinks(job.result, oada, log);
 
   // ------------- 3: make all result links versioned for some reason
@@ -141,7 +141,7 @@ async function targetSuccess({
     TreeKey,
     Record<string, unknown>
   >;
-  trace(versionedResult, 'all versioned links to bookmarks');
+  trace(versionedResult, "all versioned links to bookmarks");
 
   // ------------- 3.5 put audits/cois/etc. to proper home
   // TODO: This used to be the description for #3, but that's not what the
@@ -149,8 +149,8 @@ async function targetSuccess({
 
   // ------------- 4: cross link vdoc for pdf <-> audits,cois,letters,etc.
   void log.info(
-    'link-refs-pdf',
-    'helper: linking result _refs under <pdf>/_meta/vdoc',
+    "link-refs-pdf",
+    "helper: linking result _refs under <pdf>/_meta/vdoc",
   );
 
   const vdoc = recursiveReplaceLinksWithReferences(job.result);
@@ -171,7 +171,7 @@ async function targetSuccess({
   // ------------- 6: lookup shares, post job to shares service
   await handleShares(job, expandIndex, oada, log);
 
-  void log.info('done', 'Completed all helper tasks');
+  void log.info("done", "Completed all helper tasks");
 
   return job.result as Json;
 }
@@ -189,13 +189,13 @@ export async function composeResult(
   job.result = {};
 
   for await (const [documentType, data] of Object.entries(job.targetResult)) {
-    info('Document identified as %s', documentType);
+    info("Document identified as %s", documentType);
 
     job.result[documentType] = {};
 
     for await (const documentData of Object.values(data)) {
       trace(
-        'Merging from %s to %s.',
+        "Merging from %s to %s.",
         documentData._id,
         job.config.document._id,
       );
@@ -222,7 +222,7 @@ export async function composeResult(
       result: job.result as Json,
     },
   });
-  void log.trace('composed result after processing targetResult', {});
+  void log.trace("composed result after processing targetResult", {});
 
   return job.result;
 }
@@ -242,9 +242,9 @@ async function handleTargetTimeout({
     await oada.post({
       path: `/${jobId}/updates`,
       data: {
-        status: 'error',
-        information: 'TimeoutError',
-        meta: 'Target took too long',
+        status: "error",
+        information: "TimeoutError",
+        meta: "Target took too long",
       },
     });
     // You can also throw an error or perform any other necessary actions
@@ -262,7 +262,7 @@ async function jobChange({
   jobId: string;
   log: Logger;
   oada: OADAClient;
-  c: Omit<Change, 'resource_id'>;
+  c: Omit<Change, "resource_id">;
   unwatch: () => Promise<void>;
   onTargetSuccess: ({
     jobId,
@@ -274,12 +274,12 @@ async function jobChange({
     log: Logger;
   }) => Promise<Json>;
 }) {
-  trace('#jobChange: received change, c = %O ', c);
-  if (c.path !== '') {
+  trace("#jobChange: received change, c = %O ", c);
+  if (c.path !== "") {
     return; // Child
   }
 
-  if (c.type !== 'merge') {
+  if (c.type !== "merge") {
     return; // Delete
   }
 
@@ -291,7 +291,7 @@ async function jobChange({
     return;
   }
 
-  trace('#jobChange: it is a change we want (has an update)');
+  trace("#jobChange: it is a change we want (has an update)");
   for await (const v of Object.values(updates)) {
     // We have one change that has time as a stringified unix timestamp.
     // I think target posts it: "information": "Job result loaded to resource: '281aZusXonG7b7ZYY5w8TCteDcZ'",
@@ -305,13 +305,13 @@ async function jobChange({
     v.time = moment(v.time).toISOString();
     if (v.time === null) {
       // @ts-expect-error --- ?
-      v.time = moment(t, 'X');
+      v.time = moment(t, "X");
     }
 
-    trace(v, '#jobChange: change update');
+    trace(v, "#jobChange: change update");
     switch (v.status) {
       // Fix for Target identifying loop
-      case 'identifying': {
+      case "identifying": {
         setTimeout(async () => {
           await handleTargetTimeout({ jobId, oada });
           await unwatch();
@@ -320,8 +320,8 @@ async function jobChange({
         break;
       }
 
-      case 'success': {
-        trace('#jobChange: unwatching job and moving on with success tasks');
+      case "success": {
+        trace("#jobChange: unwatching job and moving on with success tasks");
         await unwatch();
 
         return onTargetSuccess({
@@ -331,11 +331,11 @@ async function jobChange({
         });
       }
 
-      case 'error': {
-        error('#jobChange: unwatching job and moving on with error tasks');
+      case "error": {
+        error("#jobChange: unwatching job and moving on with error tasks");
         await unwatch();
         if (v.information) {
-          error('Target job [%s] failed: %O', jobId, v.information);
+          error("Target job [%s] failed: %O", jobId, v.information);
         }
 
         throw new Error(`Target job ${jobId} returned an error`, { cause: v });
@@ -373,7 +373,7 @@ export async function handleJob({
   try {
     const { changes } = await oada.watch({
       path: `/${jobId}`,
-      type: 'single',
+      type: "single",
     });
 
     const unwatch = async () => {
@@ -432,10 +432,10 @@ async function makeSyntheticChange({
     path: `/${jobId}`,
   });
   // Initially just the original job is the "body" for a synthetic change
-  const w = data as Change['body'];
+  const w = data as Change["body"];
 
   if (w instanceof Uint8Array) {
-    throw new TypeError('body is binary, cannot call jobChange');
+    throw new TypeError("body is binary, cannot call jobChange");
   }
 
   await jobChange({
@@ -443,9 +443,9 @@ async function makeSyntheticChange({
     log,
     oada,
     c: {
-      path: '',
+      path: "",
       body: w,
-      type: 'merge',
+      type: "merge",
     },
     unwatch,
     onTargetSuccess,
@@ -475,13 +475,13 @@ export async function startJobCreator({
     });
 
     await con.ensure({
-      path: `/bookmarks/trellisfw/coi-holders`,
+      path: "/bookmarks/trellisfw/coi-holders",
       data: {},
       tree,
     });
 
     // Adding these trees because the recursiveGet within ListWatch recurses too deep otherwise
-    trace('Trading partners enabled %s', tradingPartnersEnabled);
+    trace("Trading partners enabled %s", tradingPartnersEnabled);
     if (tradingPartnersEnabled) {
       const tpWatch = new ListWatch({
         path: TP_PATH,
@@ -491,11 +491,11 @@ export async function startJobCreator({
         tree: tpTree,
       });
       tpWatch.on(ChangeType.ItemAdded, watchTp);
-      process.on('beforeExit', async () => tpWatch.stop());
+      process.on("beforeExit", async () => tpWatch.stop());
     }
 
     // Ensure the documents endpoint exists because Target is an enabler of that endpoint
-    const path = `/bookmarks/trellisfw/documents`;
+    const path = "/bookmarks/trellisfw/documents";
     await con.ensure({
       path,
       data: {},
@@ -511,7 +511,7 @@ export async function startJobCreator({
       tree: selfDocumentTypeTree,
     });
     selfDocumentsTypesWatch.on(ChangeType.ItemAdded, documentTypeAdded());
-    process.on('beforeExit', async () => selfDocumentsTypesWatch.stop());
+    process.on("beforeExit", async () => selfDocumentsTypesWatch.stop());
 
     // eslint-disable-next-line no-inner-declarations
     async function cleanupBrokenLinks() {
@@ -528,7 +528,7 @@ export async function startJobCreator({
       await Promise.all(
         Object.entries<Job & { _rev: string }>(pendingJobs).map(
           async ([key, job]) => {
-            if (key.startsWith('_')) {
+            if (key.startsWith("_")) {
               return;
             }
 
@@ -550,21 +550,21 @@ export async function startJobCreator({
     // For each trading partner, watch their documents list
     // eslint-disable-next-line no-inner-declarations
     async function watchTp({ pointer: masterId }: { pointer: string }) {
-      masterId = masterId.replace(/^\//, '');
+      masterId = masterId.replace(/^\//, "");
       // FOR DEBUGGING:
       // if (masterId!== 'd4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e') return
       info(`New trading partner detected at key: [${masterId}]`);
       const documentsPath = join(
         TP_PATH,
         masterId,
-        '/shared/trellisfw/documents',
+        "/shared/trellisfw/documents",
       );
       await con.ensure({
         path: documentsPath,
         data: {},
         tree: tpDocsTree,
       });
-      info('Starting listwatch on %s', documentsPath);
+      info("Starting listwatch on %s", documentsPath);
       const docsWatch = new ListWatch<Resource>({
         path: documentsPath,
         onNewList: AssumeState.New,
@@ -573,30 +573,30 @@ export async function startJobCreator({
         tree: tpDocsTree,
       });
       docsWatch.on(ChangeType.ItemAdded, documentTypeAdded(masterId));
-      process.on('beforeExit', async () => docsWatch.stop());
+      process.on("beforeExit", async () => docsWatch.stop());
     }
 
     // Now watch documents of that type
     // eslint-disable-next-line no-inner-declarations
     function documentTypeAdded(masterid?: string) {
-      return async function ({
+      return async ({
         item: itProm,
         pointer: docType,
       }: {
         item: Promise<Resource>;
         pointer: string;
-      }) {
+      }) => {
         const item = await itProm;
-        trace({ item, docType }, 'documentTypeAdded');
+        trace({ item, docType }, "documentTypeAdded");
         const documentPath = masterid
-          ? join(TP_PATH, masterid, '/shared/trellisfw/documents', docType)
-          : join('/bookmarks/trellisfw/documents', docType);
-        docType = docType.replace(/^\//, '');
-        info('Starting trading partner doc type listwatch on %s', documentPath);
+          ? join(TP_PATH, masterid, "/shared/trellisfw/documents", docType)
+          : join("/bookmarks/trellisfw/documents", docType);
+        docType = docType.replace(/^\//, "");
+        info("Starting trading partner doc type listwatch on %s", documentPath);
         // Register new watch on
         const docTypeWatch = new ListWatch<Resource>({
           path: documentPath,
-          name: `target-helper-tp-docs`,
+          name: "target-helper-tp-docs",
           onNewList: AssumeState.Handled,
           conn: con,
           resume: true,
@@ -612,13 +612,13 @@ export async function startJobCreator({
           documentAdded(docType, masterid)
         );
         */
-        process.on('beforeExit', async () => docTypeWatch.stop());
+        process.on("beforeExit", async () => docTypeWatch.stop());
       };
     }
 
     // eslint-disable-next-line no-inner-declarations
     function documentAdded(documentType: string, masterid?: string) {
-      return async function ({
+      return async ({
         item: itProm,
         pointer: key,
         change,
@@ -626,7 +626,7 @@ export async function startJobCreator({
         item: Promise<Resource>;
         pointer: string;
         change?: Change;
-      }) {
+      }) => {
         try {
           let item: Resource;
           if (change) {
@@ -640,7 +640,7 @@ export async function startJobCreator({
           const typePath = masterid
             ? `${TP_PATH}/${masterid}/shared/trellisfw/documents/${documentType}`
             : `/bookmarks/trellisfw/documents/${documentType}`;
-          key = key.replace(/^\//, '');
+          key = key.replace(/^\//, "");
           const { data: meta } = (await con.get({
             path: `${typePath}/${key}/_meta`,
           })) as {
@@ -650,17 +650,17 @@ export async function startJobCreator({
             };
           };
 
-          if (meta?.services?.['target-helper']) {
+          if (meta?.services?.["target-helper"]) {
             info(
-              'target-helper has already been here. %s. Skipping this document',
-              meta.services['target-helper'],
+              "target-helper has already been here. %s. Skipping this document",
+              meta.services["target-helper"],
             );
             return;
           }
 
           // FIXME: For now, take the first pdf
           if (!meta?.vdoc?.pdf) {
-            info(`No /_meta/vdoc/pdf. Skipping this doc`);
+            info("No /_meta/vdoc/pdf. Skipping this doc");
             return;
           }
 
@@ -668,41 +668,41 @@ export async function startJobCreator({
           const pdf = pdfs[0];
           info(
             `New Document was for ${
-              masterid ? `tp with masterid=${masterid}` : 'Non-Trading Partner'
+              masterid ? `tp with masterid=${masterid}` : "Non-Trading Partner"
             }`,
           );
-          info('New Document posted at %s/%s', typePath, key);
+          info("New Document posted at %s/%s", typePath, key);
 
           // Fetch the PDF Document
           //          let docs = Object.entries(meta!.vdoc || {});
 
           const data = {
-            'trading-partner': masterid, // Just for documentation
-            'type': 'transcription',
-            'service': 'target',
-            'config': {
-              'type': 'pdf',
+            "trading-partner": masterid, // Just for documentation
+            type: "transcription",
+            service: "target",
+            config: {
+              type: "pdf",
               pdf,
-              'document': { _id },
-              'docKey': key,
-              'document-type': fromOadaType(documentType)?.name ?? 'unknown',
-              'oada-doc-type': documentType,
+              document: { _id },
+              docKey: key,
+              "document-type": fromOadaType(documentType)?.name ?? "unknown",
+              "oada-doc-type": documentType,
             },
-            '_type': `application/vnd.oada.job.1+json`,
+            _type: "application/vnd.oada.job.1+json",
           };
 
           try {
             const { headers } = await con.post({
-              path: '/resources',
-              contentType: 'application/vnd.oada.job.1+json',
+              path: "/resources",
+              contentType: "application/vnd.oada.job.1+json",
               data: data as Json,
             });
-            const jobkey = headers['content-location']!.replace(
+            const jobkey = headers["content-location"]!.replace(
               /^\/resources\//,
-              '',
+              "",
             );
 
-            info('Posted job resource, jobkey = %s', jobkey);
+            info("Posted job resource, jobkey = %s", jobkey);
             try {
               await con.put({
                 path: pending,
@@ -714,18 +714,18 @@ export async function startJobCreator({
                   },
                 },
               });
-              trace('Posted new PDF document to target task queue');
+              trace("Posted new PDF document to target task queue");
             } catch (cError: unknown) {
               throw oError.tag(
                 cError as Error,
-                'Failed to PUT job link under target job queue for job key ',
+                "Failed to PUT job link under target job queue for job key ",
                 jobkey,
               );
             }
           } catch (cError: unknown) {
             throw oError.tag(
               cError as Error,
-              'Failed to create new job resource for item ',
+              "Failed to create new job resource for item ",
               _id,
             );
           }
@@ -735,7 +735,7 @@ export async function startJobCreator({
       };
     }
   } catch (cError: unknown) {
-    oError.tag(cError as Error, 'ListWatch failed!');
+    oError.tag(cError as Error, "ListWatch failed!");
     throw cError;
   }
 }
@@ -745,26 +745,26 @@ interface ExpandIndexItem {
   facilities?: Record<string, { _id: string }>;
 }
 export interface ExpandIndex {
-  'trading-partners': Record<string, ExpandIndexItem>;
-  'coi-holders': Record<string, Record<string, unknown>>;
+  "trading-partners": Record<string, ExpandIndexItem>;
+  "coi-holders": Record<string, Record<string, unknown>>;
 }
 
 export interface TargetJobConfig {
-  'type': 'pdf';
-  'pdf': {
+  type: "pdf";
+  pdf: {
     _id: string;
   };
-  'document': {
+  document: {
     _id: string;
   };
-  'docKey': string;
-  'document-type': string;
-  'oada-doc-type': string;
+  docKey: string;
+  "document-type": string;
+  "oada-doc-type": string;
 }
 
 export interface TargetJob {
-  'config': TargetJobConfig;
-  'trading-partner'?: string;
-  'targetResult': List<List<Link>>;
-  'result': List<List<Link>>;
+  config: TargetJobConfig;
+  "trading-partner"?: string;
+  targetResult: List<List<Link>>;
+  result: List<List<Link>>;
 }

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-declare module 'isomorphic-timers-promises' {
-  export * from 'node:timers/promises';
+declare module "isomorphic-timers-promises" {
+  export * from "node:timers/promises";
 }
 
-declare module 'assign-deep' {
+declare module "assign-deep" {
   function assign<A, B>(a: A, b: B): A & B;
   export = assign;
 }

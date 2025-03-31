@@ -22,7 +22,7 @@ export function has<T, K extends string>(
   value: T,
   key: K,
 ): value is T & { [P in K]: unknown } {
-  return value && typeof value === 'object' && key in value;
+  return value && typeof value === "object" && key in value;
 }
 
 // Because OADA resource keys are always in the way
@@ -46,11 +46,11 @@ export function stripResource<
 }
 
 export function recursiveMakeAllLinksVersioned(object: unknown): unknown {
-  if (typeof object !== 'object' || !object) {
+  if (typeof object !== "object" || !object) {
     return object;
   }
 
-  if (has(object, '_id')) {
+  if (has(object, "_id")) {
     return {
       _id: object._id as string,
       _rev: 0,
@@ -66,11 +66,11 @@ export function recursiveMakeAllLinksVersioned(object: unknown): unknown {
 }
 
 export function recursiveReplaceLinksWithReferences(object: unknown): unknown {
-  if (typeof object !== 'object' || !object) {
+  if (typeof object !== "object" || !object) {
     return object;
   }
 
-  if (has(object, '_id')) {
+  if (has(object, "_id")) {
     return { _ref: object._id as string };
   }
 
@@ -84,21 +84,21 @@ export function recursiveReplaceLinksWithReferences(object: unknown): unknown {
 
 export function treeForDocumentType(doctype: string) {
   let singularType = doctype;
-  if (singularType.endsWith('s')) {
+  if (singularType.endsWith("s")) {
     // If it ends in 's', easy fix
-    singularType = singularType.replace(/s$/, '');
-  } else if (singularType.includes('-')) {
+    singularType = singularType.replace(/s$/, "");
+  } else if (singularType.includes("-")) {
     // If it has a dash, maybe it is like letters-of-guarantee (first thing plural)
-    const parts = singularType.split('-');
+    const parts = singularType.split("-");
     if (parts[0]?.match(/s$/)) {
-      parts[0] = parts[0].replace(/s$/, '');
+      parts[0] = parts[0].replace(/s$/, "");
     } else {
       throw new Error(
         `ERROR: doctype ${doctype} has dashes, but is not easily convertible to singular word for _type`,
       );
     }
 
-    singularType = parts.join('-');
+    singularType = parts.join("-");
   } else {
     throw new Error(
       `ERROR: doctype ${doctype} is not easily convertible to singular word for _type`,
@@ -107,13 +107,13 @@ export function treeForDocumentType(doctype: string) {
 
   return {
     bookmarks: {
-      _type: 'application/vnd.oada.bookmarks.1+json',
+      _type: "application/vnd.oada.bookmarks.1+json",
       trellisfw: {
-        _type: 'application/vnd.trellis.1+json',
+        _type: "application/vnd.trellis.1+json",
         [doctype]: {
           // Cois, fsqa-audits, etc.
-          '_type': `application/vnd.trellis.${doctype}.1+json`, // Plural word: cois, letters-of-guarantee
-          '*': {
+          _type: `application/vnd.trellis.${doctype}.1+json`, // Plural word: cois, letters-of-guarantee
+          "*": {
             _type: `application/vnd.trellis.${singularType}.1+json`, // Coi, letter-of-guarantee
             _rev: 1, // Links within each type of thing are versioned
           },

@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-import config from '../dist/config.js';
+import config from "../dist/config.js";
 
-import test from 'ava';
+import test from "ava";
 
-import { setTimeout } from 'isomorphic-timers-promises';
+import { setTimeout } from "isomorphic-timers-promises";
 
-import { type JsonObject, connect } from '@oada/client';
-import debug from 'debug';
-import moment from 'moment';
+import { type JsonObject, connect } from "@oada/client";
+import debug from "debug";
+import moment from "moment";
 
 import {
   cleanup,
@@ -32,43 +32,43 @@ import {
   putData,
   putLink,
   setConnection,
-} from './testdata.js';
+} from "./testdata.js";
 
-const trace = debug('target-helper#test:trace');
+const trace = debug("target-helper#test:trace");
 
 const REALISTIC_TIMING = true;
 
-const doctypes = ['audit', 'cert', 'coi', 'log'];
+const doctypes = ["audit", "cert", "coi", "log"];
 
 const con = await connect({
-  domain: config.get('oada.domain'),
-  token: config.get('oada.token')[0],
+  domain: config.get("oada.domain"),
+  token: config.get("oada.token")[0],
 });
 
 test.before(async () => {
   setConnection(con);
 
   // Clear out any old stuff:
-  trace('before: cleanup');
+  trace("before: cleanup");
   await cleanup();
 
-  trace('before: putData');
+  trace("before: putData");
   // Build the tree with all the initial data:
-  await putAndLinkData(['tp', 'fac', 'logbuyer', 'coiholder']);
-  await putData(['pdf']); // Don't link into job tree since that would trigger target-helper to make a job for it
+  await putAndLinkData(["tp", "fac", "logbuyer", "coiholder"]);
+  await putData(["pdf"]); // Don't link into job tree since that would trigger target-helper to make a job for it
 
   // All 4 kinds of jobs: coi, audit, cert, log
   // --------------------------------------------------------
   for await (const doctype of doctypes) {
-    trace('before: create job for doctype: ', doctype);
+    trace("before: create job for doctype: ", doctype);
     const jobtype = `${doctype}job`; // Coijob, auditjob, etc...
     const index = items[jobtype]!;
     // Example of a successful normal job: go ahead and put that up, tests will check results later
     await putAndLinkData(jobtype, {
-      service: 'target',
-      type: 'transcription',
+      service: "target",
+      type: "transcription",
       config: {
-        type: 'pdf',
+        type: "pdf",
         pdf: { _id: `resources/${items.pdf?.key}` },
       },
     });
@@ -81,7 +81,7 @@ test.before(async () => {
       path: `${index.list}/${index.key}/updates`,
       contentType: index._type,
       data: {
-        status: 'identifying',
+        status: "identifying",
         time: moment().format(),
       },
     });
@@ -90,7 +90,7 @@ test.before(async () => {
       path: `${index.list}/${index.key}/updates`,
       contentType: index._type,
       data: {
-        status: 'identified',
+        status: "identified",
         information: `Identified as ${doctype}`,
         time: moment().format(),
       },
@@ -104,18 +104,18 @@ test.before(async () => {
     // Add the identified "lookup" to it's meta:
     let meta;
     switch (doctype) {
-      case 'audit':
-      case 'cert': {
+      case "audit":
+      case "cert": {
         meta = { organization: { _ref: `resources/${items.fac?.key}` } };
         break;
       }
 
-      case 'coi': {
+      case "coi": {
         meta = { holder: { _ref: `resources/${items.coiholder?.key}` } };
         break;
       }
 
-      case 'log': {
+      case "log": {
         meta = { buyer: { _ref: `resources/${items.logbuyer?.key}` } };
         break;
       }
@@ -147,7 +147,7 @@ test.before(async () => {
     await con.post({
       path: `${index.list}/${index.key}/updates`,
       data: {
-        status: 'success',
+        status: "success",
         type: documentIndex.name.singular,
         time: moment().format(),
       },
@@ -227,7 +227,7 @@ for (const doctype of doctypes) {
     });
     t.is(
       result6,
-      'success',
+      "success",
       `should have status of success on the ${jobtype} when completed`,
     );
 
@@ -241,7 +241,7 @@ for (const doctype of doctypes) {
       `should delete the ${jobtype} from ${jobIndex.list}}`,
     );
 
-    const day = moment().format('YYYY-MM-DD');
+    const day = moment().format("YYYY-MM-DD");
     const { data: result7 } = await con.get({
       path: `/bookmarks/services/target/jobs/success/day-index/${day}/${jobIndex.key}`,
     });
@@ -249,7 +249,7 @@ for (const doctype of doctypes) {
       (result7 as JsonObject)?._id,
       `resources/${jobIndex.key}`,
       `should put the ${jobtype} under today's day-index ${moment().format(
-        'YYYY-MM-DD',
+        "YYYY-MM-DD",
       )} within jobs-success`,
     );
   });

@@ -19,50 +19,50 @@
 /* eslint-disable no-process-exit */
 /* eslint-disable unicorn/no-process-exit */
 
-import config from '../config.js';
+import config from "../config.js";
 
-import readline from 'node:readline'; // Node.js built-in
+import readline from "node:readline"; // Node.js built-in
 
-import { connect } from '@oada/client';
-import ksuid from 'ksuid';
-import minimist from 'minimist';
-import moment from 'moment';
+import { connect } from "@oada/client";
+import ksuid from "ksuid";
+import minimist from "minimist";
+import moment from "moment";
 
 const argv = minimist(process.argv.slice(2));
 
 // DO NOT include ../ because we are testing externally.
 
-const jobkey = 'TARGETHELPER_ASNTEST_JOB1'; // Replaced in first test with actual job key
-const asnkey = 'TARGETHELPER_ASNTEST_ASN1';
+const jobkey = "TARGETHELPER_ASNTEST_JOB1"; // Replaced in first test with actual job key
+const asnkey = "TARGETHELPER_ASNTEST_ASN1";
 const jobid = `resources/${jobkey}`;
 const asnid = `resources/${asnkey}`;
-const dayIndex = moment().format('YYYY-MM-DD');
-const headers = { 'content-type': 'application/vnd.trellisfw.asn.sf.1+json' };
-const listheaders = { 'content-type': 'application/vnd.trellisfw.asns.1+json' };
-const jobsheaders = { 'content-type': 'application/vnd.oada.job.1+json' };
+const dayIndex = moment().format("YYYY-MM-DD");
+const headers = { "content-type": "application/vnd.trellisfw.asn.sf.1+json" };
+const listheaders = { "content-type": "application/vnd.trellisfw.asns.1+json" };
+const jobsheaders = { "content-type": "application/vnd.oada.job.1+json" };
 
 if (!argv.force) {
   console.log(
-    'ERROR: you must pass --force because this WILL REPLACE THE BOOKMARKS/TRELLISFW/ASNS LINK WITH A BLANK TEST ONE.  It SHOULD restore that one when you hit enter after the script pauses.',
+    "ERROR: you must pass --force because this WILL REPLACE THE BOOKMARKS/TRELLISFW/ASNS LINK WITH A BLANK TEST ONE.  It SHOULD restore that one when you hit enter after the script pauses.",
   );
   process.exit(1);
 }
 
-console.log('Replacing /bookmarks/trellisfw/asns with a new blank test tree');
+console.log("Replacing /bookmarks/trellisfw/asns with a new blank test tree");
 
 const con = await connect({
-  domain: config.get('domain'),
-  token: config.get('token'),
+  domain: config.get("domain"),
+  token: config.get("token"),
 });
 
 const { data: oldID } = await con.get({
-  path: `/bookmarks/trellisfw/asns/_id`,
+  path: "/bookmarks/trellisfw/asns/_id",
 });
-console.log('The original ASN ID (KEEP THIS JUST IN CASE!) was:', oldID);
+console.log("The original ASN ID (KEEP THIS JUST IN CASE!) was:", oldID);
 
 const { string: listID } = await ksuid.random();
 const data = {
-  '2021-01-15': {
+  "2021-01-15": {
     id: ksuid.randomSync().string,
     asnids: [
       ksuid.randomSync().string,
@@ -71,7 +71,7 @@ const data = {
       ksuid.randomSync().string,
     ],
   },
-  '2021-01-16': {
+  "2021-01-16": {
     id: ksuid.randomSync().string,
     asnids: [ksuid.randomSync().string, ksuid.randomSync().string],
   },
@@ -79,7 +79,7 @@ const data = {
 
 let count = 0;
 for await (const [day, d] of Object.entries(data)) {
-  console.log('Creating', day);
+  console.log("Creating", day);
   for await (const a of d.asnids) {
     console.log(`      Creating ${day}/${a}`);
     await con.put({
@@ -101,11 +101,11 @@ for await (const [day, d] of Object.entries(data)) {
 }
 
 // Create the list
-console.log('Creating top asns list at resources/', listID);
+console.log("Creating top asns list at resources/", listID);
 await con.put({
   path: `/resources/${listID}`,
   data: {
-    'day-index': Object.keys(data).reduce((accumulator, day) => {
+    "day-index": Object.keys(data).reduce((accumulator, day) => {
       accumulator[day] = { _id: `resources/${data[day].id}`, _rev: 0 };
       return accumulator;
     }, {}),
@@ -113,11 +113,11 @@ await con.put({
   headers: listheaders,
 });
 
-console.log('Linking new asns list under bookmarks/trellisfw', listID);
+console.log("Linking new asns list under bookmarks/trellisfw", listID);
 await con.put({
-  path: `/bookmarks/trellisfw`,
+  path: "/bookmarks/trellisfw",
   data: { asns: { _id: `resources/${listID}` } },
-  headers: { 'content-type': 'application/vnd.trellisfw.1+json' },
+  headers: { "content-type": "application/vnd.trellisfw.1+json" },
 });
 
 const rl = readline.createInterface({
@@ -129,7 +129,7 @@ const rl = readline.createInterface({
 // Wait until ready, then keeping post new ASNs and waiting until they say stop:
 const newASNDay = Object.keys(data)[0];
 const newasnids = [];
-let response = '';
+let response = "";
 do {
   const newASNid = ksuid.randomSync().string;
   newasnids.push(newASNid);
@@ -140,11 +140,11 @@ do {
       resolve,
     );
   });
-  if (response === 'stop') break;
+  if (response === "stop") break;
   // eslint-disable-next-line no-await-in-loop
   await con.put({
     path: `/resources/${newASNid}`,
-    data: { hello: 'testnewasn' },
+    data: { hello: "testnewasn" },
     headers,
   });
   // eslint-disable-next-line no-await-in-loop
@@ -153,8 +153,8 @@ do {
     data: { [newASNid]: { _id: `resources/${newASNid}`, _rev: 0 } },
     listheaders,
   });
-  console.log('New asn created at', newASNid, 'and linked under', newASNDay);
-} while (response !== 'stop');
+  console.log("New asn created at", newASNid, "and linked under", newASNDay);
+} while (response !== "stop");
 
 // ---------------------------------------------------
 // Wait until ready, then reset bookmarks and cleanup resources
@@ -164,13 +164,13 @@ await new Promise((resolve, reject) => {
     resolve,
   );
 });
-console.log('Putting back original bookmarks/trellisfw/asns from id', oldID);
+console.log("Putting back original bookmarks/trellisfw/asns from id", oldID);
 await con.put({
-  path: `/bookmarks/trellisfw`,
+  path: "/bookmarks/trellisfw",
   data: { asns: { _id: oldID } },
-  headers: { 'content-type': 'application/vnd.trellisfw.1+json' },
+  headers: { "content-type": "application/vnd.trellisfw.1+json" },
 });
-console.log('Deleting all those resources to cleanup');
+console.log("Deleting all those resources to cleanup");
 
 const ids = [
   ...newasnids,
@@ -180,13 +180,13 @@ const ids = [
     return [...accumulator, ...data[day].asnids];
   }, []),
 ];
-console.log('    Deleting ids:', ids);
+console.log("    Deleting ids:", ids);
 for await (const index of ids) {
   con.delete({ path: `/resources/${index}` });
 }
 
 console.log(
-  '\n\nDO NOT FORGET TO RESTART TARGET-HELPER SO IT PICKS THE OLD BOOKMARKS WATCH UP AGAIn\n\n',
+  "\n\nDO NOT FORGET TO RESTART TARGET-HELPER SO IT PICKS THE OLD BOOKMARKS WATCH UP AGAIn\n\n",
 );
 process.exit(0);
 

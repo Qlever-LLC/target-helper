@@ -17,30 +17,30 @@
 
 /* eslint-disable sonarjs/no-duplicate-string */
 
-import type { Tree } from '@oada/types/oada/tree/v1.js';
+import type { Tree } from "@oada/types/oada/tree/v1.js";
 
 const documents: Tree = {
-  '_type': 'application/vnd.trellisfw.documents.1+json',
-  '*': {
-    _type: 'application/vnd.trellisfw.documents.1+json',
+  _type: "application/vnd.trellisfw.documents.1+json",
+  "*": {
+    _type: "application/vnd.trellisfw.documents.1+json",
   },
 };
 
 const tree: Tree = {
   bookmarks: {
-    _type: 'application/vnd.oada.bookmarks.1+json',
+    _type: "application/vnd.oada.bookmarks.1+json",
     trellisfw: {
-      '_type': 'application/vnd.trellisfw.1+json',
-      'coi-holders': {
-        '_type': 'application/vnd.trellisfw.trading-partners.1+json',
-        'expand-index': {
-          _type: 'application/vnd.trellisfw.trading-partners.1+json',
+      _type: "application/vnd.trellisfw.1+json",
+      "coi-holders": {
+        _type: "application/vnd.trellisfw.trading-partners.1+json",
+        "expand-index": {
+          _type: "application/vnd.trellisfw.trading-partners.1+json",
         },
       },
-      'trading-partners': {
-        '_type': 'application/vnd.trellisfw.trading-partners.1+json',
-        '*': {
-          _type: 'application/vnd.trellisfw.trading-partner.1+json',
+      "trading-partners": {
+        _type: "application/vnd.trellisfw.trading-partners.1+json",
+        "*": {
+          _type: "application/vnd.trellisfw.trading-partner.1+json",
           /*
           Bookmarks: {
             _type: 'application/vnd.oada.bookmarks.1+json',
@@ -63,9 +63,9 @@ const tree: Tree = {
           },
           */
           shared: {
-            _type: 'application/vnd.oada.bookmarks.1+json',
+            _type: "application/vnd.oada.bookmarks.1+json",
             trellisfw: {
-              _type: 'application/vnd.trellisfw.1+json',
+              _type: "application/vnd.trellisfw.1+json",
               documents,
               /*
               'fsqa-audits': {
@@ -80,29 +80,29 @@ const tree: Tree = {
         },
       },
       documents,
-      'asns': {
-        '_type': 'application/vnd.trellisfw.asns.1+json',
-        'day-index': {
-          '*': {
-            '_type': 'application/vnd.trellisfw.asns.1+json',
-            '*': {
-              _type: 'application/vnd.trellisfw.asn.sf.1+json',
+      asns: {
+        _type: "application/vnd.trellisfw.asns.1+json",
+        "day-index": {
+          "*": {
+            _type: "application/vnd.trellisfw.asns.1+json",
+            "*": {
+              _type: "application/vnd.trellisfw.asn.sf.1+json",
             },
           },
         },
       },
     },
     services: {
-      '_type': 'application/vnd.oada.services.1+json',
-      '*': {
+      _type: "application/vnd.oada.services.1+json",
+      "*": {
         // We will post to shares/jobs
-        _type: 'application/vnd.oada.service.1+json',
+        _type: "application/vnd.oada.service.1+json",
         jobs: {
-          _type: 'application/vnd.oada.service.jobs.1+json',
+          _type: "application/vnd.oada.service.jobs.1+json",
           pending: {
-            '_type': 'application/vnd.oada.service.jobs.1+json',
-            '*': {
-              _type: 'application/vnd.oada.service.job.1+json',
+            _type: "application/vnd.oada.service.jobs.1+json",
+            "*": {
+              _type: "application/vnd.oada.service.job.1+json",
               _rev: 0,
             },
           },
@@ -114,30 +114,30 @@ const tree: Tree = {
 export { tree };
 
 const selfDocumentTypeTree: Tree = structuredClone(tree);
-delete selfDocumentTypeTree.bookmarks!.trellisfw!.documents!['*']!['*'];
-delete selfDocumentTypeTree.bookmarks!.trellisfw!['trading-partners'];
+delete selfDocumentTypeTree.bookmarks!.trellisfw!.documents!["*"]!["*"];
+delete selfDocumentTypeTree.bookmarks!.trellisfw!["trading-partners"];
 export { selfDocumentTypeTree };
 
 const tpTree: Tree = structuredClone(tree);
-delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['*']?.shared;
-delete tpTree.bookmarks?.trellisfw?.['trading-partners']?.['*']?.bookmarks;
+delete tpTree.bookmarks?.trellisfw?.["trading-partners"]?.["*"]?.shared;
+delete tpTree.bookmarks?.trellisfw?.["trading-partners"]?.["*"]?.bookmarks;
 delete tpTree.bookmarks!.services;
 delete tpTree.bookmarks!.trellisfw!.documents;
 export { tpTree };
 
 const tpDocsTree: Tree = structuredClone(tree);
-delete tpDocsTree.bookmarks!.trellisfw!['trading-partners']!['*']!.shared!
-  .trellisfw!.documents!['*']!['*'];
+delete tpDocsTree.bookmarks!.trellisfw!["trading-partners"]!["*"]!.shared!
+  .trellisfw!.documents!["*"]!["*"];
 delete tpDocsTree.bookmarks!.services;
 delete tpDocsTree.bookmarks!.trellisfw!.documents;
 export { tpDocsTree };
 
 const tpDocumentTypeTree: Tree = structuredClone(tree);
-delete tpDocumentTypeTree.bookmarks!.trellisfw!['trading-partners']!['*']!
-  .shared!.trellisfw!.documents!['*']!['*'];
-delete tpDocumentTypeTree.bookmarks!.trellisfw!.documents!['*']!['*'];
+delete tpDocumentTypeTree.bookmarks!.trellisfw!["trading-partners"]!["*"]!
+  .shared!.trellisfw!.documents!["*"]!["*"];
+delete tpDocumentTypeTree.bookmarks!.trellisfw!.documents!["*"]!["*"];
 delete tpDocumentTypeTree.bookmarks!.services;
 export { tpDocumentTypeTree };
 
 export default tree;
-export { type TreeKey } from '@oada/types/oada/tree/v1.js';
+export { type TreeKey } from "@oada/types/oada/tree/v1.js";

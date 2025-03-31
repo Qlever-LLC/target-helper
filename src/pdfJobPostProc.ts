@@ -15,23 +15,23 @@
  * limitations under the License.
  */
 
-import config from './config.js';
+import config from "./config.js";
 
-import { readFile } from 'node:fs/promises';
+import { readFile } from "node:fs/promises";
 
-import type { Json } from '@oada/jobs';
-import type { JWK } from '@trellisfw/signatures';
-import type { Link } from '@oada/types/oada/link/v1.js';
-import type { Logger } from '@oada/pino-debug';
-import type { OADAClient } from '@oada/client';
-import tSignatures from '@trellisfw/signatures';
+import type { OADAClient } from "@oada/client";
+import type { Json } from "@oada/jobs";
+import type { Logger } from "@oada/pino-debug";
+import type { Link } from "@oada/types/oada/link/v1.js";
+import type { JWK } from "@trellisfw/signatures";
+import tSignatures from "@trellisfw/signatures";
 
-import type { ExpandIndex, TargetJob } from './pdfJob.js';
-import { has, treeForDocumentType } from './utils.js';
-import { tree } from './tree.js';
+import type { ExpandIndex, TargetJob } from "./pdfJob.js";
+import { tree } from "./tree.js";
+import { has, treeForDocumentType } from "./utils.js";
 
 // You can generate a signing key pair by running `oada-certs --create-keys`
-const keyFile = await readFile(config.get('signing.privateJWK'));
+const keyFile = await readFile(config.get("signing.privateJWK"));
 const prvKey = JSON.parse(keyFile.toString()) as JWK;
 const pubKey = await tSignatures.keys.pubFromPriv(prvKey);
 const header: { jwk: JWK; jku?: string; kid?: string } = {
@@ -45,8 +45,8 @@ if (prvKey.kid) {
   header.kid = prvKey.kid;
 }
 
-const signer = config.get('signing.signer');
-const signatureType = config.get('signing.signatureType');
+const signer = config.get("signing.signer");
+const signatureType = config.get("signing.signatureType");
 
 // Iterate over result and handle lookups for different doc types and post jobs to shares service
 export async function handleShares(
@@ -56,14 +56,14 @@ export async function handleShares(
   log: Logger,
 ) {
   // Only share for smithfield
-  if (job['trading-partner']) return;
+  if (job["trading-partner"]) return;
 
   for await (const [doctype, doclist] of Object.entries(job.result)) {
     const shares: Shares = [];
 
     for await (const [dockey, document] of Object.entries(doclist)) {
       log.trace(
-        'Fetching lookups for doctype = %s, doc = %O, getting /%s/_meta/lookups',
+        "Fetching lookups for doctype = %s, doc = %O, getting /%s/_meta/lookups",
         doctype,
         document,
         document._id,
@@ -73,14 +73,14 @@ export async function handleShares(
       })) as unknown as {
         data: Record<string, Record<string, { _ref: string }>>;
       };
-      log.trace(lookups, 'lookups');
+      log.trace(lookups, "lookups");
       let facilityID;
       switch (doctype) {
-        case 'fsqa-audits': {
-          facilityID = lookups['fsqa-audit']!.organization!._ref;
+        case "fsqa-audits": {
+          facilityID = lookups["fsqa-audit"]?.organization?._ref;
           await pushSharesForFacility({
             log,
-            facilityid: facilityID,
+            facilityid: facilityID!,
             doc: document,
             dockey,
             shares,
@@ -89,11 +89,11 @@ export async function handleShares(
           break;
         }
 
-        case 'fsqa-certificates': {
-          facilityID = lookups['fsqa-certificate']!.organization!._ref;
+        case "fsqa-certificates": {
+          facilityID = lookups["fsqa-certificate"]?.organization?._ref;
           await pushSharesForFacility({
             log,
-            facilityid: facilityID,
+            facilityid: facilityID!,
             doc: document,
             dockey,
             shares,
@@ -102,20 +102,20 @@ export async function handleShares(
           break;
         }
 
-        case 'cois': {
+        case "cois": {
           const { data: holder } = (await oada.get({
-            path: `/${lookups.coi!.holder!._ref}`,
+            path: `/${lookups.coi?.holder?._ref}`,
           })) as unknown as {
-            data: { 'trading-partners': Record<string, { _id: string }> };
+            data: { "trading-partners": Record<string, { _id: string }> };
           };
-          log.trace({ holder }, 'Retrieved holder');
+          log.trace({ holder }, "Retrieved holder");
           for await (const tpLink of Object.values(
-            holder['trading-partners'],
+            holder["trading-partners"],
           )) {
             const { data: tp } = await oada.get({
               path: `/${tpLink._id}`,
             });
-            if (!has(tp, '_id')) {
+            if (!has(tp, "_id")) {
               throw new Error(`Expected _id on trading partner ${tpLink._id}`);
             }
 
@@ -129,14 +129,14 @@ export async function handleShares(
           break;
         }
 
-        case 'letters-of-guarantee': {
+        case "letters-of-guarantee": {
           const { data: buyer } = (await oada.get({
-            path: `/${lookups['letter-of-guarantee']!.buyer!._ref}`,
+            path: `/${lookups["letter-of-guarantee"]?.buyer?._ref}`,
           })) as unknown as {
-            data: { 'trading-partners': Record<string, { _id: string }> };
+            data: { "trading-partners": Record<string, { _id: string }> };
           };
-          log.trace('Retrieved buyer %O', buyer);
-          for await (const tpLink of Object.values(buyer['trading-partners'])) {
+          log.trace("Retrieved buyer %O", buyer);
+          for await (const tpLink of Object.values(buyer["trading-partners"])) {
             const { data: tp } = (await oada.get({
               path: `/${tpLink._id}`,
             })) as unknown as { data: { _id: string } };
@@ -155,29 +155,29 @@ export async function handleShares(
     }
 
     log.info(
-      'sharing',
+      "sharing",
       `Posting ${shares.length} shares jobs for doctype ${doctype} resulting from this transcription`,
     );
     for await (const { dockey, doc, tp } of shares) {
-      const tpKey = tp._id.replace(/^resources\//, '');
+      const tpKey = tp._id.replace(/^resources\//, "");
       const { data: user } = (await oada.get({
         path: `/${tp._id}/user`,
       })) as unknown as { data: Link };
       if (user instanceof Uint8Array) {
-        throw new TypeError('user was not JSON');
+        throw new TypeError("user was not JSON");
       }
 
       // HACK FOR DEMO UNTIL WE GET MASKING SETTINGS:
       let mask: Mask | boolean = false;
-      if (tpKey.includes('REDDYRAW')) {
-        log.info('COPY WILL MASK LOCATIONS FOR REDDYRAW');
+      if (tpKey.includes("REDDYRAW")) {
+        log.info("COPY WILL MASK LOCATIONS FOR REDDYRAW");
         log.trace(
-          'pdf is only generated for fsqa-audits or cois, doctype is %s',
+          "pdf is only generated for fsqa-audits or cois, doctype is %s",
           doctype,
         );
         mask = {
-          keys_to_mask: ['location'],
-          generate_pdf: doctype === 'fsqa-audits' || doctype === 'cois',
+          keys_to_mask: ["location"],
+          generate_pdf: doctype === "fsqa-audits" || doctype === "cois",
         };
       }
       // END HACK FOR DEMO
@@ -216,13 +216,13 @@ async function postSharesJob({
   oada: OADAClient;
 }) {
   const {
-    headers: { 'content-location': location },
+    headers: { "content-location": location },
   } = await oada.post({
-    path: `/resources`,
-    contentType: 'application/vnd.oada.service.job.1+json',
+    path: "/resources",
+    contentType: "application/vnd.oada.service.job.1+json",
     data: {
-      type: 'share-user-link',
-      service: 'trellis-shares',
+      type: "share-user-link",
+      service: "trellis-shares",
       config: {
         src: `/${doc._id}`,
         copy: {
@@ -242,18 +242,18 @@ async function postSharesJob({
       },
     } as unknown as Json, // Should be SharesJob, but JsonObject is a pita
   });
-  const resourceID = location?.replace(/^\//, '');
-  const reskey = resourceID?.replace(/^resources\//, '');
-  log.trace('Shares job posted as resId = %s', resourceID);
+  const resourceID = location?.replace(/^\//, "");
+  const reskey = resourceID?.replace(/^resources\//, "");
+  log.trace("Shares job posted as resId = %s", resourceID);
   const {
-    headers: { 'content-location': jobpath },
+    headers: { "content-location": jobpath },
   } = await oada.put({
-    path: `/bookmarks/services/trellis-shares/jobs`,
+    path: "/bookmarks/services/trellis-shares/jobs",
     data: { [reskey!]: { _id: resourceID, _rev: 0 } },
     tree,
   });
-  const jobkey = jobpath?.replace(/^\/resources\/[^/]+\//, '');
-  log.trace('Posted jobkey %s for shares', jobkey);
+  const jobkey = jobpath?.replace(/^\/resources\/[^/]+\//, "");
+  log.trace("Posted jobkey %s for shares", jobkey);
 }
 
 export async function recursiveSignLinks(
@@ -261,11 +261,11 @@ export async function recursiveSignLinks(
   oada: OADAClient,
   log: Logger,
 ): Promise<void> {
-  if (typeof object !== 'object' || !object) {
+  if (typeof object !== "object" || !object) {
     return;
   }
 
-  if (has(object, '_id')) {
+  if (has(object, "_id")) {
     await signResourceForTarget({
       _id: object._id as string,
       // Hack because jobs is on ancient client version
@@ -295,10 +295,10 @@ async function pushSharesForFacility({
   shares: Shares;
   expandIndex: ExpandIndex;
 }) {
-  const ei = expandIndex['trading-partners'];
+  const ei = expandIndex["trading-partners"];
   const values = Object.values(ei);
   log.trace(
-    'Looking for facility %s in %d trading partners',
+    "Looking for facility %s in %d trading partners",
     facilityid,
     values.length,
   );
@@ -317,7 +317,7 @@ async function pushSharesForFacility({
     const { id, ...tp } = structuredClone(tpv);
     const s = { tp: { _id: id, ...tp }, doc, dockey };
     shares.push(s);
-    log.trace('Added share to running list: %O', s);
+    log.trace("Added share to running list: %O", s);
   }
 }
 
@@ -338,7 +338,7 @@ async function signResourceForTarget({
 
   try {
     // Test first if this thing already has a transcription signature.  If so, skip it.
-    log.trace('#signResourceForTarget: Checking for existing signature...');
+    log.trace("#signResourceForTarget: Checking for existing signature...");
     // eslint-disable-next-line no-inner-declarations
     async function hasTranscriptionSignature(resource: {
       signatures?: string[];
@@ -350,7 +350,7 @@ async function signResourceForTarget({
       const { trusted, valid, unchanged, payload, original } =
         await tSignatures.verify(resource);
       log.trace(
-        '#signResourceForTarget: Checked for signature, got back trusted %s valid %s unchanged %s payload %O',
+        "#signResourceForTarget: Checked for signature, got back trusted %s valid %s unchanged %s payload %O",
         trusted,
         valid,
         unchanged,
@@ -376,7 +376,7 @@ async function signResourceForTarget({
     }
 
     log.trace(
-      '#signResourceForTarget: Did not find existing %s signature, signing...',
+      "#signResourceForTarget: Did not find existing %s signature, signing...",
       signatureType,
     );
 
@@ -387,7 +387,7 @@ async function signResourceForTarget({
       type: signatureType,
     });
 
-    log.info('PUTing signed signatures key only to /%s/signatures', _id);
+    log.info("PUTing signed signatures key only to /%s/signatures", _id);
     try {
       await oada.put({ path: `/${_id}/signatures`, data: signatures });
     } catch (cError: unknown) {
@@ -399,7 +399,7 @@ async function signResourceForTarget({
     throw new Error(`Could not apply signature to resource ${_id}`);
   }
 
-  log.info('signed', `Signed resource ${_id} successfully`);
+  log.info("signed", `Signed resource ${_id} successfully`);
   return true; // Success!
 }
 

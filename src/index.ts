@@ -16,13 +16,13 @@
  */
 
 // Needs to be imported _before_ debug
-import '@oada/pino-debug';
+import "@oada/pino-debug";
 // Load config first so it can set up env
-import config from './config.js';
+import config from "./config.js";
 
-import { pino } from '@oada/pino-debug';
+import { pino } from "@oada/pino-debug";
 
-import { Service } from '@oada/jobs';
+import { Service } from "@oada/jobs";
 
 /* Import {
   jobHandler as asnJobHandler,
@@ -32,23 +32,23 @@ import { Service } from '@oada/jobs';
 import {
   jobHandler as pdfJobHandler,
   startJobCreator as pdfStartJobCreator,
-} from './pdfJob.js';
-import { jobHandler as transcriptionOnlyJobHandler } from './transcriptionOnly.js';
+} from "./pdfJob.js";
+import { jobHandler as transcriptionOnlyJobHandler } from "./transcriptionOnly.js";
 
-const log = pino({ base: { service: 'target-helper' } });
+const log = pino({ base: { service: "target-helper" } });
 
-const tokens = config.get('oada.token');
-const domain = config.get('oada.domain');
-const jobsConcurrency = config.get('oada.jobsConcurrency');
-if (domain.startsWith('http')) {
+const tokens = config.get("oada.token");
+const domain = config.get("oada.domain");
+const jobsConcurrency = config.get("oada.jobsConcurrency");
+if (domain.startsWith("http")) {
   //  Domain = domain.replace(/^https?:\/\//, '');
 }
 
-log.trace('Using token(s) = %s', tokens);
-log.info('Using domain = %s', domain);
+log.trace("Using token(s) = %s", tokens);
+log.info("Using domain = %s", domain);
 
-process.on('unhandledRejection', (reason, promise) => {
-  log.warn({ promise, reason }, 'Unhandled Rejection');
+process.on("unhandledRejection", (reason, promise) => {
+  log.warn({ promise, reason }, "Unhandled Rejection");
   // Application specific logging, throwing an error, or other logic here
 });
 
@@ -58,7 +58,7 @@ await Promise.all(
     // --------------------------------------------------
     // Create the service
     const service = new Service({
-      name: 'target',
+      name: "target",
       oada: { domain, token },
       opts: {
         /*
@@ -78,14 +78,14 @@ await Promise.all(
     // --------------------------------------------------
     // Set the job type handlers; don't timeout jobs due to other jobs taking too long
     service.on(
-      'transcription',
-      config.get('timeouts.pdf') * jobsConcurrency,
+      "transcription",
+      config.get("timeouts.pdf") * jobsConcurrency,
       pdfJobHandler,
     );
 
     service.on(
-      'transcription-only',
-      config.get('timeouts.pdf') * jobsConcurrency,
+      "transcription-only",
+      config.get("timeouts.pdf") * jobsConcurrency,
       transcriptionOnlyJobHandler,
     );
     // Service.on('asn', config.get('timeouts.asn'), asnJobHandler);
@@ -98,7 +98,7 @@ await Promise.all(
     const serviceP = service.start();
 
     // Start the things watching to create jobs
-    log.info('Started pdf job creator processes');
+    log.info("Started pdf job creator processes");
     const pdfP = pdfStartJobCreator({ domain, token });
     //    Const asnP = asnStartJobCreator({ domain, token });
 
@@ -111,6 +111,6 @@ await Promise.all(
       process.exit(1);
     }
 
-    log.info('Ready');
+    log.info("Ready");
   }),
 );

@@ -17,13 +17,13 @@
 
 /* eslint-disable complexity */
 
-import { connect } from '@oada/client';
-import config from './dist/config.js';
-import tree from './dist/tree.js';
-import { setTimeout } from 'node:timers/promises';
+import { setTimeout } from "node:timers/promises";
+import { connect } from "@oada/client";
+import config from "./dist/config.js";
+import tree from "./dist/tree.js";
 
-const domain = config.get('oada.domain');
-const token = config.get('oada.token');
+const domain = config.get("oada.domain");
+const token = config.get("oada.token");
 
 async function main() {
   const conn = await connect({
@@ -32,34 +32,34 @@ async function main() {
   });
 
   await conn.delete({
-    path: `/bookmarks/trellisfw/trading-partners/masterid-index/d4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e/shared/trellisfw/documents/gfsi-certificates`,
+    path: "/bookmarks/trellisfw/trading-partners/masterid-index/d4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e/shared/trellisfw/documents/gfsi-certificates",
     //path: `/bookmarks/trellisfw/trading-partners/masterid-index/d4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e/shared/trellisfw/documents/gfsi-certificates/a45717de48be4a5ab6d61af7cfeb8d55`,
   });
 
-  console.log('deleted');
+  console.log("deleted");
   await setTimeout(3000);
 
   await conn.put({
-    path: `/bookmarks/trellisfw/trading-partners/masterid-index/d4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e/shared/trellisfw/documents/gfsi-certificates`,
+    path: "/bookmarks/trellisfw/trading-partners/masterid-index/d4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e/shared/trellisfw/documents/gfsi-certificates",
     data: {},
     tree,
   });
 
-  console.log('put1');
+  console.log("put1");
   await setTimeout(10000);
 
   await conn.put({
-    path: `/bookmarks/trellisfw/trading-partners/masterid-index/d4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e/shared/trellisfw/documents/gfsi-certificates`,
+    path: "/bookmarks/trellisfw/trading-partners/masterid-index/d4f7b367c7f6aa30841132811bbfe95d3c3a807513ac43d7c8fea41a6688606e/shared/trellisfw/documents/gfsi-certificates",
     data: {
       a45717de48be4a5ab6d61af7cfeb8d55: {
-        _id: 'resources/2HxK1NmfiFaWVFdDw8e1GIdh2Ua',
+        _id: "resources/2HxK1NmfiFaWVFdDw8e1GIdh2Ua",
         _rev: 0,
       },
     },
     tree,
   });
 
-  console.log('put');
+  console.log("put");
 }
 
 main();

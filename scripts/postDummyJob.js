@@ -19,37 +19,37 @@
 /* eslint-disable no-process-exit */
 /* eslint-disable unicorn/no-process-exit */
 
-import config from '../config.js';
+import config from "../config.js";
 
-import { connect } from '@oada/client';
+import { connect } from "@oada/client";
 
-const jobpath = `/bookmarks/services/target/jobs`;
-const pdfkey = 'TEST-PDF1';
-const auditkey = 'TEST-FSQAAUDIT1-DUMMY';
+const jobpath = "/bookmarks/services/target/jobs";
+const pdfkey = "TEST-PDF1";
+const auditkey = "TEST-FSQAAUDIT1-DUMMY";
 
 const tree = {
   bookmarks: {
-    _type: 'application/vnd.oada.bookmarks.1+json',
+    _type: "application/vnd.oada.bookmarks.1+json",
     services: {
-      _type: 'application/vnd.oada.services.1+json',
+      _type: "application/vnd.oada.services.1+json",
       target: {
-        '_type': 'application/vnd.oada.service.1+json',
-        'jobs': {
-          '_type': 'application/vnd.oada.jobs.1+json',
-          '*': {
-            _type: 'application/vnd.oada.job.1+json',
+        _type: "application/vnd.oada.service.1+json",
+        jobs: {
+          _type: "application/vnd.oada.jobs.1+json",
+          "*": {
+            _type: "application/vnd.oada.job.1+json",
           },
         },
-        'jobs-success': {
-          '_type': 'application/vnd.oada.jobs.1+json',
-          '*': {
-            _type: 'application/vnd.oada.job.1+json',
+        "jobs-success": {
+          _type: "application/vnd.oada.jobs.1+json",
+          "*": {
+            _type: "application/vnd.oada.job.1+json",
           },
         },
-        'jobs-error': {
-          '_type': 'application/vnd.oada.jobs.1+json',
-          '*': {
-            _type: 'application/vnd.oada.job.1+json',
+        "jobs-error": {
+          _type: "application/vnd.oada.jobs.1+json",
+          "*": {
+            _type: "application/vnd.oada.job.1+json",
           },
         },
       },
@@ -57,18 +57,18 @@ const tree = {
   },
 };
 
-let domain = config.get('domain');
-if (domain.startsWith('http')) domain = domain.replace(/^https:\/\//, '');
-const con = await connect({ domain, token: config.get('token') });
+let domain = config.get("domain");
+if (domain.startsWith("http")) domain = domain.replace(/^https:\/\//, "");
+const con = await connect({ domain, token: config.get("token") });
 try {
   await con.get({ path: `/resources/${pdfkey}` });
 } catch (error) {
   if (error && error.status === 404) {
-    console.log('resources/TEST-PDF1 does not exist, creating a dummy one');
+    console.log("resources/TEST-PDF1 does not exist, creating a dummy one");
     await con.put({
       path: `/resources/${pdfkey}`,
       data: {},
-      headers: { 'content-type': 'application/pdf' },
+      headers: { "content-type": "application/pdf" },
     });
   }
 }
@@ -77,25 +77,25 @@ try {
 // Example of a successful normal job: go ahead and put that up, tests will check results later
 const {
   data: {
-    headers: { 'content-location': location },
+    headers: { "content-location": location },
   },
 } = await con.post({
-  path: `/resources`,
-  headers: { 'content-type': 'application/vnd.oada.job.1+json' },
+  path: "/resources",
+  headers: { "content-type": "application/vnd.oada.job.1+json" },
   data: {
-    type: 'pdf',
+    type: "pdf",
     config: {
       pdf: { _id: `resources/${pdfkey}` },
     },
   },
 });
-const jobkey = location?.replace(/^\/resources\//, '');
+const jobkey = location?.replace(/^\/resources\//, "");
 
 // Link job under queue to start things off:
-console.log('Creating job key:', jobkey);
+console.log("Creating job key:", jobkey);
 await con.put({
   path: `${jobpath}`,
-  headers: { 'content-type': 'application/vnd.oada.jobs.1+json' },
+  headers: { "content-type": "application/vnd.oada.jobs.1+json" },
   data: {
     [jobkey]: { _id: `resources/${jobkey}` },
   },
