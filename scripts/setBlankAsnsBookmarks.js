@@ -19,14 +19,12 @@
 /* eslint-disable no-process-exit */
 /* eslint-disable unicorn/no-process-exit */
 
-import config from "../config.js";
-
 import readline from "node:readline"; // Node.js built-in
-
 import { connect } from "@oada/client";
 import ksuid from "ksuid";
 import minimist from "minimist";
 import moment from "moment";
+import config from "../config.js";
 
 const argv = minimist(process.argv.slice(2));
 

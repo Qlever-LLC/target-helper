@@ -15,17 +15,16 @@
  * limitations under the License.
  */
 
-import oError from "@overleaf/o-error";
-import debug from "debug";
-
 import { type Change, connect } from "@oada/client";
 import type { Json, WorkerFunction } from "@oada/jobs";
 import { ListWatch } from "@oada/list-lib";
-import {
-  type default as Job,
-  assert as assertJob,
-} from "@oada/types/oada/service/job.js";
 import type Update from "@oada/types/oada/service/job/update.js";
+import {
+  assert as assertJob,
+  type default as Job,
+} from "@oada/types/oada/service/job.js";
+import oError from "@overleaf/o-error";
+import debug from "debug";
 
 import tree from "./tree.js";
 

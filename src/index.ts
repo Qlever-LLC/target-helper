@@ -17,12 +17,12 @@
 
 // Needs to be imported _before_ debug
 import "@oada/pino-debug";
-// Load config first so it can set up env
-import config from "./config.js";
-
-import { pino } from "@oada/pino-debug";
 
 import { Service } from "@oada/jobs";
+
+import { pino } from "@oada/pino-debug";
+// Load config first so it can set up env
+import config from "./config.js";
 
 /* Import {
   jobHandler as asnJobHandler,

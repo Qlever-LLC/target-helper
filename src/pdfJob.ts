@@ -15,28 +15,25 @@
  * limitations under the License.
  */
 
-import config from "./config.js";
-
 // eslint-disable-next-line unicorn/import-style
 import { join } from "node:path";
-
-import oError from "@overleaf/o-error";
-import debug from "debug";
-import moment from "moment";
-
 import type { Change, JsonObject, OADAClient } from "@oada/client";
+import { connect } from "@oada/client";
 import type { Job, Json, WorkerFunction } from "@oada/jobs";
 import { AssumeState, ChangeType, ListWatch } from "@oada/list-lib";
 import type { Logger } from "@oada/pino-debug";
-
-import { connect } from "@oada/client";
 import type { Link } from "@oada/types/oada/link/v1.js";
 import type Resource from "@oada/types/oada/resource.js";
-import { assert as assertJob } from "@oada/types/oada/service/job.js";
 import type Update from "@oada/types/oada/service/job/update.js";
+import { assert as assertJob } from "@oada/types/oada/service/job.js";
+import oError from "@overleaf/o-error";
+import debug from "debug";
+import moment from "moment";
+import config from "./config.js";
 
 import { fromOadaType } from "./conversions.js";
 import { handleShares, recursiveSignLinks } from "./pdfJobPostProc.js";
+import type { TreeKey } from "./tree.js";
 import {
   selfDocumentTypeTree,
   tpDocsTree,
@@ -44,7 +41,6 @@ import {
   tpTree,
   tree,
 } from "./tree.js";
-import type { TreeKey } from "./tree.js";
 import {
   recursiveMakeAllLinksVersioned,
   recursiveReplaceLinksWithReferences,

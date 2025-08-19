@@ -15,16 +15,14 @@
  * limitations under the License.
  */
 
-import config from "./config.js";
-
 import { readFile } from "node:fs/promises";
-
 import type { OADAClient } from "@oada/client";
 import type { Json } from "@oada/jobs";
 import type { Logger } from "@oada/pino-debug";
 import type { Link } from "@oada/types/oada/link/v1.js";
 import type { JWK } from "@trellisfw/signatures";
 import tSignatures from "@trellisfw/signatures";
+import config from "./config.js";
 
 import type { ExpandIndex, TargetJob } from "./pdfJob.js";
 import { tree } from "./tree.js";

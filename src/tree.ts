@@ -140,4 +140,4 @@ delete tpDocumentTypeTree.bookmarks!.services;
 export { tpDocumentTypeTree };
 
 export default tree;
-export { type TreeKey } from "@oada/types/oada/tree/v1.js";
+export type { TreeKey } from "@oada/types/oada/tree/v1.js";

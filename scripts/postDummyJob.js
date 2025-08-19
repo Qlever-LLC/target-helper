@@ -19,9 +19,8 @@
 /* eslint-disable no-process-exit */
 /* eslint-disable unicorn/no-process-exit */
 
-import config from "../config.js";
-
 import { connect } from "@oada/client";
+import config from "../config.js";
 
 const jobpath = "/bookmarks/services/target/jobs";
 const pdfkey = "TEST-PDF1";

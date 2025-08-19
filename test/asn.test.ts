@@ -15,18 +15,13 @@
  * limitations under the License.
  */
 
-import config from "../dist/config.js";
-
+import { connect } from "@oada/client";
+import type Job from "@oada/types/oada/service/job.js";
 import test from "ava";
-
 import { setTimeout } from "isomorphic-timers-promises";
-
 import { difference } from "lodash-es";
 import moment from "moment";
-
-import { connect } from "@oada/client";
-
-import type Job from "@oada/types/oada/service/job.js";
+import config from "../dist/config.js";
 
 import testAsn from "./testAsn.js";
 

@@ -15,16 +15,13 @@
  * limitations under the License.
  */
 
-import config from "../dist/config.js";
+import { connect, type JsonObject } from "@oada/client";
 
 import test from "ava";
-
-import { setTimeout } from "isomorphic-timers-promises";
-
 import debug from "debug";
+import { setTimeout } from "isomorphic-timers-promises";
 import moment from "moment";
-
-import { type JsonObject, connect } from "@oada/client";
+import config from "../dist/config.js";
 
 import {
   cleanup,

@@ -15,12 +15,10 @@
  * limitations under the License.
  */
 
-import config from "../dist/config.js";
-
-import test from "ava";
-
 import { connect } from "@oada/client";
 import { doJob } from "@oada/client/jobs";
+import test from "ava";
+import config from "../dist/config.js";
 
 const con = await connect({
   domain: config.get("oada.domain"),

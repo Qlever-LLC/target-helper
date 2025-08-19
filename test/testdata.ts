@@ -15,14 +15,12 @@
  * limitations under the License.
  */
 
+import type { OADAClient } from "@oada/client";
 import assign from "assign-deep";
 import debug from "debug";
 import { JsonPointer } from "json-ptr";
 import moment from "moment";
-
 import { tree } from "../dist/tree.js";
-
-import type { OADAClient } from "@oada/client";
 
 const trace = debug("target-helper#test:trace");
 const info = debug("target-helper#test:info");

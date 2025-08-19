@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
-import config from "../dist/config.js";
+import { connect } from "@oada/client";
 
 import test from "ava";
-
-import { connect } from "@oada/client";
 import moment from "moment";
+import config from "../dist/config.js";
 
 // DO NOT include ../ because we are testing externally.
 
