@@ -111,11 +111,13 @@ const tree: Tree = {
     },
   },
 };
+
 export { tree };
 
 const selfDocumentTypeTree: Tree = structuredClone(tree);
 delete selfDocumentTypeTree.bookmarks!.trellisfw!.documents!["*"]!["*"];
 delete selfDocumentTypeTree.bookmarks!.trellisfw!["trading-partners"];
+
 export { selfDocumentTypeTree };
 
 const tpTree: Tree = structuredClone(tree);
@@ -123,6 +125,7 @@ delete tpTree.bookmarks?.trellisfw?.["trading-partners"]?.["*"]?.shared;
 delete tpTree.bookmarks?.trellisfw?.["trading-partners"]?.["*"]?.bookmarks;
 delete tpTree.bookmarks!.services;
 delete tpTree.bookmarks!.trellisfw!.documents;
+
 export { tpTree };
 
 const tpDocsTree: Tree = structuredClone(tree);
@@ -130,6 +133,7 @@ delete tpDocsTree.bookmarks!.trellisfw!["trading-partners"]!["*"]!.shared!
   .trellisfw!.documents!["*"]!["*"];
 delete tpDocsTree.bookmarks!.services;
 delete tpDocsTree.bookmarks!.trellisfw!.documents;
+
 export { tpDocsTree };
 
 const tpDocumentTypeTree: Tree = structuredClone(tree);
@@ -137,6 +141,7 @@ delete tpDocumentTypeTree.bookmarks!.trellisfw!["trading-partners"]!["*"]!
   .shared!.trellisfw!.documents!["*"]!["*"];
 delete tpDocumentTypeTree.bookmarks!.trellisfw!.documents!["*"]!["*"];
 delete tpDocumentTypeTree.bookmarks!.services;
+
 export { tpDocumentTypeTree };
 
 export default tree;

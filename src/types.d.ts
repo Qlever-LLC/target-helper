@@ -18,7 +18,7 @@
 /**
  * OADA certificates
  */
-declare module '@oada/oada-certs' {
+declare module "@oada/oada-certs" {
   /**
    * JSON Web Key
    */
@@ -33,7 +33,7 @@ declare module '@oada/oada-certs' {
     e?: string;
     d?: string;
   }
-  type JWKPrivate = 'd';
+  type JWKPrivate = "d";
 
   declare namespace OADACerts {
     async function pubFromPriv<K extends JWK>(
@@ -46,7 +46,7 @@ declare module '@oada/oada-certs' {
 /**
  * Trellis signatures
  */
-declare module '@trellisfw/signatures' {
+declare module "@trellisfw/signatures" {
   import type OADACerts, { JWK } from '@oada/oada-certs';
 
   declare namespace TrellisSignatures {
@@ -72,5 +72,5 @@ declare module '@trellisfw/signatures' {
   }
   export = TrellisSignatures;
 
-  export type { JWK } from '@oada/oada-certs';
+  export type { JWK } from "@oada/oada-certs";
 }

@@ -472,6 +472,5 @@ function setConnection(theconnection: OADAClient) {
   con = theconnection;
 }
 
-export { items, cleanup, putData, putLink, putAndLinkData, setConnection };
-
 export { default as tree } from "../dist/tree.js";
+export { cleanup, items, putAndLinkData, putData, putLink, setConnection };
