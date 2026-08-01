@@ -1,0 +1,19 @@
+package.json
+  s_63b1781674518c::t_fee934c82a65b0 90-91,93-95,97-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "f9bf2ed2b923875edeff373d4e4718612a6cda51",
+  "prompts": {},
+  "sessions": {
+    "s_63b1781674518c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_040c89cfaffeRFb8CuMhZIpzpQ",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "Alex Layton <alex@qlever.io>"
+    }
+  }
+}
